@@ -1,0 +1,66 @@
+plugins {
+    id 'application'
+    id 'java'
+    id 'org.openjfx.javafxplugin' version '0.1.0'
+}
+
+group = 'ch.unibas.dmi.dbis'
+version = '0.0.1-ALPHA'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+application {
+    mainClass = 'ch.unibas.dmi.dbis.cs108.example.HelloWorld'
+}
+
+repositories {
+    mavenCentral()
+}
+
+javafx {
+    version = "25.0.2"
+    modules = ['javafx.controls', 'javafx.fxml', 'javafx.base']
+}
+
+dependencies {
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.10.0")
+}
+
+test {
+    useJUnitPlatform()
+}
+
+tasks.named('jar', Jar) {
+    manifest {
+        attributes('Main-Class': application.mainClass.get())
+    }
+}
+
+
+tasks.register('fatJar', Jar) {
+    group = 'build'
+    description = 'Assembles a runnable fat JAR including runtime dependencies.'
+
+    archiveClassifier = 'all'
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    manifest {
+        attributes('Main-Class': application.mainClass.get())
+    }
+
+    // include your compiled classes/resources
+    from(sourceSets.main.output)
+
+    // make sure runtimeClasspath is resolved before we try to zipTree it
+    dependsOn(configurations.runtimeClasspath)
+
+    // unpack runtime deps into the jar
+    from({
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    })
+}
