@@ -14,7 +14,7 @@ java {
 }
 
 application {
-    mainClass = 'ch.unibas.dmi.dbis.cs108.example.HelloWorld'
+    mainClass = 'ch.unibas.dmi.dbis.cs108.example.prototype.ServerMain'
 }
 
 repositories {
@@ -41,7 +41,6 @@ tasks.named('jar', Jar) {
     }
 }
 
-
 tasks.register('fatJar', Jar) {
     group = 'build'
     description = 'Assembles a runnable fat JAR including runtime dependencies.'
@@ -53,14 +52,26 @@ tasks.register('fatJar', Jar) {
         attributes('Main-Class': application.mainClass.get())
     }
 
-    // include your compiled classes/resources
     from(sourceSets.main.output)
 
-    // make sure runtimeClasspath is resolved before we try to zipTree it
     dependsOn(configurations.runtimeClasspath)
 
-    // unpack runtime deps into the jar
     from({
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     })
+}
+
+tasks.register('runServer', JavaExec) {
+    group = 'application'
+    description = 'Runs the TCP server'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'ch.unibas.dmi.dbis.cs108.example.prototype.ServerMain'
+}
+
+tasks.register('runClient', JavaExec) {
+    group = 'application'
+    description = 'Runs the TCP client'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'ch.unibas.dmi.dbis.cs108.example.prototype.client.ClientMain'
+    standardInput = System.in
 }
