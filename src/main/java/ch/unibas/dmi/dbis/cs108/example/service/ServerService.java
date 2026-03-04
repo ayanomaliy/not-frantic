@@ -1,8 +1,8 @@
 package ch.unibas.dmi.dbis.cs108.example.service;
 
-import ch.unibas.dmi.dbis.cs108.example.controller.controller.ClientSession;
-import ch.unibas.dmi.dbis.cs108.example.model.model.Lobby;
-import ch.unibas.dmi.dbis.cs108.example.model.model.Player;
+import ch.unibas.dmi.dbis.cs108.example.controller.ClientSession;
+import ch.unibas.dmi.dbis.cs108.example.model.Lobby;
+import ch.unibas.dmi.dbis.cs108.example.model.Player;
 
 import java.util.ArrayList;
 import java.util.List;

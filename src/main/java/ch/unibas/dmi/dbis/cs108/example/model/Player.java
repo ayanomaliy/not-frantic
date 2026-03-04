@@ -1,4 +1,4 @@
-package ch.unibas.dmi.dbis.cs108.example.model.model;
+package ch.unibas.dmi.dbis.cs108.example.model;
 
 /**
  * Represents a player in the game.

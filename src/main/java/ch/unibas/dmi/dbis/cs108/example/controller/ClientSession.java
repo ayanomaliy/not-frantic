@@ -1,4 +1,4 @@
-package ch.unibas.dmi.dbis.cs108.example.controller.controller;
+package ch.unibas.dmi.dbis.cs108.example.controller;
 
 import ch.unibas.dmi.dbis.cs108.example.service.Message;
 import ch.unibas.dmi.dbis.cs108.example.service.ServerService;

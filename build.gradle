@@ -72,6 +72,6 @@ tasks.register('runClient', JavaExec) {
     group = 'application'
     description = 'Runs the TCP client'
     classpath = sourceSets.main.runtimeClasspath
-    mainClass = 'ch.unibas.dmi.dbis.cs108.example.client.client.ClientMain'
+    mainClass = 'ch.unibas.dmi.dbis.cs108.example.client.ClientMain'
     standardInput = System.in
 }

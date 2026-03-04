@@ -1,6 +1,6 @@
 package ch.unibas.dmi.dbis.cs108.example;
 
-import ch.unibas.dmi.dbis.cs108.example.controller.controller.ServerController;
+import ch.unibas.dmi.dbis.cs108.example.controller.ServerController;
 import ch.unibas.dmi.dbis.cs108.example.service.ServerService;
 
 /**

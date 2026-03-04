@@ -1,7 +1,7 @@
-package ch.unibas.dmi.dbis.cs108.example.model.model;
+package ch.unibas.dmi.dbis.cs108.example.model;
 
 
-import ch.unibas.dmi.dbis.cs108.example.controller.controller.ClientSession;
+import ch.unibas.dmi.dbis.cs108.example.controller.ClientSession;
 
 import java.util.ArrayList;
 import java.util.List;
