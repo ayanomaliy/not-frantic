@@ -1,4 +1,4 @@
-# Project Meeting Notes
+# Project Diary
 
 ## Date: February 19, 2026
 
