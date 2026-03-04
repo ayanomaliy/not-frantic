@@ -9,7 +9,7 @@ import java.nio.charset.StandardCharsets;
 public class ClientMain {
 
     public static void main(String[] args) {
-        String host = "127.0.0.1";
+        String host = "10.192.4.22";
         int port = 5555;
 
         try (
