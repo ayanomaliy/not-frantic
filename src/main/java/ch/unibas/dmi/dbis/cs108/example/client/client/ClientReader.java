@@ -1,4 +1,4 @@
-package ch.unibas.dmi.dbis.cs108.example.prototype.client;
+package ch.unibas.dmi.dbis.cs108.example.client.client;
 
 import java.io.BufferedReader;
 

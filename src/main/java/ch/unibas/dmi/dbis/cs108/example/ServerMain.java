@@ -1,7 +1,7 @@
-package ch.unibas.dmi.dbis.cs108.example.prototype;
+package ch.unibas.dmi.dbis.cs108.example;
 
-import ch.unibas.dmi.dbis.cs108.example.prototype.controller.ServerController;
-import ch.unibas.dmi.dbis.cs108.example.prototype.service.ServerService;
+import ch.unibas.dmi.dbis.cs108.example.controller.controller.ServerController;
+import ch.unibas.dmi.dbis.cs108.example.service.ServerService;
 
 public class ServerMain {
 

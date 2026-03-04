@@ -1,7 +1,7 @@
-package ch.unibas.dmi.dbis.cs108.example.prototype.controller;
+package ch.unibas.dmi.dbis.cs108.example.controller.controller;
 
-import ch.unibas.dmi.dbis.cs108.example.prototype.service.Message;
-import ch.unibas.dmi.dbis.cs108.example.prototype.service.ServerService;
+import ch.unibas.dmi.dbis.cs108.example.service.Message;
+import ch.unibas.dmi.dbis.cs108.example.service.ServerService;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;

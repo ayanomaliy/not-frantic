@@ -1,6 +1,6 @@
-package ch.unibas.dmi.dbis.cs108.example.prototype.controller;
+package ch.unibas.dmi.dbis.cs108.example.controller.controller;
 
-import ch.unibas.dmi.dbis.cs108.example.prototype.service.ServerService;
+import ch.unibas.dmi.dbis.cs108.example.service.ServerService;
 
 import java.net.ServerSocket;
 import java.net.Socket;

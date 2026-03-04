@@ -1,4 +1,4 @@
-package ch.unibas.dmi.dbis.cs108.example.prototype.service;
+package ch.unibas.dmi.dbis.cs108.example.service;
 
 public record Message(Type type, String content) {
 
