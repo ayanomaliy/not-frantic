@@ -9,6 +9,14 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 
+/**
+ * Represents a single client connection session.
+ * <p>
+ * Handles communication with a connected client, processes incoming commands,
+ * and manages the client's session state. Runs in its own thread to handle
+ * concurrent client connections.
+ * </p>
+ */
 public class ClientSession implements Runnable {
 
     private final Socket socket;
@@ -19,19 +27,42 @@ public class ClientSession implements Runnable {
 
     private String playerName = "Anonymous";
 
+    /**
+     * Creates a new client session for the given socket connection.
+     *
+     * @param socket the client's TCP socket connection
+     * @param serverService the server service managing game state
+     */
     public ClientSession(Socket socket, ServerService serverService) {
         this.socket = socket;
         this.serverService = serverService;
     }
 
+    /**
+     * Sends a message to this client.
+     *
+     * @param text the message to send
+     */
     public void send(String text) {
         out.println(text);
     }
 
+    /**
+     * Gets the name of the player associated with this session.
+     *
+     * @return the player's display name
+     */
     public String getPlayerName() {
         return playerName;
     }
 
+    /**
+     * Executes the client session thread.
+     * <p>
+     * Registers the client with the server, welcomes them, reads incoming commands,
+     * processes them through the server service, and handles disconnection cleanup.
+     * </p>
+     */
     @Override
     public void run() {
         try (Socket s = this.socket) {
