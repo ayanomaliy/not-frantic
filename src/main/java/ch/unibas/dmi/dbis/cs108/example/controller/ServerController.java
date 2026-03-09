@@ -4,24 +4,38 @@ import ch.unibas.dmi.dbis.cs108.example.service.ServerService;
 
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * Manages the server's TCP connection handling and client session creation.
+ * Controls the game server.
  * <p>
- * Listens on a specified port for incoming client connections and spawns a new
- * {@link ClientSession} thread for each connected client to handle their communication.
- * </p>
+ * Accepts client connections and manages active sessions.
+ * A background heartbeat thread periodically checks whether
+ * connected clients are still alive.
  */
 public class ServerController {
 
+    /** Server listening port. */
     private final int port;
+
+    /** Service responsible for game logic and message handling. */
     private final ServerService serverService;
 
+    /** Active client sessions. */
+    private final List<ClientSession> sessions = new CopyOnWriteArrayList<>();
+
+    /** Interval between heartbeat pings. */
+    private static final long HEARTBEAT_INTERVAL_MS = 5000;
+
+    /** Timeout before a client is considered disconnected. */
+    private static final long HEARTBEAT_TIMEOUT_MS = 15000;
+
     /**
-     * Creates a server controller for accepting client connections.
+     * Creates a new server controller.
      *
-     * @param port the port number on which the server listens
-     * @param serverService the service used to manage game state and client interactions
+     * @param port server port
+     * @param serverService service managing game state
      */
     public ServerController(int port, ServerService serverService) {
         this.port = port;
@@ -29,19 +43,20 @@ public class ServerController {
     }
 
     /**
-     * Starts the server and begins accepting client connections.
-     * <p>
-     * Continuously listens for incoming connections and creates a new client session
-     * thread for each connected client. Runs indefinitely until interrupted.
-     * </p>
+     * Starts the server and accepts incoming client connections.
      */
     public void start() {
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             System.out.println("Server running on port " + port);
 
+            startHeartbeatMonitor();
+
             while (true) {
                 Socket socket = serverSocket.accept();
+
                 ClientSession clientSession = new ClientSession(socket, serverService);
+                sessions.add(clientSession);
+
                 Thread thread = new Thread(clientSession);
                 thread.start();
             }
@@ -49,5 +64,38 @@ public class ServerController {
         } catch (Exception e) {
             System.err.println("Server error: " + e.getMessage());
         }
+    }
+
+    /**
+     * Starts a background thread that monitors client heartbeats.
+     * Clients that do not respond in time are removed.
+     */
+    private void startHeartbeatMonitor() {
+
+        Thread heartbeatThread = new Thread(() -> {
+            try {
+                while (true) {
+
+                    long now = System.currentTimeMillis();
+
+                    for (ClientSession session : sessions) {
+
+                        session.send("SYS|PING");
+
+                        if (now - session.getLastHeartbeatTime() > HEARTBEAT_TIMEOUT_MS) {
+                            System.err.println("[SERVER] Client timed out: " + session.getPlayerName());
+                            sessions.remove(session);
+                        }
+                    }
+
+                    Thread.sleep(HEARTBEAT_INTERVAL_MS);
+                }
+
+            } catch (InterruptedException ignored) {
+            }
+        });
+
+        heartbeatThread.setDaemon(true);
+        heartbeatThread.start();
     }
 }

@@ -5,6 +5,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Entry point for the client application.
@@ -35,6 +36,9 @@ public class ClientMain {
         String host = "localhost"; /*temporary solution, Aiysha's IP*/
         int port = 5555;
 
+        final long heartbeatIntervalMillis = 5000;
+        final long heartbeatTimeoutMillis = 15000;
+
         try (
                 Socket socket = new Socket(host, port);
                 BufferedReader serverIn = new BufferedReader(
@@ -52,9 +56,37 @@ public class ClientMain {
                 System.out.println("Type /name " + suggestedName + " to use it, or choose your own name.");
             }
 
-            Thread readerThread = new Thread(new ClientReader(serverIn));
+            AtomicLong lastServerPongTime = new AtomicLong(System.currentTimeMillis());
+
+            Thread readerThread = new Thread(new ClientReader(serverIn, serverOut, lastServerPongTime));
             readerThread.setDaemon(true);
             readerThread.start();
+
+            Thread heartbeatThread = new Thread(() -> {
+                try {
+                    while (!socket.isClosed()) {
+                        serverOut.println("SYS|PING");
+
+                        long now = System.currentTimeMillis();
+                        long lastPong = lastServerPongTime.get();
+
+                        if (now - lastPong > heartbeatTimeoutMillis) {
+                            System.err.println("Connection to server lost.");
+                            socket.close();
+                            break;
+                        }
+
+                        Thread.sleep(heartbeatIntervalMillis);
+                    }
+                } catch (Exception e) {
+                    if (!socket.isClosed()) {
+                        System.err.println("Heartbeat error: " + e.getMessage());
+                    }
+                }
+            });
+
+            heartbeatThread.setDaemon(true);
+            heartbeatThread.start();
 
             System.out.println("Commands:");
             System.out.println("  /name Alice");

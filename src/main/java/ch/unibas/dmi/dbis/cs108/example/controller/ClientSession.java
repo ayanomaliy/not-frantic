@@ -8,6 +8,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Represents a single client connection session.
@@ -26,6 +27,7 @@ public class ClientSession implements Runnable {
     private BufferedReader in;
 
     private String playerName = "Anonymous";
+    private final AtomicLong lastHeartbeatTime = new AtomicLong(System.currentTimeMillis());
 
     /**
      * Creates a new client session for the given socket connection.
@@ -44,7 +46,9 @@ public class ClientSession implements Runnable {
      * @param text the message to send
      */
     public void send(String text) {
-        out.println(text);
+        if (out != null) {
+            out.println(text);
+        }
     }
 
     /**
@@ -58,6 +62,14 @@ public class ClientSession implements Runnable {
 
     public void setPlayerName(String playerName) {
         this.playerName = playerName;
+    }
+
+    public long getLastHeartbeatTime() {
+        return lastHeartbeatTime.get();
+    }
+
+    public void updateHeartbeatTime() {
+        lastHeartbeatTime.set(System.currentTimeMillis());
     }
 
     /**
@@ -82,9 +94,21 @@ public class ClientSession implements Runnable {
 
             String line;
             while ((line = in.readLine()) != null) {
-                System.out.println("[SESSION] Raw input from " + playerName + ": " + line);
+                String trimmed = line.trim();
+                System.out.println("[SESSION] Raw input from " + playerName + ": " + trimmed);
 
-                Message message = Message.parse(line);
+                if ("SYS|PING".equalsIgnoreCase(trimmed)) {
+                    updateHeartbeatTime();
+                    send("SYS|PONG");
+                    continue;
+                }
+
+                if ("SYS|PONG".equalsIgnoreCase(trimmed)) {
+                    updateHeartbeatTime();
+                    continue;
+                }
+
+                Message message = Message.parse(trimmed);
 
                 if (message == null) {
                     send("ERROR Invalid command.");
