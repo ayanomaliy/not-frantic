@@ -73,6 +73,18 @@ public class ClientSession implements Runnable {
     }
 
     /**
+     * Closes this client connection and removes the session from the server.
+     */
+    public void disconnect() {
+        try {
+            socket.close();
+        } catch (Exception ignored) {
+        }
+
+        serverService.unregisterClient(this);
+    }
+
+    /**
      * Executes the client session thread.
      * <p>
      * Registers the client with the server, welcomes them, reads incoming commands,

@@ -84,6 +84,7 @@ public class ServerController {
 
                         if (now - session.getLastHeartbeatTime() > HEARTBEAT_TIMEOUT_MS) {
                             System.err.println("[SERVER] Client timed out: " + session.getPlayerName());
+                            session.disconnect();
                             sessions.remove(session);
                         }
                     }
