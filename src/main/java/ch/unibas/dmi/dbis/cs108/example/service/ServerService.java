@@ -104,9 +104,48 @@ public class ServerService {
             return;
         }
 
-        log("Player renamed: " + session.getPlayerName() + " -> " + name);
-        session.send("INFO Name set to " + name);
-        broadcast("INFO " + name + " joined the lobby.");
+        String newName = name.trim();
+        String oldName = session.getPlayerName();
+        boolean firstTimeNaming = oldName.equals("Anonymous");
+
+        if (newName.length() > 20) {
+            log("Rejected too long name from " + oldName + ": " + newName);
+            session.send("ERROR Name is too long. Maximum 20 characters.");
+            return;
+        }
+
+        if (!oldName.equals("Anonymous") && oldName.equalsIgnoreCase(newName)) {
+            log("Rejected same name from " + oldName);
+            session.send("ERROR You already have this name.");
+            return;
+        }
+
+        if (isNameTaken(newName, session)) {
+            log("Rejected duplicate name: " + newName);
+            session.send("ERROR This name is already taken.");
+            return;
+        }
+
+        session.setPlayerName(newName);
+
+        if (firstTimeNaming) {
+            log("Player set initial name: " + oldName + " -> " + newName);
+            session.send("INFO Your name has been set to " + newName);
+            broadcast("INFO " + newName + " joined the lobby.");
+        } else {
+            log("Player renamed: " + oldName + " -> " + newName);
+            session.send("INFO Your name is now " + newName);
+            broadcast("INFO " + oldName + " changed their name to " + newName);
+        }
+    }
+
+    private boolean isNameTaken(String name, ClientSession currentSession) {
+        for (ClientSession session : lobby.getSessions()) {
+            if (session != currentSession && session.getPlayerName().equalsIgnoreCase(name)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

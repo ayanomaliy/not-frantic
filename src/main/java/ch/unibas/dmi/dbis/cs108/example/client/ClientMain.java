@@ -32,7 +32,7 @@ public class ClientMain {
      * @param args command-line arguments (not used)
      */
     public static void main(String[] args) {
-        String host = "10.192.4.22"; /*temporary solution, Aiysha's IP*/
+        String host = "localhost"; /*temporary solution, Aiysha's IP*/
         int port = 5555;
 
         try (

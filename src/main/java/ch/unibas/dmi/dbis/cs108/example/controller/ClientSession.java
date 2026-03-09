@@ -56,6 +56,10 @@ public class ClientSession implements Runnable {
         return playerName;
     }
 
+    public void setPlayerName(String playerName) {
+        this.playerName = playerName;
+    }
+
     /**
      * Executes the client session thread.
      * <p>
@@ -85,10 +89,6 @@ public class ClientSession implements Runnable {
                 if (message == null) {
                     send("ERROR Invalid command.");
                     continue;
-                }
-
-                if (message.type() == Message.Type.NAME) {
-                    this.playerName = message.content();
                 }
 
                 serverService.handleMessage(this, message);
