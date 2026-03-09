@@ -45,6 +45,13 @@ public class ClientMain {
         ) {
             System.out.println("Connected to server at " + host + ":" + port);
 
+            String suggestedName = System.getProperty("user.name");
+
+            if (suggestedName != null && !suggestedName.isBlank()) {
+                System.out.println("Suggested nickname: " + suggestedName);
+                System.out.println("Type /name " + suggestedName + " to use it, or choose your own name.");
+            }
+
             Thread readerThread = new Thread(new ClientReader(serverIn));
             readerThread.setDaemon(true);
             readerThread.start();
@@ -58,6 +65,15 @@ public class ClientMain {
 
             String line;
             while ((line = userIn.readLine()) != null) {
+
+                if (line.trim().equals("/name")) {
+                    if (suggestedName != null && !suggestedName.isBlank()) {
+                        System.out.println("Using suggested nickname: " + suggestedName);
+                        serverOut.println("/name " + suggestedName);
+                        continue;
+                    }
+                }
+
                 serverOut.println(line);
 
                 if ("/quit".equalsIgnoreCase(line.trim())) {
