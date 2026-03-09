@@ -120,25 +120,78 @@ public class ServerService {
             return;
         }
 
-        if (isNameTaken(newName, session)) {
-            log("Rejected duplicate name: " + newName);
-            session.send("ERROR This name is already taken.");
-            return;
-        }
-
-        session.setPlayerName(newName);
+        String uniqueName = makeUniqueName(newName, session);
+        session.setPlayerName(uniqueName);
 
         if (firstTimeNaming) {
-            log("Player set initial name: " + oldName + " -> " + newName);
-            session.send("INFO Your name has been set to " + newName);
-            broadcast("INFO " + newName + " joined the lobby.");
+            log("Player set initial name: " + oldName + " -> " + uniqueName);
+
+            if (uniqueName.equals(extractBaseName(newName)) || uniqueName.equals(newName)) {
+                session.send("INFO Your name has been set to " + uniqueName);
+            } else {
+                session.send("INFO Your requested name was taken. Your name has been set to " + uniqueName);
+            }
+
+            broadcast("INFO " + uniqueName + " joined the lobby.");
         } else {
-            log("Player renamed: " + oldName + " -> " + newName);
-            session.send("INFO Your name is now " + newName);
-            broadcast("INFO " + oldName + " changed their name to " + newName);
+            log("Player renamed: " + oldName + " -> " + uniqueName);
+
+            if (uniqueName.equals(extractBaseName(newName)) || uniqueName.equals(newName)) {
+                session.send("INFO Your name is now " + uniqueName);
+            } else {
+                session.send("INFO Your requested name was taken. Your name is now " + uniqueName);
+            }
+
+            broadcast("INFO " + oldName + " changed their name to " + uniqueName);
         }
     }
 
+    /**
+     * Removes a trailing numeric suffix like "(2)" from a name.
+     *
+     * @param name the player name
+     * @return the base name without trailing suffix
+     */
+    private String extractBaseName(String name) {
+        return name.replaceAll("\\(\\d+\\)$", "").trim();
+    }
+
+    /**
+     * Creates a unique player name.
+     * <p>
+     * If the requested name is already taken, the server appends
+     * "(2)", "(3)", and so on until a free name is found.
+     * </p>
+     *
+     * @param requestedName the requested player name
+     * @param currentSession the client requesting the name
+     * @return a unique player name
+     */
+    private String makeUniqueName(String requestedName, ClientSession currentSession) {
+        String baseName = extractBaseName(requestedName);
+
+        if (!isNameTaken(baseName, currentSession)) {
+            return baseName;
+        }
+
+        int counter = 2;
+        String candidate;
+
+        do {
+            candidate = baseName + "(" + counter + ")";
+            counter++;
+        } while (isNameTaken(candidate, currentSession));
+
+        return candidate;
+    }
+
+    /**
+     * Checks whether a player name is already used by another session.
+     *
+     * @param name the name to check
+     * @param currentSession the current client session
+     * @return true if the name is already taken, false otherwise
+     */
     private boolean isNameTaken(String name, ClientSession currentSession) {
         for (ClientSession session : lobby.getSessions()) {
             if (session != currentSession && session.getPlayerName().equalsIgnoreCase(name)) {
