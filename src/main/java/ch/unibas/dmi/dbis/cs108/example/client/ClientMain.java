@@ -50,11 +50,11 @@ public class ClientMain {
             System.out.println("Connected to server at " + host + ":" + port);
 
             String suggestedName = System.getProperty("user.name");
-
-            if (suggestedName != null && !suggestedName.isBlank()) {
-                System.out.println("Suggested nickname: " + suggestedName);
-                System.out.println("Type /name " + suggestedName + " to use it, or choose your own name.");
+            if (suggestedName == null || suggestedName.isBlank()) {
+                suggestedName = "Player";
             }
+            suggestedName = suggestedName.trim();
+            serverOut.println("/name " + suggestedName);
 
             AtomicLong lastServerPongTime = new AtomicLong(System.currentTimeMillis());
 
