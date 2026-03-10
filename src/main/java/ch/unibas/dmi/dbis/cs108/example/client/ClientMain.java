@@ -54,7 +54,10 @@ public class ClientMain {
                 suggestedName = "Player";
             }
             suggestedName = suggestedName.trim();
+            System.out.println("Your suggested username is " + suggestedName. + ".")
+            // apply suggested name
             serverOut.println("/name " + suggestedName);
+
 
             AtomicLong lastServerPongTime = new AtomicLong(System.currentTimeMillis());
 
