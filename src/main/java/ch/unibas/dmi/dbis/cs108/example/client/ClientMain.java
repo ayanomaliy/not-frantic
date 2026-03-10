@@ -1,5 +1,7 @@
 package ch.unibas.dmi.dbis.cs108.example.client;
 
+import ch.unibas.dmi.dbis.cs108.example.service.Message;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -105,7 +107,7 @@ public class ClientMain {
             Thread heartbeatThread = new Thread(() -> {
                 try {
                     while (!socket.isClosed()) {
-                        serverOut.println("SYS|PING");
+                        serverOut.println(new Message(Message.Type.PING, "").encode());
 
                         long now = System.currentTimeMillis();
                         long lastPong = lastServerPongTime.get();

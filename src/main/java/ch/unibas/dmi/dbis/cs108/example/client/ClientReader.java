@@ -1,5 +1,7 @@
 package ch.unibas.dmi.dbis.cs108.example.client;
 
+import ch.unibas.dmi.dbis.cs108.example.service.Message;
+
 import java.io.BufferedReader;
 import java.io.PrintWriter;
 import java.util.concurrent.atomic.AtomicLong;
@@ -39,12 +41,18 @@ public class ClientReader implements Runnable {
             while ((line = serverIn.readLine()) != null) {
                 String trimmed = line.trim();
 
-                if ("SYS|PING".equalsIgnoreCase(trimmed)) {
-                    serverOut.println("SYS|PONG");
+                Message message = Message.parse(line);
+
+                if (message == null) {
                     continue;
                 }
 
-                if ("SYS|PONG".equalsIgnoreCase(trimmed)) {
+                if (message.type() == Message.Type.PING) {
+                    serverOut.println(new Message(Message.Type.PONG, "").encode());
+                    continue;
+                }
+
+                if (message.type() == Message.Type.PONG) {
                     lastServerPongTime.set(System.currentTimeMillis());
                     continue;
                 }

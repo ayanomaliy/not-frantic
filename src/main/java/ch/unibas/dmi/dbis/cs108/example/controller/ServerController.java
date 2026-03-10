@@ -1,5 +1,6 @@
 package ch.unibas.dmi.dbis.cs108.example.controller;
 
+import ch.unibas.dmi.dbis.cs108.example.service.Message;
 import ch.unibas.dmi.dbis.cs108.example.service.ServerService;
 
 import java.net.ServerSocket;
@@ -88,7 +89,7 @@ public class ServerController {
 
                     for (ClientSession session : sessions) {
 
-                        session.send("SYS|PING");
+                        session.send(new Message(Message.Type.PING, "").encode());
 
                         if (now - session.getLastHeartbeatTime() > HEARTBEAT_TIMEOUT_MS) {
                             System.err.println("[SERVER] Client timed out: " + session.getPlayerName());

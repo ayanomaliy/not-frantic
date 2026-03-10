@@ -117,22 +117,21 @@ public class ClientSession implements Runnable {
             while ((line = in.readLine()) != null) {
                 String trimmed = line.trim();
                 System.out.println("[SESSION] Raw input from " + playerName + ": " + trimmed);
-
-                if ("SYS|PING".equalsIgnoreCase(trimmed)) {
-                    updateHeartbeatTime();
-                    send("SYS|PONG");
-                    continue;
-                }
-
-                if ("SYS|PONG".equalsIgnoreCase(trimmed)) {
-                    updateHeartbeatTime();
-                    continue;
-                }
-
                 Message message = Message.parse(trimmed);
 
                 if (message == null) {
                     send("ERROR Invalid command.");
+                    continue;
+                }
+
+                if (message.type() == Message.Type.PING) {
+                    updateHeartbeatTime();
+                    send(new Message(Message.Type.PONG, "").encode());
+                    continue;
+                }
+
+                if (message.type() == Message.Type.PONG) {
+                    updateHeartbeatTime();
                     continue;
                 }
 
