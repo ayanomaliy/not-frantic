@@ -1,16 +1,30 @@
-# Documentation
+# Frantic^-1
 
-## Teacher Note
+**Frantic^-1** is a multiplayer card game developed as part of the **Programmierprojekt** lecture at the **University of Basel**.
 
-This is a readme file. It typically includes some information about your project. 
-For more information about readmes, you can either [read a guide](https://github.com/18F/open-source-guide/blob/18f-pages/pages/making-readmes-readable.md) or have a look at the readmes of popular open-source projects such as [Swift by Apple](https://github.com/apple/swift) or [Tensorflow](https://github.com/tensorflow/tensorflow).
+The project is developed by **The Devs^-1**.
 
-Readme files are typically formatted in Markdown. 
-However, there are platform-specific flavors, so for this project, you can make full use of the [Gitlab markdown syntax](https://docs.gitlab.com/ee/user/markdown.html), for example when talking about a :bug: (bug) or if your code is slow like a :snail:.
-You can also tag people using @username and reference issues using '#1', where 1 is the issue number. For more features, consult the linked Gitlab syntax guide. 
+## About the Project
 
-If you don't like reading documentation, [here's a cheatsheet](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet).
+Frantic^-1 is an interactive card game where players try to get rid of all cards in their hand while sabotaging each other through special effects, hand manipulation, and table-wide events. The game combines simple matching rules with chaotic action cards and global event mechanics.
 
-## Tools
+This repository contains the current prototype implementation of the game, including:
+- a TCP server
+- a TCP client
+- login and nickname handling
+- chat functionality
+- basic lobby interaction
 
-- Visual Studio Code
+## Context
+
+This game is being developed for the **Programmierprojekt** course at the **University of Basel**.
+
+## Team
+
+**The Devs^-1**
+
+
+## How to Run
+
+
+### Start the server
