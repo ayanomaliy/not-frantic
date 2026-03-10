@@ -41,7 +41,7 @@ Today, we met to share the research we had done individually. After discussing o
 #### What did we do today?
 Today, we started implementing the basic skeleton of our project. The focus was on creating the first core classes and setting up the server-client structure so that communication could already work in a simple form.
 
-#### Meeting Summary
+#### Work Summary
 - We created the first important project classes for the basic structure.
 - We implemented the server and client entry points.
 - We set up the first TCP connection between server and client.
@@ -63,7 +63,7 @@ Today, we started implementing the basic skeleton of our project. The focus was 
 #### What did we do today?
 Today, we improved the connection handling in our client-server structure. The main focus was to make disconnect/logout behavior more reliable and to improve the nickname flow when a client connects.
 
-#### Meeting Summary
+#### Work Summary
 - We fixed the disconnect handling so that cleanup now goes through one central disconnect method.
 - We prevented duplicate unregister/cleanup behavior when a client leaves.
 - We corrected the session cleanup flow in `ClientSession`.
