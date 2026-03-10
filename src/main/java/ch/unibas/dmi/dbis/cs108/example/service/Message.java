@@ -2,12 +2,11 @@ package ch.unibas.dmi.dbis.cs108.example.service;
 
 /**
  * Represents a message exchanged between client and server.
- * <p>
- * Each message has a type (command) and optional content. Messages are parsed
- * from client input using slash commands (e.g., "/name Alice").
- * </p>
  *
- * @param type the message type/command
+ * <p>Each message has a type (command) and optional content. Messages are parsed
+ * from client input using slash commands (e.g., "/name Alice").
+ *
+ * @param type the message type or command
  * @param content the optional message content or arguments
  */
 public record Message(Type type, String content) {
@@ -25,9 +24,9 @@ public record Message(Type type, String content) {
     }
 
     /**
-     * Parses a raw command string into a Message.
-     * <p>
-     * Recognized commands are:
+     * Parses a raw command string into a {@code Message}.
+     *
+     * <p>Recognized commands are:
      * <ul>
      *   <li>{@code /name <username>} – NAME message</li>
      *   <li>{@code /chat <message>} – CHAT message</li>
@@ -36,10 +35,9 @@ public record Message(Type type, String content) {
      *   <li>{@code /quit} – QUIT message</li>
      *   <li>Any other input – UNKNOWN message</li>
      * </ul>
-     * </p>
      *
      * @param raw the raw command string to parse
-     * @return a Message with appropriate type and content, or null if raw is empty/blank
+     * @return a {@code Message} with appropriate type and content, or {@code null} if the input is empty or blank
      */
     public static Message parse(String raw) {
         if (raw == null || raw.isBlank()) {

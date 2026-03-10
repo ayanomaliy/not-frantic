@@ -35,6 +35,14 @@ test {
     useJUnitPlatform()
 }
 
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+tasks.withType(Javadoc).configureEach {
+    options.encoding = 'UTF-8'
+}
+
 tasks.named('jar', Jar) {
     manifest {
         attributes('Main-Class': application.mainClass.get())
@@ -45,7 +53,10 @@ tasks.register('fatJar', Jar) {
     group = 'build'
     description = 'Assembles a runnable fat JAR including runtime dependencies.'
 
-    archiveClassifier = 'all'
+    archiveBaseName = 'not-frantic'
+    archiveVersion = ''
+    archiveClassifier = ''
+
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
     manifest {
@@ -56,9 +67,9 @@ tasks.register('fatJar', Jar) {
 
     dependsOn(configurations.runtimeClasspath)
 
-    from({
+    from {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
-    })
+    }
 }
 
 tasks.register('runServer', JavaExec) {
@@ -74,4 +85,10 @@ tasks.register('runClient', JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
     mainClass = 'ch.unibas.dmi.dbis.cs108.example.client.ClientMain'
     standardInput = System.in
+}
+
+tasks.register('build-cs108') {
+    group = 'build'
+    description = 'Builds the executable jar and JavaDoc'
+    dependsOn 'clean', 'fatJar', 'javadoc'
 }

@@ -9,18 +9,17 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Entry point for the client application.
- * <p>
- * Establishes a TCP connection to the game server, starts a background thread
+ *
+ * <p>Establishes a TCP connection to the game server, starts a background thread
  * to read incoming messages ({@link ClientReader}), and forwards user input
  * from stdin to the server.
- * </p>
  */
 public class ClientMain {
 
     /**
      * Launches the client, connects to the server, and processes user commands.
-     * <p>
-     * Supported commands:
+     *
+     * <p>Supported commands:
      * <ul>
      *   <li>{@code /name <username>} – set the player's display name</li>
      *   <li>{@code /chat <message>} – send a chat message</li>
@@ -28,7 +27,6 @@ public class ClientMain {
      *   <li>{@code /start} – request to start the game</li>
      *   <li>{@code /quit} – disconnect from the server</li>
      * </ul>
-     * </p>
      *
      * @param args command-line arguments (not used)
      */
