@@ -72,14 +72,14 @@ tasks.register('fatJar', Jar) {
     }
 }
 
-tasks.register('runServer', JavaExec) {
+tasks.register('server', JavaExec) {
     group = 'application'
     description = 'Runs the TCP server'
     classpath = sourceSets.main.runtimeClasspath
     mainClass = 'ch.unibas.dmi.dbis.cs108.example.ServerMain'
 }
 
-tasks.register('runClient', JavaExec) {
+tasks.register('client', JavaExec) {
     group = 'application'
     description = 'Runs the TCP client'
     classpath = sourceSets.main.runtimeClasspath

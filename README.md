@@ -26,5 +26,28 @@ This game is being developed for the **Programmierprojekt** course at the **Univ
 
 ## How to Run
 
+Make sure you are in the **project root directory** (the folder containing `build.gradle`).
+
+### Requirements
+
+Before running the project, make sure you have:
+
+- **Java 25**
+- **Gradle** available through the wrapper (`gradlew` / `gradlew.bat`)
+
 
 ### Start the server
+.\gradlew server --args="<port>"
+or just .\gradlew server to automatically run on port 5555
+
+### Start the client
+.\gradlew client --args="localhost:5555 Alice"
+
+or leave out the username to have a suggested username assigned to you via 
+
+.\gradlew client --args="localhost:5555" 
+
+or connect to the default port (port 5555) and localhost using 
+
+.\gradlew client
+
