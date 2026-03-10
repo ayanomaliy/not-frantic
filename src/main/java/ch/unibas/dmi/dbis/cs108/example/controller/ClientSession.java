@@ -31,15 +31,18 @@ public class ClientSession implements Runnable {
 
     private boolean disconnected = false;
 
+    private final ServerController serverController;
+
     /**
      * Creates a new client session for the given socket connection.
      *
      * @param socket the client's TCP socket connection
      * @param serverService the server service managing game state
      */
-    public ClientSession(Socket socket, ServerService serverService) {
+    public ClientSession(Socket socket, ServerService serverService, ServerController serverController) {
         this.socket = socket;
         this.serverService = serverService;
+        this.serverController = serverController;
     }
 
     /**
@@ -87,6 +90,7 @@ public class ClientSession implements Runnable {
         }
 
         serverService.unregisterClient(this);
+        serverController.removeSession(this);
     }
 
     /**

@@ -13,12 +13,22 @@ import ch.unibas.dmi.dbis.cs108.example.service.ServerService;
 public class ServerMain {
 
     /**
-     * Starts the game server listening for client connections.
+     * Starts the game server listening for client connections. Either accepts Port as argument or opens default port 5555.
      *
      * @param args command-line arguments (not used)
      */
     public static void main(String[] args) {
         int port = 5555;
+
+        if (args.length >= 1) {
+            try {
+                port = Integer.parseInt(args[0]);
+            } catch (NumberFormatException e) {
+                System.err.println("Invalid port: " + args[0]);
+                System.err.println("Usage: server <port>");
+                return;
+            }
+        }
 
         ServerService serverService = new ServerService();
         ServerController serverController = new ServerController(port, serverService);

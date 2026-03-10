@@ -28,11 +28,56 @@ public class ClientMain {
      *   <li>{@code /quit} – disconnect from the server</li>
      * </ul>
      *
-     * @param args command-line arguments (not used)
+     * <p>Command-line usage:
+     * <ul>
+     *   <li>{@code client <hostaddress>:<port> [<username>]}</li>
+     * </ul>
+     *
+     * @param args command-line arguments:
+     *             {@code <hostaddress>:<port>} and optionally {@code <username>}
      */
     public static void main(String[] args) {
-        String host = "localhost"; /*temporary solution, Aiysha's IP*/
+        String host = "localhost";
         int port = 5555;
+        String suggestedName = System.getProperty("user.name");
+
+        if (args.length >= 1) {
+            String[] hostPort = args[0].split(":", 2);
+
+            if (hostPort.length != 2 || hostPort[0].isBlank() || hostPort[1].isBlank()) {
+                System.err.println("Usage: client <hostaddress>:<port> [<username>]");
+                return;
+            }
+
+            host = hostPort[0].trim();
+
+            try {
+                port = Integer.parseInt(hostPort[1].trim());
+                if (port < 1 || port > 65535) {
+                    System.err.println("Invalid port: " + hostPort[1]);
+                    System.err.println("Port must be between 1 and 65535.");
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                System.err.println("Invalid port: " + hostPort[1]);
+                System.err.println("Usage: client <hostaddress>:<port> [<username>]");
+                return;
+            }
+        }
+
+        if (args.length >= 2) {
+            suggestedName = args[1];
+        }
+
+        if (args.length > 2) {
+            System.err.println("Usage: client <hostaddress>:<port> [<username>]");
+            return;
+        }
+
+        if (suggestedName == null || suggestedName.isBlank()) {
+            suggestedName = "Player";
+        }
+        suggestedName = suggestedName.trim();
 
         final long heartbeatIntervalMillis = 5000;
         final long heartbeatTimeoutMillis = 15000;
@@ -46,16 +91,10 @@ public class ClientMain {
                         new InputStreamReader(System.in, StandardCharsets.UTF_8))
         ) {
             System.out.println("Connected to server at " + host + ":" + port);
+            System.out.println("Using username: " + suggestedName);
 
-            String suggestedName = System.getProperty("user.name");
-            if (suggestedName == null || suggestedName.isBlank()) {
-                suggestedName = "Player";
-            }
-            suggestedName = suggestedName.trim();
-            System.out.println("Your suggested username is " + suggestedName + ".");
-            // apply suggested name
+            // Automatically apply username on connect
             serverOut.println("/name " + suggestedName);
-
 
             AtomicLong lastServerPongTime = new AtomicLong(System.currentTimeMillis());
 
@@ -98,18 +137,17 @@ public class ClientMain {
 
             String line;
             while ((line = userIn.readLine()) != null) {
+                String trimmed = line.trim();
 
-                if (line.trim().equals("/name")) {
-                    if (suggestedName != null && !suggestedName.isBlank()) {
-                        System.out.println("Using suggested nickname: " + suggestedName);
-                        serverOut.println("/name " + suggestedName);
-                        continue;
-                    }
+                if (trimmed.equals("/name")) {
+                    System.out.println("Using suggested nickname: " + suggestedName);
+                    serverOut.println("/name " + suggestedName);
+                    continue;
                 }
 
                 serverOut.println(line);
 
-                if ("/quit".equalsIgnoreCase(line.trim())) {
+                if ("/quit".equalsIgnoreCase(trimmed)) {
                     break;
                 }
             }

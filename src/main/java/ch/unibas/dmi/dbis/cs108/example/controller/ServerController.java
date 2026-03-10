@@ -54,7 +54,7 @@ public class ServerController {
             while (true) {
                 Socket socket = serverSocket.accept();
 
-                ClientSession clientSession = new ClientSession(socket, serverService);
+                ClientSession clientSession = new ClientSession(socket, serverService, this);
                 sessions.add(clientSession);
 
                 Thread thread = new Thread(clientSession);
@@ -64,6 +64,14 @@ public class ServerController {
         } catch (Exception e) {
             System.err.println("Server error: " + e.getMessage());
         }
+    }
+    /**
+     * Removes a client session from the active session list.
+     *
+     * @param session the session to remove
+     */
+    public void removeSession(ClientSession session) {
+        sessions.remove(session);
     }
 
     /**
@@ -85,7 +93,6 @@ public class ServerController {
                         if (now - session.getLastHeartbeatTime() > HEARTBEAT_TIMEOUT_MS) {
                             System.err.println("[SERVER] Client timed out: " + session.getPlayerName());
                             session.disconnect();
-                            sessions.remove(session);
                         }
                     }
 
