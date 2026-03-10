@@ -29,6 +29,8 @@ public class ClientSession implements Runnable {
     private String playerName = "Anonymous";
     private final AtomicLong lastHeartbeatTime = new AtomicLong(System.currentTimeMillis());
 
+    private boolean disconnected = false;
+
     /**
      * Creates a new client session for the given socket connection.
      *
@@ -75,7 +77,10 @@ public class ClientSession implements Runnable {
     /**
      * Closes this client connection and removes the session from the server.
      */
-    public void disconnect() {
+    public synchronized void disconnect() {
+        if (disconnected) return;
+        disconnected = true;
+
         try {
             socket.close();
         } catch (Exception ignored) {
@@ -136,9 +141,10 @@ public class ClientSession implements Runnable {
 
         } catch (Exception e) {
             System.err.println("[SESSION] Client session ended: " + e.getMessage());
-        } finally {
+        }finally {
             System.out.println("[SESSION] Closing session for " + playerName);
-            serverService.unregisterClient(this);
+            disconnect();
         }
+
     }
 }
