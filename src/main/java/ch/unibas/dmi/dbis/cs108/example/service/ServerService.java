@@ -9,11 +9,11 @@ import java.util.List;
 
 /**
  * Manages server-side game state, client connections, and message handling.
- * <p>
- * Handles client registration/unregistration, processes incoming player commands,
- * manages the lobby of connected players, and broadcasts messages to all clients.
- * This class is thread-safe through synchronized methods to handle concurrent client access.
- * </p>
+ *
+ * <p>Handles client registration and unregistration, processes incoming player
+ * commands, manages the lobby of connected players, and broadcasts structured
+ * protocol messages to all clients. This class is thread-safe through
+ * synchronized methods to handle concurrent client access.
  */
 public class ServerService {
 
@@ -31,9 +31,8 @@ public class ServerService {
 
     /**
      * Registers a new client connection.
-     * <p>
-     * Adds the client session to the lobby and notifies all clients of the new connection.
-     * </p>
+     *
+     * <p>Adds the client session to the lobby and notifies all clients of the new connection.
      *
      * @param session the client session to register
      */
@@ -41,16 +40,22 @@ public class ServerService {
         lobby.addSession(session);
         log("Client connected. Total clients: " + lobby.getPlayerCount());
 
-        session.send("INFO Connected. Current players: " + lobby.getPlayerCount());
-        broadcast("INFO A new client connected.");
+        session.send(new Message(
+                Message.Type.INFO,
+                "Connected. Current players: " + lobby.getPlayerCount()
+        ).encode());
+
+        broadcast(new Message(
+                Message.Type.INFO,
+                "A new client connected."
+        ));
     }
 
     /**
      * Unregisters a disconnected client.
-     * <p>
-     * Removes the client session from the lobby and notifies remaining clients
+     *
+     * <p>Removes the client session from the lobby and notifies remaining clients
      * of the disconnection.
-     * </p>
      *
      * @param session the client session to unregister
      */
@@ -59,14 +64,16 @@ public class ServerService {
         log("Client disconnected: " + session.getPlayerName()
                 + ". Remaining clients: " + lobby.getPlayerCount());
 
-        broadcast("INFO " + session.getPlayerName() + " disconnected.");
+        broadcast(new Message(
+                Message.Type.INFO,
+                session.getPlayerName() + " disconnected."
+        ));
     }
 
     /**
      * Processes an incoming message from a client.
-     * <p>
-     * Routes the message to the appropriate handler based on message type.
-     * </p>
+     *
+     * <p>Routes the message to the appropriate handler based on message type.
      *
      * @param session the client session sending the message
      * @param message the message to process
@@ -78,15 +85,58 @@ public class ServerService {
         switch (message.type()) {
             case NAME -> handleName(session, message.content());
             case CHAT -> handleChat(session, message.content());
-            case PLAYERS -> handlePlayers(session);
-            case START -> handleStart(session);
+            case PLAYERS -> {
+                if (!message.content().isBlank()) {
+                    session.send(new Message(
+                            Message.Type.ERROR,
+                            "PLAYERS must not contain content."
+                    ).encode());
+                    return;
+                }
+                handlePlayers(session);
+            }
+            case START -> {
+                if (!message.content().isBlank()) {
+                    session.send(new Message(
+                            Message.Type.ERROR,
+                            "START must not contain content."
+                    ).encode());
+                    return;
+                }
+                handleStart(session);
+            }
             case QUIT -> {
+                if (!message.content().isBlank()) {
+                    session.send(new Message(
+                            Message.Type.ERROR,
+                            "QUIT must not contain content."
+                    ).encode());
+                    return;
+                }
                 log(session.getPlayerName() + " requested quit.");
-                session.send("INFO Goodbye.");
+                session.send(new Message(
+                        Message.Type.INFO,
+                        "Goodbye."
+                ).encode());
+            }
+            case PING, PONG -> {
+                // Heartbeat messages are handled in ClientSession / ClientReader.
+                // They should normally not reach ServerService.
+                log("Heartbeat message reached ServerService from " + session.getPlayerName()
+                        + ": " + message.type());
+            }
+            case INFO, ERROR, GAME -> {
+                session.send(new Message(
+                        Message.Type.ERROR,
+                        "Client may not send server-only message types."
+                ).encode());
             }
             case UNKNOWN -> {
                 log("Unknown command from " + session.getPlayerName() + ": " + message.content());
-                session.send("ERROR Unknown command.");
+                session.send(new Message(
+                        Message.Type.ERROR,
+                        "Unknown command."
+                ).encode());
             }
         }
     }
@@ -100,7 +150,10 @@ public class ServerService {
     private void handleName(ClientSession session, String name) {
         if (name == null || name.isBlank()) {
             log("Rejected empty name from " + session.getPlayerName());
-            session.send("ERROR Name cannot be empty.");
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Name cannot be empty."
+            ).encode());
             return;
         }
 
@@ -110,13 +163,28 @@ public class ServerService {
 
         if (newName.length() > 20) {
             log("Rejected too long name from " + oldName + ": " + newName);
-            session.send("ERROR Name is too long. Maximum 20 characters.");
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Name is too long. Maximum 20 characters."
+            ).encode());
+            return;
+        }
+
+        if (newName.contains("|") || newName.contains(",")) {
+            log("Rejected invalid characters in name from " + oldName + ": " + newName);
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Name contains invalid characters."
+            ).encode());
             return;
         }
 
         if (!oldName.equals("Anonymous") && oldName.equalsIgnoreCase(newName)) {
             log("Rejected same name from " + oldName);
-            session.send("ERROR You already have this name.");
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "You already have this name."
+            ).encode());
             return;
         }
 
@@ -127,22 +195,40 @@ public class ServerService {
             log("Player set initial name: " + oldName + " -> " + uniqueName);
 
             if (uniqueName.equals(extractBaseName(newName)) || uniqueName.equals(newName)) {
-                session.send("INFO Your name has been set to " + uniqueName);
+                session.send(new Message(
+                        Message.Type.INFO,
+                        "Your name has been set to " + uniqueName
+                ).encode());
             } else {
-                session.send("INFO Your requested name was taken. Your name has been set to " + uniqueName);
+                session.send(new Message(
+                        Message.Type.INFO,
+                        "Your requested name was taken. Your name has been set to " + uniqueName
+                ).encode());
             }
 
-            broadcast("INFO " + uniqueName + " joined the lobby.");
+            broadcast(new Message(
+                    Message.Type.INFO,
+                    uniqueName + " joined the lobby."
+            ));
         } else {
             log("Player renamed: " + oldName + " -> " + uniqueName);
 
             if (uniqueName.equals(extractBaseName(newName)) || uniqueName.equals(newName)) {
-                session.send("INFO Your name is now " + uniqueName);
+                session.send(new Message(
+                        Message.Type.INFO,
+                        "Your name is now " + uniqueName
+                ).encode());
             } else {
-                session.send("INFO Your requested name was taken. Your name is now " + uniqueName);
+                session.send(new Message(
+                        Message.Type.INFO,
+                        "Your requested name was taken. Your name is now " + uniqueName
+                ).encode());
             }
 
-            broadcast("INFO " + oldName + " changed their name to " + uniqueName);
+            broadcast(new Message(
+                    Message.Type.INFO,
+                    oldName + " changed their name to " + uniqueName
+            ));
         }
     }
 
@@ -158,10 +244,9 @@ public class ServerService {
 
     /**
      * Creates a unique player name.
-     * <p>
-     * If the requested name is already taken, the server appends
+     *
+     * <p>If the requested name is already taken, the server appends
      * "(2)", "(3)", and so on until a free name is found.
-     * </p>
      *
      * @param requestedName the requested player name
      * @param currentSession the client requesting the name
@@ -208,8 +293,38 @@ public class ServerService {
      * @param text the chat message content
      */
     private void handleChat(ClientSession session, String text) {
-        log("Chat from " + session.getPlayerName() + ": " + text);
-        broadcast("CHAT [" + session.getPlayerName() + "]: " + text);
+        if (text == null || text.isBlank()) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Chat message cannot be empty."
+            ).encode());
+            return;
+        }
+
+        String cleanText = text.trim();
+
+        if (cleanText.length() > 200) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Chat message is too long. Maximum 200 characters."
+            ).encode());
+            return;
+        }
+
+        if (cleanText.contains("\n") || cleanText.contains("\r")) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Chat message contains invalid characters."
+            ).encode());
+            return;
+        }
+
+        log("Chat from " + session.getPlayerName() + ": " + cleanText);
+
+        broadcast(new Message(
+                Message.Type.CHAT,
+                session.getPlayerName() + "|" + cleanText
+        ));
     }
 
     /**
@@ -224,15 +339,18 @@ public class ServerService {
         }
 
         log(session.getPlayerName() + " requested player list: " + names);
-        session.send("PLAYERS " + String.join(", ", names));
+
+        session.send(new Message(
+                Message.Type.PLAYERS,
+                String.join(",", names)
+        ).encode());
     }
 
     /**
      * Handles a game start request from a client.
-     * <p>
-     * Validates that the game has not already started and that there are enough players.
+     *
+     * <p>Validates that the game has not already started and that there are enough players.
      * Broadcasts game start information to all connected clients.
-     * </p>
      *
      * @param session the client session requesting to start the game
      */
@@ -241,33 +359,48 @@ public class ServerService {
 
         if (gameStarted) {
             log("Start rejected: game already started.");
-            session.send("ERROR Game already started.");
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Game already started."
+            ).encode());
             return;
         }
 
         if (lobby.getPlayerCount() < 2) {
             log("Start rejected: not enough players.");
-            session.send("ERROR Need at least 2 players to start.");
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Need at least 2 players to start."
+            ).encode());
             return;
         }
 
         gameStarted = true;
         log("Game started with " + lobby.getPlayerCount() + " players.");
 
-        broadcast("GAME Starting prototype game...");
-        broadcast("GAME Connected players: " + lobby.getPlayerCount());
-        broadcast("GAME This is where actual game initialization will go.");
+        broadcast(new Message(
+                Message.Type.GAME,
+                "Starting prototype game..."
+        ));
+        broadcast(new Message(
+                Message.Type.GAME,
+                "Connected players: " + lobby.getPlayerCount()
+        ));
+        broadcast(new Message(
+                Message.Type.GAME,
+                "This is where actual game initialization will go."
+        ));
     }
 
     /**
-     * Sends a message to all connected clients.
+     * Sends a structured message to all connected clients.
      *
-     * @param text the message to broadcast
+     * @param message the message to broadcast
      */
-    private void broadcast(String text) {
-        log("Broadcast: " + text);
+    private void broadcast(Message message) {
+        log("Broadcast: " + message.encode());
         for (ClientSession session : lobby.getSessions()) {
-            session.send(text);
+            session.send(message.encode());
         }
     }
 }

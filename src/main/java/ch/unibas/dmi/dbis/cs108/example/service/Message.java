@@ -5,7 +5,7 @@ package ch.unibas.dmi.dbis.cs108.example.service;
  *
  * <p>This class models both application-level messages such as naming,
  * chatting, listing players, starting, and quitting, as well as
- * system-level heartbeat messages.
+ * system-level heartbeat messages and structured server responses.
  *
  * @param type the message type
  * @param content the optional message content or arguments
@@ -23,6 +23,9 @@ public record Message(Type type, String content) {
         QUIT,
         PING,
         PONG,
+        INFO,
+        ERROR,
+        GAME,
         UNKNOWN
     }
 
@@ -42,7 +45,7 @@ public record Message(Type type, String content) {
 
         String trimmed = raw.trim();
 
-        // Old system heartbeat format
+        // Legacy heartbeat format
         if (trimmed.equalsIgnoreCase("SYS|PING")) {
             return new Message(Type.PING, "");
         }
@@ -50,7 +53,7 @@ public record Message(Type type, String content) {
             return new Message(Type.PONG, "");
         }
 
-        // New unified TYPE|payload format
+        // Unified TYPE|payload format
         if (trimmed.contains("|")) {
             String[] parts = trimmed.split("\\|", 2);
             String typeText = parts[0].trim().toUpperCase();
@@ -64,11 +67,14 @@ public record Message(Type type, String content) {
                 case "QUIT" -> new Message(Type.QUIT, content);
                 case "PING" -> new Message(Type.PING, content);
                 case "PONG" -> new Message(Type.PONG, content);
+                case "INFO" -> new Message(Type.INFO, content);
+                case "ERROR" -> new Message(Type.ERROR, content);
+                case "GAME" -> new Message(Type.GAME, content);
                 default -> new Message(Type.UNKNOWN, trimmed);
             };
         }
 
-        // Old slash-command format
+        // Legacy slash-command format
         if (trimmed.startsWith("/")) {
             String[] parts = trimmed.split("\\s+", 2);
             String command = parts[0].toLowerCase();
@@ -96,11 +102,14 @@ public record Message(Type type, String content) {
         return switch (type) {
             case NAME -> "NAME|" + safe(content);
             case CHAT -> "CHAT|" + safe(content);
-            case PLAYERS -> "PLAYERS|";
-            case START -> "START|";
-            case QUIT -> "QUIT|";
-            case PING -> "PING|";
-            case PONG -> "PONG|";
+            case PLAYERS -> "PLAYERS|" + safe(content);
+            case START -> "START|" + safe(content);
+            case QUIT -> "QUIT|" + safe(content);
+            case PING -> "PING|" + safe(content);
+            case PONG -> "PONG|" + safe(content);
+            case INFO -> "INFO|" + safe(content);
+            case ERROR -> "ERROR|" + safe(content);
+            case GAME -> "GAME|" + safe(content);
             case UNKNOWN -> "UNKNOWN|" + safe(content);
         };
     }
@@ -119,18 +128,21 @@ public record Message(Type type, String content) {
             case QUIT -> "/quit";
             case PING -> "SYS|PING";
             case PONG -> "SYS|PONG";
+            case INFO -> "INFO|" + safe(content);
+            case ERROR -> "ERROR|" + safe(content);
+            case GAME -> "GAME|" + safe(content);
             case UNKNOWN -> safe(content);
         };
     }
 
     /**
-     * Returns whether this message type normally expects a payload.
+     * Returns whether this message type normally expects payload content.
      *
      * @return true if the message should carry content
      */
     public boolean expectsContent() {
         return switch (type) {
-            case NAME, CHAT -> true;
+            case NAME, CHAT, INFO, ERROR, GAME -> true;
             case PLAYERS, START, QUIT, PING, PONG, UNKNOWN -> false;
         };
     }

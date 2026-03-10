@@ -96,7 +96,7 @@ public class ClientMain {
             System.out.println("Using username: " + suggestedName);
 
             // Automatically apply username on connect
-            serverOut.println("/name " + suggestedName);
+            serverOut.println(new Message(Message.Type.NAME, suggestedName).encode());
 
             AtomicLong lastServerPongTime = new AtomicLong(System.currentTimeMillis());
 
@@ -143,13 +143,31 @@ public class ClientMain {
 
                 if (trimmed.equals("/name")) {
                     System.out.println("Using suggested nickname: " + suggestedName);
-                    serverOut.println("/name " + suggestedName);
+                    serverOut.println(new Message(Message.Type.NAME, suggestedName).encode());
                     continue;
                 }
 
-                serverOut.println(line);
+                Message message = Message.parse(trimmed);
 
-                if ("/quit".equalsIgnoreCase(trimmed)) {
+                if (message == null) {
+                    System.out.println("Invalid input.");
+                    continue;
+                }
+
+                if (message.type() == Message.Type.UNKNOWN) {
+                    System.out.println("Unknown command.");
+                    continue;
+                }
+
+                // Do not allow manual heartbeat input from the terminal
+                if (message.type() == Message.Type.PING || message.type() == Message.Type.PONG) {
+                    System.out.println("Heartbeat messages are handled automatically.");
+                    continue;
+                }
+
+                serverOut.println(message.encode());
+
+                if (message.type() == Message.Type.QUIT) {
                     break;
                 }
             }
