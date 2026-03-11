@@ -139,14 +139,14 @@ public class ClientMain {
             String line;
             while ((line = userIn.readLine()) != null) {
                 String trimmed = line.trim();
-
+/*
                 // edge case: /name without any name uses suggested user name
                 if (trimmed.equals("/name")) {
                     System.out.println("Using suggested nickname: " + suggestedName);
                     serverOut.println(new Message(Message.Type.NAME, suggestedName).encode());
                     continue;
                 }
-
+*/
                 Message message = Message.parse(trimmed);
 
                 if (message == null) {

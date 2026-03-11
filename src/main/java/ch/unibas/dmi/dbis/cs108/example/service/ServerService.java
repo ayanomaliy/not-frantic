@@ -79,6 +79,14 @@ public class ServerService {
      * @param message the message to process
      */
     public synchronized void handleMessage(ClientSession session, Message message) {
+        if (message == null || !message.hasValidStructure()) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Malformed protocol message."
+            ).encode());
+            return;
+        }
+
         log("Received from " + session.getPlayerName() + ": " + message.type()
                 + (message.content().isBlank() ? "" : " -> " + message.content()));
 
@@ -318,8 +326,6 @@ public class ServerService {
             ).encode());
             return;
         }
-
-        log("Chat from " + session.getPlayerName() + ": " + cleanText);
 
         broadcast(new Message(
                 Message.Type.CHAT,

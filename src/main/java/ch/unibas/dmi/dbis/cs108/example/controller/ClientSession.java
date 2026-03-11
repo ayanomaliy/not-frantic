@@ -110,17 +110,17 @@ public class ClientSession implements Runnable {
 
             serverService.registerClient(this);
 
-            send("WELCOME");
-            send("Set your name with: /name YourName");
+            send(new Message(Message.Type.INFO, "WELCOME").encode());
 
             String line;
             while ((line = in.readLine()) != null) {
                 String trimmed = line.trim();
                 System.out.println("[SESSION] Raw input from " + playerName + ": " + trimmed);
+
                 Message message = Message.parse(trimmed);
 
                 if (message == null) {
-                    send("ERROR Invalid command.");
+                    send(new Message(Message.Type.ERROR, "Invalid command.").encode());
                     continue;
                 }
 

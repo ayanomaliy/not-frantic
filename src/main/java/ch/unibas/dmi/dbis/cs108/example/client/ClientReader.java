@@ -6,63 +6,59 @@ import java.io.BufferedReader;
 import java.io.PrintWriter;
 import java.util.concurrent.atomic.AtomicLong;
 
-/**
- * Reads incoming lines from the server and processes system heartbeat messages
- * in the background without printing them to the user.
- */
 public class ClientReader implements Runnable {
 
     private final BufferedReader serverIn;
     private final PrintWriter serverOut;
     private final AtomicLong lastServerPongTime;
 
-    /**
-     * Creates a reader task for server messages.
-     *
-     * @param serverIn buffered character stream connected to the server socket
-     * @param serverOut writer connected to the server socket
-     * @param lastServerPongTime timestamp of the last received server pong
-     */
     public ClientReader(BufferedReader serverIn, PrintWriter serverOut, AtomicLong lastServerPongTime) {
         this.serverIn = serverIn;
         this.serverOut = serverOut;
         this.lastServerPongTime = lastServerPongTime;
     }
 
-    /**
-     * Continuously reads lines from the server.
-     * System heartbeat messages are handled silently.
-     * User-visible messages are printed to the console.
-     */
     @Override
     public void run() {
         try {
             String line;
             while ((line = serverIn.readLine()) != null) {
-                String trimmed = line.trim();
-
                 Message message = Message.parse(line);
 
-                if (message == null) {
+                if (message == null || !message.hasValidStructure()) {
+                    System.out.println("[CLIENT] Invalid server message: " + line);
                     continue;
                 }
 
-                if (message.type() == Message.Type.PING) {
-                    serverOut.println(new Message(Message.Type.PONG, "").encode());
-                    continue;
+                switch (message.type()) {
+                    case PING -> {
+                        serverOut.println(new Message(Message.Type.PONG, "").encode());
+                    }
+                    case PONG -> {
+                        lastServerPongTime.set(System.currentTimeMillis());
+                    }
+                    case CHAT -> {
+                        String[] parts = message.splitChatPayload();
+                        String sender = parts[0];
+                        String text = parts[1];
+                        System.out.println(sender + ": " + text);
+                    }
+                    case INFO -> System.out.println("[INFO] " + message.content());
+                    case ERROR -> System.out.println("[ERROR] " + message.content());
+                    case PLAYERS -> {
+                        if (message.content().isBlank()) {
+                            System.out.println("[PLAYERS] none");
+                        } else {
+                            System.out.println("[PLAYERS] " + message.content());
+                        }
+                    }
+                    case GAME -> System.out.println("[GAME] " + message.content());
+                    case NAME, START, QUIT, UNKNOWN ->
+                            System.out.println("[CLIENT] Unexpected server message: " + line);
                 }
-
-                if (message.type() == Message.Type.PONG) {
-                    lastServerPongTime.set(System.currentTimeMillis());
-                    continue;
-                }
-
-                System.out.println(line);
             }
-
-            System.err.println("Disconnected from server.");
         } catch (Exception e) {
-            System.err.println("Disconnected from server.");
+            System.err.println("Connection closed: " + e.getMessage());
         }
     }
 }
