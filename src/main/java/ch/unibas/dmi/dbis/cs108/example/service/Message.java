@@ -92,8 +92,8 @@ public record Message(Type type, String content) {
 
     public boolean expectsContent() {
         return switch (type) {
-            case NAME, CHAT, INFO, ERROR, GAME -> true;
-            case PLAYERS, START, QUIT, PING, PONG, UNKNOWN -> false;
+            case NAME, CHAT, PLAYERS, INFO, ERROR, GAME -> true;
+            case START, QUIT, PING, PONG, UNKNOWN -> false;
         };
     }
 
@@ -103,8 +103,8 @@ public record Message(Type type, String content) {
         }
 
         return switch (type) {
-            case PLAYERS, START, QUIT, PING, PONG -> safe(content).isBlank();
-            case NAME, CHAT, INFO, ERROR, GAME -> true;
+            case START, QUIT, PING, PONG -> safe(content).isBlank();
+            case NAME, CHAT, PLAYERS, INFO, ERROR, GAME -> true;
             case UNKNOWN -> false;
         };
     }
