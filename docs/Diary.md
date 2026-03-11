@@ -22,9 +22,9 @@ Today, we had our first project meeting. We spent time chatting and getting to k
 
 ---
 
-## Date: March 3, 2026 (Everyone)
+## Date: March 3, 2026
 
-### Research Discussion and Project Decision
+### Research Discussion and Project Decision (Everyone)
 
 #### What did we do today?
 
@@ -39,9 +39,9 @@ Today, we met to share the research we had done individually. After discussing o
 
 ---
 
-## Date: March 3, 2026 (Aiysha)
+## Date: March 3, 2026
 
-### Project Skeleton and Core Networking Setup
+### Project Skeleton and Core Networking Setup (Aiysha)
 
 #### What did we do today?
 
@@ -64,9 +64,9 @@ Today, we started implementing the basic skeleton of our project. The focus was 
 ---
 
 
-## Date: March 10, 2026 (Aiysha)
+## Date: March 10, 2026
 
-### Disconnect Handling and Automatic Nickname Assignment
+### Disconnect Handling and Automatic Nickname Assignment (Aiysha)
 
 #### What did we do today?
 
@@ -93,3 +93,23 @@ Today, we improved the connection handling in our client-server structure. The m
 #### What did we do to-day?
 
 - Clearly defined the communication protocol by defining commands, syntax, message formats, and error handling. Added clear explanations with examples. Defines legacy commands for backwards-compatibility, and possilbe future additions for forwards-compatibility.
+
+## Date: March 11, 2026
+
+### Message Cleanup, Emoji Testing, and JAR Launcher (Aiysha)
+
+#### What did we do today?
+
+Today, I focused on improving the client-server communication structure and cleaning up the protocol handling. The goal was to make message encoding, decoding, and validation more consistent and easier to justify for the milestone requirements.
+
+#### Work Summary
+
+- I cleaned up the message handling so protocol-related logic is now more centralized and consistent.
+- I improved the client so that incoming messages are parsed and interpreted instead of only being printed as raw protocol lines.
+- I adjusted validation so malformed or structurally invalid messages can be rejected more clearly.
+- I also removed some older ad-hoc handling to make the message flow cleaner and easier to understand.
+
+I also investigated whether emojis could be sent correctly through the chat, since this is relevant for robust encoding. For this, I added temporary debugging output and checked the message flow step by step. The result was that the emojis were already corrupted before they even entered the actual protocol layer. This means the issue is not mainly caused by the socket encoding itself, but by terminal input handling on Windows. A full fix for emoji input through the console was not achieved, but the source of the problem was narrowed down.
+
+In addition, I created a new `AppMain` launcher class so that the executable `not-frantic.jar` can be used to start either the server or the client. This makes the packaged application more practical, because one JAR file can now serve as the unified entry point for both modes.
+
