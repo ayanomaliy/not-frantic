@@ -1,0 +1,53 @@
+**Zählt für die Requirements nicht als Library, erlaubt für das Programmierprojekt:**
+
+- JavaFX
+- JUnit (http://junit.org/)
+
+
+**Libraries auf dieser liste dürfen für das Programmierprojekt verwendet werden:**
+
+- Mockito (http://site.mockito.org/)
+- Guava (https://github.com/google/guava)
+- FindBugs (Java <10) (http://findbugs.sourceforge.net/)
+- SpotBugs (Java 8+) (https://spotbugs.github.io)
+- JOGL / JOAL (https://jogamp.org/jogl/www)
+- Log4j 2 (https://logging.apache.org/log4j/2.0)
+- LWJGL (https://www.lwjgl.org/)
+- SLF4J (https://www.slf4j.org)
+- LWJGL (https://www.lwjgl.org)
+- Apache Commons Collections (https://commons.apache.org/proper/commons-collections/)
+- Apache Commons IO (https://commons.apache.org/proper/commons-io/)
+- Apache Commons Lang (https://commons.apache.org/proper/commons-lang/)
+- Apache Commons Math (https://commons.apache.org/proper/commons-math/)
+- Apache Commons Text (https://commons.apache.org/proper/commons-text/)
+- fastutil (http://fastutil.di.unimi.it/)
+- JetBrains Java Annotations (https://github.com/JetBrains/java-annotations/)
+- TinyLog (http://www.tinylog.org)
+- JInput (https://github.com/jinput/jinput)
+- Jamepad (https://github.com/williamahartman/Jamepad)
+- Prometheus (https://prometheus.io)
+- Project Lombok (https://projectlombok.org)
+- AnimateFX (https://github.com/Typhon0/AnimateFX)
+- Emoji Text Flow JavaFX (https://github.com/pavlobu/emoji-text-flow-javafx/)
+- Apache POI (https://poi.apache.org/)
+- emoji-java (https://github.com/vdurmont/emoji-java/)
+- svgfx (https://github.com/bnnsz/svgfx?tab=readme-ov-file/)
+
+**Libraries auf dieser liste dürfen NICHT für das Programmierprojekt verwendet werden:**
+
+- CS101 Image Window
+- Ziemlich alles, was Objektserialisierung übernimmt für das Netzwerkprotokoll, z.B.
+- GRPC (http://www.grpc.io)
+- LibGDX (https://libgdx.badlogicgames.com)
+- Joda Time (Obsolete durch Java 11)
+- JLayer (Obsolete durch JavaFX)
+- LITIENGINE (https://litiengine.com/)
+- Protocol Buffers (https://developers.google.com/protocol-buffers)
+- und java.io.ObjectOutputStream
+- Javassist https://github.com/jboss-javassist/javassist
+- Spring https://spring.io/
+- Guice https://github.com/google/guice
+- Dagger https://dagger.dev/
+- JavaFaker https://github.com/DiUS/java-faker
+- ImGui https://github.com/SpaiR/imgui-java
+- FXGL https://github.com/AlmasB/FXGL
