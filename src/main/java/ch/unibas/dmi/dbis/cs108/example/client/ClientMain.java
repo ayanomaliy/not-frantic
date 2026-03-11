@@ -90,12 +90,11 @@ public class ClientMain {
                         new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
                 PrintWriter serverOut = new PrintWriter(socket.getOutputStream(), true, StandardCharsets.UTF_8);
                 BufferedReader userIn = new BufferedReader(
-                        new InputStreamReader(System.in, StandardCharsets.UTF_8))
+                        new InputStreamReader(System.in))
         ) {
             System.out.println("Connected to server at " + host + ":" + port);
             System.out.println("Using username: " + suggestedName);
 
-            // Automatically apply username on connect
             serverOut.println(new Message(Message.Type.NAME, suggestedName).encode());
 
             AtomicLong lastServerPongTime = new AtomicLong(System.currentTimeMillis());
@@ -141,6 +140,7 @@ public class ClientMain {
             while ((line = userIn.readLine()) != null) {
                 String trimmed = line.trim();
 
+                // edge case: /name without any name uses suggested user name
                 if (trimmed.equals("/name")) {
                     System.out.println("Using suggested nickname: " + suggestedName);
                     serverOut.println(new Message(Message.Type.NAME, suggestedName).encode());
@@ -159,12 +159,10 @@ public class ClientMain {
                     continue;
                 }
 
-                // Do not allow manual heartbeat input from the terminal
                 if (message.type() == Message.Type.PING || message.type() == Message.Type.PONG) {
                     System.out.println("Heartbeat messages are handled automatically.");
                     continue;
                 }
-
                 serverOut.println(message.encode());
 
                 if (message.type() == Message.Type.QUIT) {

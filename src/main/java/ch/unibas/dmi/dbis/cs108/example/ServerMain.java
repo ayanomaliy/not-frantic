@@ -3,6 +3,9 @@ package ch.unibas.dmi.dbis.cs108.example;
 import ch.unibas.dmi.dbis.cs108.example.controller.ServerController;
 import ch.unibas.dmi.dbis.cs108.example.service.ServerService;
 
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
+
 /**
  * Entry point for the game server application.
  * <p>
@@ -18,6 +21,9 @@ public class ServerMain {
      * @param args command-line arguments (not used)
      */
     public static void main(String[] args) {
+        System.setOut(new PrintStream(System.out, true, StandardCharsets.UTF_8));
+        System.setErr(new PrintStream(System.err, true, StandardCharsets.UTF_8));
+
         int port = 5555;
 
         if (args.length >= 1) {
