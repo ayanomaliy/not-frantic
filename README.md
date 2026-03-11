@@ -40,8 +40,11 @@ Before running the project, make sure you have:
 .\gradlew server --args="<port>"
 or just .\gradlew server to automatically run on port 5555
 
+or use the jar to run:
 
-or not use gradle:
+java -jar build\libs\not-frantic.jar server
+
+java -jar build\libs\not-frantic.jar server 5555
 
 
 ### Start the client
@@ -55,15 +58,8 @@ or connect to the default port (port 5555) and localhost using
 
 .\gradlew client
 
+or use the jar to run:
 
-or not use gradle:
+java -jar build\libs\not-frantic.jar client localhost:5555
 
-java -jar build\libs\not-frantic.jar
-
-java -cp build\libs\not-frantic.jar ch.unibas.dmi.dbis.cs108.example.client.ClientMain
-
-
-java -cp build\libs\not-frantic.jar ch.unibas.dmi.dbis.cs108.example.client.ClientMain localhost:5555
-
-
-java -cp build\libs\not-frantic.jar ch.unibas.dmi.dbis.cs108.example.client.ClientMain localhost:5555 Ayano
+java -jar build\libs\not-frantic.jar client localhost:5555 Alice
