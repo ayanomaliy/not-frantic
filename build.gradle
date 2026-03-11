@@ -14,7 +14,7 @@ java {
 }
 
 application {
-    mainClass = 'ch.unibas.dmi.dbis.cs108.example.ServerMain'
+    mainClass = 'ch.unibas.dmi.dbis.cs108.example.AppMain'
 }
 
 repositories {
