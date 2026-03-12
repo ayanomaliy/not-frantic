@@ -181,4 +181,3 @@ Aiysha was able to run the server while the rest was able to join. We were able 
 
 - Since QA task was postponed, I didn't start to work on it as planned.
 - I went through all our uploads, adjusted some things, made sure there are no more typos/errors and checked that everything for the milestone is ready.
-- 
