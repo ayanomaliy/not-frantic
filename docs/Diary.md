@@ -63,6 +63,31 @@ Today, we started implementing the basic skeleton of our project. The focus was 
 
 ---
 
+## Date: March 9, 2026 (Senanur)
+
+### Ping/Pong System and Nickname Features
+
+#### What did we do today?
+Today, I implemented several protocol features required for Milestone 2. The focus was on improving connection reliability and adding nickname management functionality.
+
+#### Work Summary
+- Implemented the Ping system, where the server regularly sends ping messages to connected clients.
+- Clients process the ping messages and respond appropriately so that connection losses can be detected.
+- Implemented the Pong mechanism, where the client sends periodic pong responses back to the server.
+- This allows the server to monitor whether clients are still connected.
+
+- Added unique nickname handling on the server.
+    - If a player joins with a nickname that already exists, the server automatically assigns a modified name by adding a suffix
+
+- Implemented the feature, where the client suggests a nickname based on the system username.
+
+- Implemented the feature, which allows players to change their nickname during runtime.
+
+#### Future Plans
+- Test ping/pong behavior with multiple clients to ensure connection losses are detected reliably.
+- Test nickname uniqueness with several clients joining simultaneously.
+- Continue improving the protocol and expand the lobby/chat functionality.
+
 
 ## Date: March 10, 2026
 
