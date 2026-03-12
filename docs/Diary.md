@@ -160,3 +160,14 @@ Overall, the revised rules make the game easier to understand while keeping its 
 
 I asked our tutor for the QA slides, as soon as we receive them I will start working on it.
 Tomorrow I will go through our docs and see if we lack on milestones, if there are typos or any other errors to make sure its ready to hand in.
+
+## Date: March 11, 2026
+
+### Excercise session
+
+#### What did we do today?
+
+- We tested our server and clients
+
+#### Work Summary
+Aiysha was able to run the server while the rest was able to join. We were able to see the ping pongs,who joined the lobby and to send messages.
