@@ -158,5 +158,5 @@ Overall, the revised rules make the game easier to understand while keeping its 
 
 #### Future Plans
 
-I asked our tutor for the QA slides, as soon as we receive them i will start working on it.
+I asked our tutor for the QA slides, as soon as we receive them I will start working on it.
 Tomorrow I will go through our docs and see if we lack on milestones, if there are typos or any other errors to make sure its ready to hand in.

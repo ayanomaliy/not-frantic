@@ -6,7 +6,7 @@ The project is developed by **The Devs^-1**.
 
 ## About the Project
 
-Frantic^-1 is an interactive card game where players try to get rid of all cards in their hand while sabotaging each other through special effects, hand manipulation, and table-wide events. The game combines simple matching rules with chaotic action cards and global event mechanics.
+Frantic^-1 is an interactive card game where players try to get rid of all cards in their hand while sabotaging each other with special effects, hand manipulation, and table-wide events, combining simple matching rules with chaotic action cards and global event mechanics.
 
 This repository contains the current prototype implementation of the game, including:
 - a TCP server
