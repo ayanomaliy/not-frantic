@@ -138,3 +138,25 @@ I also investigated whether emojis could be sent correctly through the chat, sin
 
 In addition, I created a new `AppMain` launcher class so that the executable `not-frantic.jar` can be used to start either the server or the client. This makes the packaged application more practical, because one JAR file can now serve as the unified entry point for both modes.
 
+## Date: March 11, 2026
+
+### Game Rules (Sevval)
+
+#### What did we do today?
+
+- The Game rules have been revised, officially established and uploaded. 
+- Waiting for QA slides to work on.
+
+#### Work Summary
+
+I revised and improved the rule set for our game. The goal was to create a clearer and more structured set of rules so that players can easily understand how the game works.
+First, the rules were reorganized into clear sections, including the game objective, scoring system, card types turn structure and special mechanics. This structure helps players quickly find important infos and understand the gameplay.
+The objective of the game is for players to get rid of all the cards in their hand using their different cards strategically to affect other players. The game ends when player has no cards left or when a special event ends the game. The winner is determined by counting the points of the cards remaining in each players hand.
+The rules describe different types of cards. Normal cards are played by matching color or number, while black cards trigger event cards that affect all players. Effect cards introduce special abilities that allow players to manipulate the game, such as exchanging hands or forcing others to draw cards.
+Event cards ass unpredictable elements to the game. When triggered, they create situations that affect all players, such as reshuffling all hands or starting a final countdown of rounds.
+Overall, the revised rules make the game easier to understand while keeping its strategic and chaotic gameplay.
+
+#### Future Plans
+
+I asked our tutor for the QA slides, as soon as we receive them i will start working on it.
+Tomorrow I will go through our docs and see if we lack on milestones, if there are typos or any other errors to make sure its ready to hand in.
