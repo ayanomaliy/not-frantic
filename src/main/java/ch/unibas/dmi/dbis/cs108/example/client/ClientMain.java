@@ -10,33 +10,40 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Entry point for the client application.
+ * Entry point of the client application.
  *
- * <p>Establishes a TCP connection to the game server, starts a background thread
- * to read incoming messages ({@link ClientReader}), and forwards user input
- * from stdin to the server.
+ * <p>This class establishes a TCP connection to the game server, starts a
+ * background reader thread for incoming server messages, and forwards user
+ * commands from standard input to the server. It also maintains a heartbeat
+ * mechanism to detect lost server connections.
  */
 public class ClientMain {
 
     /**
-     * Launches the client, connects to the server, and processes user commands.
+     * Starts the client application and connects to the server.
+     *
+     * <p>The client reads commands from standard input, converts them into
+     * {@link Message} objects, and sends them to the server. A background
+     * reader thread handles incoming messages, while a heartbeat thread
+     * periodically sends ping messages to check whether the server is still
+     * reachable.
      *
      * <p>Supported commands:
      * <ul>
-     *   <li>{@code /name <username>} – set the player's display name</li>
-     *   <li>{@code /chat <message>} – send a chat message</li>
-     *   <li>{@code /players} – list connected players</li>
-     *   <li>{@code /start} – request to start the game</li>
-     *   <li>{@code /quit} – disconnect from the server</li>
+     *   <li>{@code /name <username>} - sets the player's display name</li>
+     *   <li>{@code /chat <message>} - sends a chat message</li>
+     *   <li>{@code /players} - requests the list of connected players</li>
+     *   <li>{@code /start} - requests to start the game</li>
+     *   <li>{@code /quit} - disconnects from the server</li>
      * </ul>
      *
-     * <p>Command-line usage:
+     * <p>Usage:
      * <ul>
      *   <li>{@code client <hostaddress>:<port> [<username>]}</li>
      * </ul>
      *
-     * @param args command-line arguments:
-     *             {@code <hostaddress>:<port>} and optionally {@code <username>}
+     * @param args command-line arguments containing the server address in the
+     *             format {@code <hostaddress>:<port>} and an optional username
      */
     public static void main(String[] args) {
         String host = "localhost";
@@ -133,14 +140,7 @@ public class ClientMain {
             String line;
             while ((line = userIn.readLine()) != null) {
                 String trimmed = line.trim();
-/*
-                // edge case: /name without any name uses suggested user name
-                if (trimmed.equals("/name")) {
-                    System.out.println("Using suggested nickname: " + suggestedName);
-                    serverOut.println(new Message(Message.Type.NAME, suggestedName).encode());
-                    continue;
-                }
-*/
+
                 Message message = Message.parse(trimmed);
 
                 if (message == null) {
@@ -157,6 +157,7 @@ public class ClientMain {
                     System.out.println("Heartbeat messages are handled automatically.");
                     continue;
                 }
+
                 serverOut.println(message.encode());
 
                 if (message.type() == Message.Type.QUIT) {
@@ -169,6 +170,9 @@ public class ClientMain {
         }
     }
 
+    /**
+     * Prints the list of supported client commands to standard output.
+     */
     private static void printCommandHelp() {
         System.out.println("Commands:");
         System.out.println("  /name Alice");

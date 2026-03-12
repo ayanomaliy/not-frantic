@@ -6,18 +6,43 @@ import java.io.BufferedReader;
 import java.io.PrintWriter;
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * Reads and processes messages sent by the server.
+ *
+ * <p>This class runs in a background thread on the client side. It continuously
+ * reads incoming messages from the server, validates them, and handles them
+ * according to their {@link Message.Type}. It also responds to heartbeat
+ * requests and updates the timestamp of the last received pong message.
+ */
 public class ClientReader implements Runnable {
 
     private final BufferedReader serverIn;
     private final PrintWriter serverOut;
     private final AtomicLong lastServerPongTime;
 
+    /**
+     * Creates a new client reader.
+     *
+     * @param serverIn reader used to receive messages from the server
+     * @param serverOut writer used to send messages back to the server
+     * @param lastServerPongTime shared timestamp of the last received pong
+     *                           message from the server
+     */
     public ClientReader(BufferedReader serverIn, PrintWriter serverOut, AtomicLong lastServerPongTime) {
         this.serverIn = serverIn;
         this.serverOut = serverOut;
         this.lastServerPongTime = lastServerPongTime;
     }
 
+    /**
+     * Continuously reads and handles incoming server messages.
+     *
+     * <p>The method validates each received message and processes it based on
+     * its type. Ping messages are answered with a pong response, pong messages
+     * update the heartbeat timestamp, and user-visible messages such as chat,
+     * info, error, player list, and game messages are printed to standard
+     * output.
+     */
     @Override
     public void run() {
         try {

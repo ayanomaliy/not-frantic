@@ -12,11 +12,10 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Represents a single client connection session.
- * <p>
- * Handles communication with a connected client, processes incoming commands,
- * and manages the client's session state. Runs in its own thread to handle
- * concurrent client connections.
- * </p>
+ *
+ * <p>This class handles communication with one connected client, processes
+ * incoming messages, and keeps track of the client's session state. Each
+ * client session runs in its own thread to support concurrent connections.</p>
  */
 public class ClientSession implements Runnable {
 
@@ -37,7 +36,9 @@ public class ClientSession implements Runnable {
      * Creates a new client session for the given socket connection.
      *
      * @param socket the client's TCP socket connection
-     * @param serverService the server service managing game state
+     * @param serverService the server service responsible for handling messages
+     *                      and managing connected clients
+     * @param serverController the server controller managing active sessions
      */
     public ClientSession(Socket socket, ServerService serverService, ServerController serverController) {
         this.socket = socket;
@@ -46,9 +47,9 @@ public class ClientSession implements Runnable {
     }
 
     /**
-     * Sends a message to this client.
+     * Sends a raw encoded message to this client.
      *
-     * @param text the message to send
+     * @param text the message text to send
      */
     public void send(String text) {
         if (out != null) {
@@ -57,7 +58,7 @@ public class ClientSession implements Runnable {
     }
 
     /**
-     * Gets the name of the player associated with this session.
+     * Returns the current player name associated with this session.
      *
      * @return the player's display name
      */
@@ -65,20 +66,36 @@ public class ClientSession implements Runnable {
         return playerName;
     }
 
+    /**
+     * Updates the player name associated with this session.
+     *
+     * @param playerName the new display name of the player
+     */
     public void setPlayerName(String playerName) {
         this.playerName = playerName;
     }
 
+    /**
+     * Returns the timestamp of the last received heartbeat message.
+     *
+     * @return the last heartbeat time in milliseconds
+     */
     public long getLastHeartbeatTime() {
         return lastHeartbeatTime.get();
     }
 
+    /**
+     * Updates the heartbeat timestamp to the current system time.
+     */
     public void updateHeartbeatTime() {
         lastHeartbeatTime.set(System.currentTimeMillis());
     }
 
     /**
      * Closes this client connection and removes the session from the server.
+     *
+     * <p>This method is synchronized to prevent duplicate disconnection logic
+     * when multiple parts of the code attempt to close the same session.</p>
      */
     public synchronized void disconnect() {
         if (disconnected) return;
@@ -94,11 +111,12 @@ public class ClientSession implements Runnable {
     }
 
     /**
-     * Executes the client session thread.
-     * <p>
-     * Registers the client with the server, welcomes them, reads incoming commands,
-     * processes them through the server service, and handles disconnection cleanup.
-     * </p>
+     * Executes the client session.
+     *
+     * <p>This method initializes the input and output streams, registers the
+     * client with the server, sends a welcome message, and continuously reads
+     * incoming client messages. Heartbeat messages are handled directly, while
+     * all other valid messages are forwarded to the server service.</p>
      */
     @Override
     public void run() {
@@ -144,10 +162,9 @@ public class ClientSession implements Runnable {
 
         } catch (Exception e) {
             System.err.println("[SESSION] Client session ended: " + e.getMessage());
-        }finally {
+        } finally {
             System.out.println("[SESSION] Closing session for " + playerName);
             disconnect();
         }
-
     }
 }
