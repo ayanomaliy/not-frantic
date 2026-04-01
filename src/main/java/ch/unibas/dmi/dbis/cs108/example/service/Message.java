@@ -8,20 +8,54 @@ package ch.unibas.dmi.dbis.cs108.example.service;
  */
 public record Message(Type type, String content) {
 
+    /**
+     * Supported protocol message types exchanged between client and server.
+     */
     public enum Type {
+        /** Message used to set or change a player's display name. */
         NAME,
+
+        /** Message containing a chat text. */
         CHAT,
+
+        /** Message used to request or transmit the player list. */
         PLAYERS,
+
+        /** Message used to request the start of the game. */
         START,
+
+        /** Message used to leave the server. */
         QUIT,
+
+        /** Heartbeat ping message. */
         PING,
+
+        /** Heartbeat pong response message. */
         PONG,
+
+        /** Informational message sent by the server. */
         INFO,
+
+        /** Error message sent by the server. */
         ERROR,
+
+        /** Game-related message sent by the server. */
         GAME,
+
+        /** Fallback type for unrecognized or malformed messages. */
         UNKNOWN
     }
 
+    /**
+     * Parses a raw protocol string into a {@code Message}.
+     *
+     * <p>This method supports legacy heartbeat messages, the unified
+     * {@code TYPE|payload} format, and legacy slash commands such as
+     * {@code /chat Hello}.</p>
+     *
+     * @param raw the raw input string to parse
+     * @return the parsed message, or {@code null} if the input is null or blank
+     */
     public static Message parse(String raw) {
         if (raw == null || raw.isBlank()) {
             return null;
@@ -86,10 +120,20 @@ public record Message(Type type, String content) {
         };
     }
 
+    /**
+     * Encodes this message into the unified protocol format.
+     *
+     * @return the encoded message string in the form {@code TYPE|payload}
+     */
     public String encode() {
         return type.name() + "|" + safe(content);
     }
 
+    /**
+     * Returns whether this message type normally expects a content payload.
+     *
+     * @return {@code true} if the type expects content, {@code false} otherwise
+     */
     public boolean expectsContent() {
         return switch (type) {
             case NAME, CHAT, PLAYERS, INFO, ERROR, GAME -> true;
@@ -97,6 +141,15 @@ public record Message(Type type, String content) {
         };
     }
 
+    /**
+     * Checks whether this message has a valid structure for its type.
+     *
+     * <p>For example, heartbeat and control messages such as {@code PING},
+     * {@code PONG}, {@code START}, and {@code QUIT} must not contain payload
+     * text, while other message types may contain content.</p>
+     *
+     * @return {@code true} if the message structure is valid, {@code false} otherwise
+     */
     public boolean hasValidStructure() {
         if (type == Type.UNKNOWN) {
             return false;
@@ -109,6 +162,15 @@ public record Message(Type type, String content) {
         };
     }
 
+    /**
+     * Splits a chat payload into sender name and message text.
+     *
+     * <p>If the payload does not contain the expected separator, the sender
+     * is returned as {@code "?"} and the entire payload is treated as the
+     * message text.</p>
+     *
+     * @return a two-element array containing sender name and chat text
+     */
     public String[] splitChatPayload() {
         String[] parts = safe(content).split("\\|", 2);
         if (parts.length < 2) {

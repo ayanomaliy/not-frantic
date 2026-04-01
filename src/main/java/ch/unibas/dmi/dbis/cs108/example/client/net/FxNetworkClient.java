@@ -1,6 +1,6 @@
 package ch.unibas.dmi.dbis.cs108.example.client.net;
 
-import ch.unibas.dmi.dbis.cs108.example.client.state.ClientState;
+import ch.unibas.dmi.dbis.cs108.example.client.ClientState;
 import ch.unibas.dmi.dbis.cs108.example.service.Message;
 import javafx.application.Platform;
 
@@ -10,19 +10,52 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 
+
+/**
+ * JavaFX-aware network client for the Frantic^-1 GUI.
+ *
+ * <p>This class manages the TCP connection to the game server, sends
+ * protocol messages, receives server responses, and updates the shared
+ * {@link ClientState} on the JavaFX application thread.</p>
+ *
+ * <p>It also maintains a heartbeat mechanism to detect lost server
+ * connections automatically.</p>
+ */
 public class FxNetworkClient {
 
+    /** Shared GUI state updated from incoming server messages. */
     private final ClientState state;
-
+    /** TCP socket connected to the game server. */
     private Socket socket;
+    /** Reader for incoming server messages. */
     private BufferedReader serverIn;
+    /** Writer for outgoing client messages. */
     private PrintWriter serverOut;
+    /** Timestamp of the last received pong message from the server. */
     private final AtomicLong lastServerPongTime = new AtomicLong(System.currentTimeMillis());
 
+    /**
+     * Creates a new GUI network client.
+     *
+     * @param state the shared client state to update from network events
+     */
     public FxNetworkClient(ClientState state) {
         this.state = state;
     }
 
+    /**
+     * Connects to the server and initializes background reader and heartbeat threads.
+     *
+     * <p>After the connection is established, the client sends its initial
+     * player name, starts a reader thread for incoming messages, starts a
+     * heartbeat thread for connection monitoring, and requests the current
+     * player list from the server.</p>
+     *
+     * @param host the server host name or IP address
+     * @param port the server port
+     * @param username the desired player name
+     * @throws IOException if the socket connection cannot be established
+     */
     public void connect(String host, int port, String username) throws IOException {
         socket = new Socket(host, port);
         serverIn = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
@@ -48,7 +81,13 @@ public class FxNetworkClient {
 
         requestPlayers();
     }
-
+    /**
+     * Disconnects from the server and updates the client state.
+     *
+     * <p>If a connection is currently active, a quit message is sent first.
+     * The socket is then closed and the GUI state is reset to a disconnected
+     * status.</p>
+     */
     public void disconnect() {
         try {
             if (serverOut != null) {
@@ -70,25 +109,44 @@ public class FxNetworkClient {
             state.getPlayers().clear();
         });
     }
-
+    /**
+     * Sends a chat message to the server.
+     *
+     * @param text the chat message text
+     */
     public void sendChat(String text) {
         send(new Message(Message.Type.CHAT, text));
     }
-
+    /**
+     * Requests the current player list from the server.
+     */
     public void requestPlayers() {
         send(new Message(Message.Type.PLAYERS, ""));
     }
-
+    /**
+     * Sends a request to start the game.
+     */
     public void startGame() {
         send(new Message(Message.Type.START, ""));
     }
 
+    /**
+     * Sends a protocol message to the server if an output stream is available.
+     *
+     * @param message the message to send
+     */
     private void send(Message message) {
         if (serverOut != null) {
             serverOut.println(message.encode());
         }
     }
-
+    /**
+     * Continuously reads incoming server messages and processes them.
+     *
+     * <p>Malformed messages are reported in the GUI state. Valid messages
+     * are forwarded to {@link #handleIncoming(Message)}. If the connection
+     * is lost, the client state is updated accordingly.</p>
+     */
     private void readLoop() {
         try {
             String line;
@@ -111,7 +169,15 @@ public class FxNetworkClient {
             });
         }
     }
-
+    /**
+     * Handles a single incoming protocol message from the server.
+     *
+     * <p>Depending on the message type, this method may respond to
+     * heartbeat messages, update the chat view, refresh the player list,
+     * or append informational/game messages to the GUI state.</p>
+     *
+     * @param message the parsed incoming message
+     */
     private void handleIncoming(Message message) {
         switch (message.type()) {
             case PING -> send(new Message(Message.Type.PONG, ""));
@@ -147,7 +213,12 @@ public class FxNetworkClient {
                     state.getGameMessages().add("[CLIENT] Unexpected: " + message.encode()));
         }
     }
-
+    /**
+     * Periodically sends heartbeat ping messages and checks server responsiveness.
+     *
+     * <p>If no pong message is received within the configured timeout,
+     * the client disconnects automatically.</p>
+     */
     private void heartbeatLoop() {
         final long heartbeatIntervalMillis = 5000;
         final long heartbeatTimeoutMillis = 15000;

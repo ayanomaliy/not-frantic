@@ -32,7 +32,9 @@ public class ServerService {
     /**
      * Registers a new client connection.
      *
-     * <p>Adds the client session to the lobby and notifies all clients of the new connection.
+     * <p>Adds the client session to the lobby, sends the connecting client
+     * a confirmation message, notifies all clients that a new client has
+     * connected, and broadcasts the updated player list.</p>
      *
      * @param session the client session to register
      */
@@ -49,13 +51,16 @@ public class ServerService {
                 Message.Type.INFO,
                 "A new client connected."
         ));
+
+        broadcastPlayerList();
     }
 
     /**
      * Unregisters a disconnected client.
      *
-     * <p>Removes the client session from the lobby and notifies remaining clients
-     * of the disconnection.
+     * <p>Removes the client session from the lobby, notifies the remaining
+     * clients that the player disconnected, and broadcasts the updated
+     * player list so all clients can refresh their lobby view automatically.</p>
      *
      * @param session the client session to unregister
      */
@@ -68,6 +73,8 @@ public class ServerService {
                 Message.Type.INFO,
                 session.getPlayerName() + " disconnected."
         ));
+
+        broadcastPlayerList();
     }
 
     /**
@@ -148,9 +155,13 @@ public class ServerService {
             }
         }
     }
-
     /**
      * Handles a name change request from a client.
+     *
+     * <p>Validates the requested name, ensures uniqueness, updates the
+     * client's player name, informs the client about the result, notifies
+     * the lobby about the join or rename event, and broadcasts the updated
+     * player list to all connected clients.</p>
      *
      * @param session the client session requesting the name change
      * @param name the new name requested
@@ -238,6 +249,8 @@ public class ServerService {
                     oldName + " changed their name to " + uniqueName
             ));
         }
+
+        broadcastPlayerList();
     }
 
     /**
@@ -398,6 +411,28 @@ public class ServerService {
         ));
     }
 
+
+
+    /**
+     * Broadcasts the current list of connected players to all clients.
+     *
+     * <p>The player list is encoded as a comma-separated string in a
+     * {@link Message.Type#PLAYERS} message. This allows all connected
+     * clients to refresh their lobby player list automatically whenever
+     * the lobby membership changes.</p>
+     */
+    private void broadcastPlayerList() {
+        List<String> names = new ArrayList<>();
+        for (Player player : lobby.getPlayers()) {
+            names.add(player.name());
+        }
+
+        broadcast(new Message(
+                Message.Type.PLAYERS,
+                String.join(",", names)
+        ));
+    }
+
     /**
      * Sends a structured message to all connected clients.
      *
@@ -409,4 +444,6 @@ public class ServerService {
             session.send(message.encode());
         }
     }
+
+
 }

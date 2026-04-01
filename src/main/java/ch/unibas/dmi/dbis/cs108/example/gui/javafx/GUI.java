@@ -7,56 +7,35 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
 /**
- * This is an example JavaFX-Application.
+ * Example JavaFX application kept for reference.
+ *
+ * <p>This class is not used by the actual Frantic^-1 GUI client.
+ * The real GUI is launched via {@link GuiMain} and implemented in
+ * {@link FranticFxApp}.</p>
  */
 public class GUI extends Application {
 
-    /**apackage ch.unibas.dmi.dbis.cs108.example.client.ui;
-
-     import ch.unibas.dmi.dbis.cs108.example.client.net.FxNetworkClient;
-     import ch.unibas.dmi.dbis.cs108.example.client.state.ClientState;
-     import ch.unibas.dmi.dbis.cs108.example.client.ui.view.ConnectView;
-     import ch.unibas.dmi.dbis.cs108.example.client.ui.view.LobbyView;
-     import javafx.application.Application;
-     import javafx.scene.Scene;
-     import javafx.stage.Stage;
-
-     public class FranticFxApp extends Application {
-
-     private final ClientState state = new ClientState();
-     private final FxNetworkClient networkClient = new FxNetworkClient(state);
-
-     @Override
-     public void start(Stage stage) {
-     MainController controller = new MainController(stage, state, networkClient);
-     controller.showConnectView();
-
-     stage.setTitle("Frantic^-1");
-     stage.setMinWidth(1000);
-     stage.setMinHeight(700);
-     stage.show();
-     }
-
-     @Override
-     public void stop() {
-     networkClient.disconnect();
-     }
-     }
-     * Launching this method will not work on some platforms.
-     * What you should do is to create a separate main class and launch the GUI class from there as is done in {@link Main}
+    /**
+     * Launches the example JavaFX application.
+     *
+     * @param args command-line arguments
      */
     public static void main(String[] args) {
         launch(args);
     }
 
+    /**
+     * Starts the example JavaFX application window.
+     *
+     * @param stage the primary JavaFX stage
+     */
     @Override
     public void start(Stage stage) {
         String javaVersion = System.getProperty("java.version");
         String javafxVersion = System.getProperty("javafx.version");
-        Label l = new Label("Hello, JavaFX " + javafxVersion + ", running on Java " + javaVersion + ".");
-        Scene scene = new Scene(new StackPane(l), 640, 480);
+        Label label = new Label("Hello, JavaFX " + javafxVersion + ", running on Java " + javaVersion + ".");
+        Scene scene = new Scene(new StackPane(label), 640, 480);
         stage.setScene(scene);
         stage.show();
     }
-
 }
