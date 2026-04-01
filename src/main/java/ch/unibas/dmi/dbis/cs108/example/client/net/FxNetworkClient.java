@@ -88,9 +88,28 @@ public class FxNetworkClient {
      * The socket is then closed and the GUI state is reset to a disconnected
      * status.</p>
      */
+    /**
+     * Disconnects this client from the server and updates the local GUI state.
+     *
+     * <p>This method sends a {@code QUIT} message before closing the socket.</p>
+     */
     public void disconnect() {
+        disconnect(true);
+    }
+
+    /**
+     * Disconnects this client from the server and updates the local GUI state.
+     *
+     * <p>If {@code notifyServer} is {@code true}, a {@code QUIT} message is
+     * sent before the socket is closed. This is useful for distinguishing
+     * between an explicit quit command and a local shutdown after the command
+     * was already sent.</p>
+     *
+     * @param notifyServer whether a {@code QUIT} message should be sent first
+     */
+    private void disconnect(boolean notifyServer) {
         try {
-            if (serverOut != null) {
+            if (notifyServer && serverOut != null) {
                 send(new Message(Message.Type.QUIT, ""));
             }
         } catch (Exception ignored) {
@@ -109,6 +128,7 @@ public class FxNetworkClient {
             state.getPlayers().clear();
         });
     }
+
     /**
      * Sends a chat message to the server.
      *
@@ -140,6 +160,55 @@ public class FxNetworkClient {
             serverOut.println(message.encode());
         }
     }
+
+    /**
+     * Parses and executes a raw client command using the same rules as the
+     * terminal client.
+     *
+     * <p>Supported input includes both slash commands such as
+     * {@code /name Alice} and the structured protocol format parsed by
+     * {@link Message#parse(String)}. Invalid input and unknown commands are
+     * reported to the GUI. Manual heartbeat commands are rejected because
+     * heartbeat handling is automatic.</p>
+     *
+     * <p>If the command is {@code /quit}, the method closes the local
+     * connection after sending the quit request and returns {@code true} so the
+     * caller can switch back to the connect view.</p>
+     *
+     * @param rawInput the raw command entered by the user
+     * @return {@code true} if the command caused a disconnect, otherwise {@code false}
+     */
+    public boolean sendCommand(String rawInput) {
+        Message message = Message.parse(rawInput);
+
+        if (message == null) {
+            Platform.runLater(() ->
+                    state.getGameMessages().add("[CLIENT] Invalid input."));
+            return false;
+        }
+
+        if (message.type() == Message.Type.UNKNOWN) {
+            Platform.runLater(() ->
+                    state.getGameMessages().add("[CLIENT] Unknown command."));
+            return false;
+        }
+
+        if (message.type() == Message.Type.PING || message.type() == Message.Type.PONG) {
+            Platform.runLater(() ->
+                    state.getGameMessages().add("[CLIENT] Heartbeat messages are handled automatically."));
+            return false;
+        }
+
+        send(message);
+
+        if (message.type() == Message.Type.QUIT) {
+            disconnect(false);
+            return true;
+        }
+
+        return false;
+    }
+
     /**
      * Continuously reads incoming server messages and processes them.
      *

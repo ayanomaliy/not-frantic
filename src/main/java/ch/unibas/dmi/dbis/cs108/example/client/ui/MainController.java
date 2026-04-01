@@ -82,6 +82,9 @@ public class MainController {
         view.getSendButton().setOnAction(e -> sendChat(view));
         view.getChatInput().setOnAction(e -> sendChat(view));
 
+        view.getCommandButton().setOnAction(e -> sendCommand(view));
+        view.getCommandInput().setOnAction(e -> sendCommand(view));
+
         view.getRefreshPlayersButton().setOnAction(e -> networkClient.requestPlayers());
         view.getStartButton().setOnAction(e -> networkClient.startGame());
         view.getDisconnectButton().setOnAction(e -> {
@@ -104,6 +107,29 @@ public class MainController {
         if (!text.isBlank()) {
             networkClient.sendChat(text);
             view.getChatInput().clear();
+        }
+    }
+
+    /**
+     * Executes a terminal-style client command entered in the command field.
+     *
+     * <p>The command is parsed and handled by the network client using the same
+     * rules as the console client. If the command disconnects the client, the
+     * GUI returns to the connect view.</p>
+     *
+     * @param view the lobby view containing the command input field
+     */
+    private void sendCommand(LobbyView view) {
+        String command = view.getCommandInput().getText().trim();
+        if (command.isBlank()) {
+            return;
+        }
+
+        boolean disconnected = networkClient.sendCommand(command);
+        view.getCommandInput().clear();
+
+        if (disconnected) {
+            showConnectView();
         }
     }
 }

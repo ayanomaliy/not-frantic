@@ -37,6 +37,9 @@ public class LobbyView extends BorderPane {
     /** Button for disconnecting from the server and returning to the connect screen. */
     private final Button disconnectButton = new Button("Disconnect");
 
+    private final TextField commandInput = new TextField();
+    private final Button commandButton = new Button("Run");
+
     /**
      * Creates the lobby view and initializes its layout and controls.
      *
@@ -55,7 +58,16 @@ public class LobbyView extends BorderPane {
         VBox.setVgrow(center, Priority.ALWAYS);
         VBox.setVgrow(chatList, Priority.ALWAYS);
 
-        VBox right = new VBox(10, new Label("Game / Info"), infoList, startButton, disconnectButton);
+        HBox commandBox = new HBox(10, commandInput, commandButton);
+        VBox right = new VBox(
+                10,
+                new Label("Game / Info"),
+                infoList,
+                new Label("Command"),
+                commandBox,
+                startButton,
+                disconnectButton
+        );
         right.setPrefWidth(280);
 
         setLeft(left);
@@ -66,6 +78,7 @@ public class LobbyView extends BorderPane {
         BorderPane.setMargin(chatSection, new Insets(0, 10, 0, 0));
 
         chatInput.setPromptText("Type a message...");
+        commandInput.setPromptText("/name Alice, /players, /start, /quit");
     }
 
     /**
@@ -138,5 +151,23 @@ public class LobbyView extends BorderPane {
      */
     public Button getDisconnectButton() {
         return disconnectButton;
+    }
+
+    /**
+     * Returns the text field used to enter terminal-style client commands.
+     *
+     * @return the command input field
+     */
+    public TextField getCommandInput() {
+        return commandInput;
+    }
+
+    /**
+     * Returns the button that submits the command entered in the command field.
+     *
+     * @return the command submit button
+     */
+    public Button getCommandButton() {
+        return commandButton;
     }
 }
