@@ -2,7 +2,7 @@ package ch.unibas.dmi.dbis.cs108.example.client.ui;
 
 import ch.unibas.dmi.dbis.cs108.example.client.net.FxNetworkClient;
 import ch.unibas.dmi.dbis.cs108.example.client.state.ClientState;
-import ch.unibas.dmi.dbis.cs108.example.client.ui.view.ConnectView;
+import ch.unibas.dmi.dbis.cs108.example.client.ui.ConnectView;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
