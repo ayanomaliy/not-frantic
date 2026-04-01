@@ -46,6 +46,14 @@ java -jar build\libs\not-frantic.jar server
 
 java -jar build\libs\not-frantic.jar server 5555
 
+### Run Client with GUI
+.\gradlew run --args="gui"
+
+or 
+
+java -jar build\libs\not-frantic.jar gui
+
+
 
 ### Start the client
 .\gradlew client --args="localhost:5555 Alice"

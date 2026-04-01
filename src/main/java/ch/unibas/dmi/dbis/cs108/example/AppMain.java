@@ -1,6 +1,8 @@
 package ch.unibas.dmi.dbis.cs108.example;
 
+
 import ch.unibas.dmi.dbis.cs108.example.client.ClientMain;
+import ch.unibas.dmi.dbis.cs108.example.gui.javafx.GuiMain;
 
 import java.util.Arrays;
 
@@ -54,6 +56,7 @@ public class AppMain {
         switch (mode) {
             case "server" -> ServerMain.main(forwardedArgs);
             case "client" -> ClientMain.main(forwardedArgs);
+            case "gui" -> GuiMain.main(forwardedArgs);
             default -> {
                 System.err.println("Unknown mode: " + args[0]);
                 printUsage();
