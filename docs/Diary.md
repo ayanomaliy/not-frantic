@@ -181,3 +181,55 @@ Aiysha was able to run the server while the rest was able to join. We were able 
 
 - Since QA task was postponed, I didn't start to work on it as planned.
 - I went through all our uploads, adjusted some things, made sure there are no more typos/errors and checked that everything for the milestone is ready.
+
+
+## Date: April 1, 2026
+
+### JavaFX GUI Integration, Chat Functionality, Networking Debugging, and Command Input (Aiysha)
+
+#### What did we do today?
+
+Today, I focused on building the JavaFX GUI for the client and integrating it with the existing networking and protocol system.
+
+#### Work Summary
+
+- I implemented a JavaFX-based GUI structure consisting of:
+  - a **ConnectView** for entering host, port, and username
+  - a **LobbyView** for displaying players, chat, and game/info messages
+  - a **MainController** to manage scene switching and user interaction
+- I connected the GUI to the existing client logic via a new `FxNetworkClient`, ensuring that the GUI uses the same protocol and message system as the terminal client.
+
+- I implemented full **chat functionality in the GUI**:
+  - Incoming chat messages are displayed in real time using observable lists.
+  - Outgoing messages are sent through the same protocol (`Message.Type.CHAT`) as in the terminal client.
+  - The GUI updates automatically via JavaFX bindings and `Platform.runLater`.
+
+- I ensured that **player list updates are reactive**:
+  - The server now broadcasts updated player lists when players join, leave, or rename.
+  - The GUI listens for `PLAYERS` messages and updates the list automatically.
+
+- I debugged a critical issue where the **client instantly disconnected when connecting over the network**:
+  - The problem was caused by the heartbeat system using an outdated `lastServerPongTime`.
+  - Because it was not reset on connect, the client immediately assumed the connection timed out.
+  - Fix: Reset the heartbeat timestamp during connection initialization.
+  - After the fix, remote clients can connect reliably over LAN.
+
+- I added a **command input field to the GUI**, allowing users to enter commands just like in the terminal client:
+  - Commands such as `/name`, `/players`, `/start`, and `/quit` are parsed using `Message.parse(...)`.
+  - The behavior now mirrors the terminal client exactly, including validation and error handling.
+  - Special cases like heartbeat commands are blocked from manual input.
+  - The `/quit` command properly disconnects the client and returns to the connect screen.
+
+- I ensured that the GUI remains consistent with the architecture of the reference repositories:
+  - Clear separation between UI, controller, state, and networking
+  - Reuse of the same message protocol across both GUI and CLI clients
+
+#### Next Steps
+
+- Improve the **visual design of the GUI** (layout, spacing, styling)
+- Make the GUI more intuitive and user-friendly
+- Prepare the GUI structure so that **future game logic can be easily integrated**, especially:
+  - rendering hands, cards, and the game board
+  - handling turn-based interactions
+  - visualizing game events and effects
+- Possibly refactor UI components further to keep them modular and extensible
