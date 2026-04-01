@@ -28,6 +28,8 @@ public class FxNetworkClient {
         serverIn = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
         serverOut = new PrintWriter(socket.getOutputStream(), true, StandardCharsets.UTF_8);
 
+        lastServerPongTime.set(System.currentTimeMillis());
+
         Platform.runLater(() -> {
             state.setConnected(true);
             state.setUsername(username);
