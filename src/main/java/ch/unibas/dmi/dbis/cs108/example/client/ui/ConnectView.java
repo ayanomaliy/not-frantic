@@ -1,4 +1,4 @@
-package ch.unibas.dmi.dbis.cs108.example.client.ui.view;
+package ch.unibas.dmi.dbis.cs108.example.client.ui;
 
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
