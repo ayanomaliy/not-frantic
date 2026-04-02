@@ -279,11 +279,96 @@ public class ServerService {
         ));
     }
 
+    /**
+     * Handles a whisper chat message from a client.
+     *
+     * <p>The payload must have the form {@code targetName|message text}.
+     * The server delivers the message privately to the target player and
+     * also sends a confirmation copy back to the sender.</p>
+     *
+     * @param session the sending client session
+     * @param payload the whisper payload
+     */
     private void handleWhisperChat(ClientSession session, String payload) {
-        session.send(new Message(
-                Message.Type.ERROR,
-                "Whisper chat is not implemented yet."
+        if (payload == null || payload.isBlank()) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Whisper message cannot be empty."
+            ).encode());
+            return;
+        }
+
+        String[] parts = payload.split("\\|", 2);
+        if (parts.length < 2 || parts[0].isBlank() || parts[1].isBlank()) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Usage: /whisper <player> <message>"
+            ).encode());
+            return;
+        }
+
+        String targetName = parts[0].trim();
+        String text = parts[1].trim();
+
+        if (text.length() > 200) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Whisper message is too long. Maximum 200 characters."
+            ).encode());
+            return;
+        }
+
+        if (text.contains("\n") || text.contains("\r")) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Whisper message contains invalid characters."
+            ).encode());
+            return;
+        }
+
+        ClientSession target = findConnectedClientByName(targetName);
+
+        if (target == null) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Player not found: " + targetName
+            ).encode());
+            return;
+        }
+
+        if (target == session) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "You cannot whisper to yourself."
+            ).encode());
+            return;
+        }
+
+        target.send(new Message(
+                Message.Type.WHISPERCHAT,
+                "FROM|" + session.getPlayerName() + "|" + text
         ).encode());
+
+        session.send(new Message(
+                Message.Type.WHISPERCHAT,
+                "TO|" + target.getPlayerName() + "|" + text
+        ).encode());
+    }
+
+
+    /**
+     * Finds a connected client session by player name.
+     *
+     * @param name the player name to search for
+     * @return the matching client session, or {@code null} if not found
+     */
+    private ClientSession findConnectedClientByName(String name) {
+        for (ClientSession client : connectedClients) {
+            if (client.getPlayerName().equalsIgnoreCase(name)) {
+                return client;
+            }
+        }
+        return null;
     }
 
 

@@ -302,8 +302,25 @@ public class FxNetworkClient {
 
             }
 
-            case WHISPERCHAT -> Platform.runLater(() ->
-                    state.getWhisperChatMessages().add(message.content()));
+            case WHISPERCHAT -> Platform.runLater(() -> {
+                String[] parts = message.content().split("\\|", 3);
+
+                if (parts.length == 3) {
+                    String direction = parts[0];
+                    String otherUser = parts[1];
+                    String text = parts[2];
+
+                    if ("FROM".equals(direction)) {
+                        state.getWhisperChatMessages().add("[From " + otherUser + "] " + text);
+                    } else if ("TO".equals(direction)) {
+                        state.getWhisperChatMessages().add("[To " + otherUser + "] " + text);
+                    } else {
+                        state.getWhisperChatMessages().add(message.content());
+                    }
+                } else {
+                    state.getWhisperChatMessages().add(message.content());
+                }
+            });
 
 
             case INFO -> Platform.runLater(() ->

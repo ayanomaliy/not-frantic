@@ -147,11 +147,24 @@ public class MainController {
     /**
      * Sends the content of the chat input field using the currently selected chat mode.
      *
+     * <p>If the input starts with a whisper command, it is sent as a command
+     * instead of a normal chat message.</p>
+     *
      * @param view the lobby view containing the chat input
      */
     private void sendChat(LobbyView view) {
         String text = view.getChatInput().getText().trim();
         if (text.isBlank()) {
+            return;
+        }
+
+        String lower = text.toLowerCase();
+        if (lower.startsWith("/w ")
+                || lower.startsWith("/whisper ")
+                || lower.startsWith("/msg ")
+                || lower.startsWith("/tell ")) {
+            networkClient.sendCommand(text);
+            view.getChatInput().clear();
             return;
         }
 
