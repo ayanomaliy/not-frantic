@@ -5,20 +5,29 @@ import ch.unibas.dmi.dbis.cs108.example.model.Lobby;
 import ch.unibas.dmi.dbis.cs108.example.model.Player;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Manages server-side game state, client connections, and message handling.
  *
- * <p>Handles client registration and unregistration, processes incoming player
- * commands, manages the lobby of connected players, and broadcasts structured
- * protocol messages to all clients. This class is thread-safe through
- * synchronized methods to handle concurrent client access.
+ * <p>This service supports multiple lobbies. A client may connect to the server,
+ * choose a unique player name, then create a new lobby or join an existing one.
+ * Chat messages, player lists, and start requests are handled per lobby.</p>
+ *
+ * <p>This class uses synchronized methods to ensure thread-safe access to the
+ * shared lobby and client state.</p>
  */
 public class ServerService {
 
-    private final Lobby lobby = new Lobby();
-    private boolean gameStarted = false;
+    /** All existing lobbies mapped by their lobby id. */
+    private final Map<String, Lobby> lobbies = new HashMap<>();
+
+    /** Maps each connected client session to the id of its current lobby. */
+    private final Map<ClientSession, String> playerLobbyMap = new HashMap<>();
+
+
 
     /**
      * Logs a message to the console with a server prefix.
@@ -30,57 +39,144 @@ public class ServerService {
     }
 
     /**
+     * Returns the existing lobby with the given id or creates it if absent.
+     *
+     * @param lobbyId the lobby id
+     * @return the existing or newly created lobby
+     */
+    private Lobby getOrCreateLobby(String lobbyId) {
+        return lobbies.computeIfAbsent(lobbyId, Lobby::new);
+    }
+
+    /**
+     * Returns the lobby of the given client session.
+     *
+     * @param session the client session
+     * @return the lobby of the session, or {@code null} if none is assigned
+     */
+    private Lobby getLobbyOf(ClientSession session) {
+        String lobbyId = playerLobbyMap.get(session);
+        return lobbyId == null ? null : lobbies.get(lobbyId);
+    }
+
+    /**
+     * Sends a structured message to all clients inside the given lobby.
+     *
+     * @param lobby the target lobby
+     * @param message the message to broadcast
+     */
+    private void broadcastToLobby(Lobby lobby, Message message) {
+        log("Broadcast to lobby " + lobby.getLobbyId() + ": " + message.encode());
+        for (ClientSession session : lobby.getSessions()) {
+            session.send(message.encode());
+        }
+    }
+
+    /**
+     * Broadcasts the current player list to all players inside the given lobby.
+     *
+     * @param lobby the target lobby
+     */
+    private void broadcastPlayerList(Lobby lobby) {
+        List<String> names = new ArrayList<>();
+        for (Player player : lobby.getPlayers()) {
+            names.add(player.name());
+        }
+
+        broadcastToLobby(lobby, new Message(
+                Message.Type.PLAYERS,
+                String.join(",", names)
+        ));
+    }
+
+    /**
+     * Removes the client from its current lobby, if any.
+     *
+     * <p>The remaining players in that lobby are informed about the departure,
+     * the player list is refreshed, and the lobby is deleted if it becomes empty.</p>
+     *
+     * @param session the client session leaving its current lobby
+     */
+    private void leaveCurrentLobby(ClientSession session) {
+        Lobby currentLobby = getLobbyOf(session);
+
+        if (currentLobby == null) {
+            return;
+        }
+
+        currentLobby.removeSession(session);
+        playerLobbyMap.remove(session);
+
+        broadcastToLobby(currentLobby, new Message(
+                Message.Type.INFO,
+                session.getPlayerName() + " left the lobby."
+        ));
+
+        broadcastPlayerList(currentLobby);
+
+        if (currentLobby.getPlayerCount() == 0) {
+            lobbies.remove(currentLobby.getLobbyId());
+            log("Removed empty lobby: " + currentLobby.getLobbyId());
+        }
+    }
+
+    /**
      * Registers a new client connection.
      *
-     * <p>Adds the client session to the lobby, sends the connecting client
-     * a confirmation message, notifies all clients that a new client has
-     * connected, and broadcasts the updated player list.</p>
+     * <p>New clients connect to the server without being placed into a lobby
+     * automatically. They must explicitly create or join one.</p>
      *
      * @param session the client session to register
      */
     public synchronized void registerClient(ClientSession session) {
-        lobby.addSession(session);
-        log("Client connected. Total clients: " + lobby.getPlayerCount());
+        log("Client connected without lobby yet: " + session.getPlayerName());
 
         session.send(new Message(
                 Message.Type.INFO,
-                "Connected. Current players: " + lobby.getPlayerCount()
+                "Connected to server. Use /create <lobby> or /join <lobby>."
         ).encode());
-
-        broadcast(new Message(
-                Message.Type.INFO,
-                "A new client connected."
-        ));
-
-        broadcastPlayerList();
     }
 
     /**
      * Unregisters a disconnected client.
      *
-     * <p>Removes the client session from the lobby, notifies the remaining
-     * clients that the player disconnected, and broadcasts the updated
-     * player list so all clients can refresh their lobby view automatically.</p>
+     * <p>If the client is currently inside a lobby, it is removed from that lobby.
+     * If the client is not in any lobby, only a log entry is written.</p>
      *
      * @param session the client session to unregister
      */
     public synchronized void unregisterClient(ClientSession session) {
-        lobby.removeSession(session);
-        log("Client disconnected: " + session.getPlayerName()
-                + ". Remaining clients: " + lobby.getPlayerCount());
+        Lobby lobby = getLobbyOf(session);
 
-        broadcast(new Message(
+        if (lobby == null) {
+            log("Client disconnected without lobby: " + session.getPlayerName());
+            return;
+        }
+
+        lobby.removeSession(session);
+        playerLobbyMap.remove(session);
+
+        log("Client disconnected: " + session.getPlayerName()
+                + ". Remaining clients in lobby " + lobby.getLobbyId() + ": " + lobby.getPlayerCount());
+
+        broadcastToLobby(lobby, new Message(
                 Message.Type.INFO,
                 session.getPlayerName() + " disconnected."
         ));
 
-        broadcastPlayerList();
+        broadcastPlayerList(lobby);
+
+        if (lobby.getPlayerCount() == 0) {
+            lobbies.remove(lobby.getLobbyId());
+            log("Removed empty lobby: " + lobby.getLobbyId());
+        }
     }
 
     /**
      * Processes an incoming message from a client.
      *
-     * <p>Routes the message to the appropriate handler based on message type.
+     * <p>The message is validated and then routed to the corresponding handler
+     * based on its type.</p>
      *
      * @param session the client session sending the message
      * @param message the message to process
@@ -100,6 +196,9 @@ public class ServerService {
         switch (message.type()) {
             case NAME -> handleName(session, message.content());
             case CHAT -> handleChat(session, message.content());
+            case CREATE -> handleCreateLobby(session, message.content());
+            case JOIN -> handleJoinLobby(session, message.content());
+
             case PLAYERS -> {
                 if (!message.content().isBlank()) {
                     session.send(new Message(
@@ -110,6 +209,7 @@ public class ServerService {
                 }
                 handlePlayers(session);
             }
+
             case START -> {
                 if (!message.content().isBlank()) {
                     session.send(new Message(
@@ -120,6 +220,7 @@ public class ServerService {
                 }
                 handleStart(session);
             }
+
             case QUIT -> {
                 if (!message.content().isBlank()) {
                     session.send(new Message(
@@ -128,24 +229,25 @@ public class ServerService {
                     ).encode());
                     return;
                 }
+
                 log(session.getPlayerName() + " requested quit.");
                 session.send(new Message(
                         Message.Type.INFO,
                         "Goodbye."
                 ).encode());
             }
+
             case PING, PONG -> {
                 // Heartbeat messages are handled in ClientSession / ClientReader.
-                // They should normally not reach ServerService.
-                log("Heartbeat message reached ServerService from " + session.getPlayerName()
-                        + ": " + message.type());
+                log("Heartbeat message reached ServerService from "
+                        + session.getPlayerName() + ": " + message.type());
             }
-            case INFO, ERROR, GAME -> {
-                session.send(new Message(
-                        Message.Type.ERROR,
-                        "Client may not send server-only message types."
-                ).encode());
-            }
+
+            case INFO, ERROR, GAME -> session.send(new Message(
+                    Message.Type.ERROR,
+                    "Client may not send server-only message types."
+            ).encode());
+
             case UNKNOWN -> {
                 log("Unknown command from " + session.getPlayerName() + ": " + message.content());
                 session.send(new Message(
@@ -155,13 +257,117 @@ public class ServerService {
             }
         }
     }
+
+    /**
+     * Handles a request to create a new lobby and join it.
+     *
+     * @param session the client session creating the lobby
+     * @param lobbyId the requested lobby id
+     */
+    private void handleCreateLobby(ClientSession session, String lobbyId) {
+        if (lobbyId == null || lobbyId.isBlank()) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Lobby name cannot be empty."
+            ).encode());
+            return;
+        }
+
+        String cleanLobbyId = lobbyId.trim();
+
+        if (cleanLobbyId.length() > 20) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Lobby name is too long. Maximum 20 characters."
+            ).encode());
+            return;
+        }
+
+        if (cleanLobbyId.contains("|") || cleanLobbyId.contains(",")) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Lobby name contains invalid characters."
+            ).encode());
+            return;
+        }
+
+        if (lobbies.containsKey(cleanLobbyId)) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Lobby already exists."
+            ).encode());
+            return;
+        }
+
+        leaveCurrentLobby(session);
+
+        Lobby newLobby = getOrCreateLobby(cleanLobbyId);
+        newLobby.addSession(session);
+        playerLobbyMap.put(session, cleanLobbyId);
+
+        session.send(new Message(
+                Message.Type.INFO,
+                "Lobby created and joined: " + cleanLobbyId
+        ).encode());
+
+        broadcastToLobby(newLobby, new Message(
+                Message.Type.INFO,
+                session.getPlayerName() + " joined the lobby."
+        ));
+
+        broadcastPlayerList(newLobby);
+    }
+
+    /**
+     * Handles a request to join an existing lobby.
+     *
+     * @param session the client session joining the lobby
+     * @param lobbyId the lobby id to join
+     */
+    private void handleJoinLobby(ClientSession session, String lobbyId) {
+        if (lobbyId == null || lobbyId.isBlank()) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Lobby name cannot be empty."
+            ).encode());
+            return;
+        }
+
+        String cleanLobbyId = lobbyId.trim();
+        Lobby lobby = lobbies.get(cleanLobbyId);
+
+        if (lobby == null) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Lobby does not exist."
+            ).encode());
+            return;
+        }
+
+        leaveCurrentLobby(session);
+
+        lobby.addSession(session);
+        playerLobbyMap.put(session, cleanLobbyId);
+
+        session.send(new Message(
+                Message.Type.INFO,
+                "Joined lobby: " + cleanLobbyId
+        ).encode());
+
+        broadcastToLobby(lobby, new Message(
+                Message.Type.INFO,
+                session.getPlayerName() + " joined the lobby."
+        ));
+
+        broadcastPlayerList(lobby);
+    }
+
     /**
      * Handles a name change request from a client.
      *
-     * <p>Validates the requested name, ensures uniqueness, updates the
-     * client's player name, informs the client about the result, notifies
-     * the lobby about the join or rename event, and broadcasts the updated
-     * player list to all connected clients.</p>
+     * <p>A player may choose or change a name even before joining a lobby.
+     * If the player is already inside a lobby, the lobby is informed about
+     * the new or changed name and its player list is refreshed.</p>
      *
      * @param session the client session requesting the name change
      * @param name the new name requested
@@ -224,11 +430,6 @@ public class ServerService {
                         "Your requested name was taken. Your name has been set to " + uniqueName
                 ).encode());
             }
-
-            broadcast(new Message(
-                    Message.Type.INFO,
-                    uniqueName + " joined the lobby."
-            ));
         } else {
             log("Player renamed: " + oldName + " -> " + uniqueName);
 
@@ -243,14 +444,24 @@ public class ServerService {
                         "Your requested name was taken. Your name is now " + uniqueName
                 ).encode());
             }
-
-            broadcast(new Message(
-                    Message.Type.INFO,
-                    oldName + " changed their name to " + uniqueName
-            ));
         }
 
-        broadcastPlayerList();
+        Lobby lobby = getLobbyOf(session);
+        if (lobby != null) {
+            if (firstTimeNaming) {
+                broadcastToLobby(lobby, new Message(
+                        Message.Type.INFO,
+                        uniqueName + " joined the lobby."
+                ));
+            } else {
+                broadcastToLobby(lobby, new Message(
+                        Message.Type.INFO,
+                        oldName + " changed their name to " + uniqueName
+                ));
+            }
+
+            broadcastPlayerList(lobby);
+        }
     }
 
     /**
@@ -264,10 +475,10 @@ public class ServerService {
     }
 
     /**
-     * Creates a unique player name.
+     * Creates a unique player name across all lobbies.
      *
      * <p>If the requested name is already taken, the server appends
-     * "(2)", "(3)", and so on until a free name is found.
+     * "(2)", "(3)", and so on until a free name is found.</p>
      *
      * @param requestedName the requested player name
      * @param currentSession the client requesting the name
@@ -296,12 +507,14 @@ public class ServerService {
      *
      * @param name the name to check
      * @param currentSession the current client session
-     * @return true if the name is already taken, false otherwise
+     * @return {@code true} if the name is already taken, otherwise {@code false}
      */
     private boolean isNameTaken(String name, ClientSession currentSession) {
-        for (ClientSession session : lobby.getSessions()) {
-            if (session != currentSession && session.getPlayerName().equalsIgnoreCase(name)) {
-                return true;
+        for (Lobby lobby : lobbies.values()) {
+            for (ClientSession session : lobby.getSessions()) {
+                if (session != currentSession && session.getPlayerName().equalsIgnoreCase(name)) {
+                    return true;
+                }
             }
         }
         return false;
@@ -310,10 +523,23 @@ public class ServerService {
     /**
      * Handles a chat message from a client.
      *
+     * <p>Chat is only allowed inside a lobby and is only broadcast to the
+     * sender's current lobby.</p>
+     *
      * @param session the client session sending the chat
      * @param text the chat message content
      */
     private void handleChat(ClientSession session, String text) {
+        Lobby lobby = getLobbyOf(session);
+
+        if (lobby == null) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "You are not in a lobby."
+            ).encode());
+            return;
+        }
+
         if (text == null || text.isBlank()) {
             session.send(new Message(
                     Message.Type.ERROR,
@@ -340,24 +566,35 @@ public class ServerService {
             return;
         }
 
-        broadcast(new Message(
+        broadcastToLobby(lobby, new Message(
                 Message.Type.CHAT,
                 session.getPlayerName() + "|" + cleanText
         ));
     }
 
     /**
-     * Handles a request to list all connected players.
+     * Handles a request to list all connected players in the current lobby.
      *
      * @param session the client session requesting the player list
      */
     private void handlePlayers(ClientSession session) {
+        Lobby lobby = getLobbyOf(session);
+
+        if (lobby == null) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "You are not in a lobby."
+            ).encode());
+            return;
+        }
+
         List<String> names = new ArrayList<>();
         for (Player player : lobby.getPlayers()) {
             names.add(player.name());
         }
 
-        log(session.getPlayerName() + " requested player list: " + names);
+        log(session.getPlayerName() + " requested player list in lobby "
+                + lobby.getLobbyId() + ": " + names);
 
         session.send(new Message(
                 Message.Type.PLAYERS,
@@ -368,82 +605,60 @@ public class ServerService {
     /**
      * Handles a game start request from a client.
      *
-     * <p>Validates that the game has not already started and that there are enough players.
-     * Broadcasts game start information to all connected clients.
+     * <p>The request is only valid inside a lobby. At least two players must
+     * be present in that lobby. The gameStarted state is now stored per lobby.</p>
      *
      * @param session the client session requesting to start the game
      */
     private void handleStart(ClientSession session) {
-        log(session.getPlayerName() + " requested game start.");
+        Lobby lobby = getLobbyOf(session);
 
-        if (gameStarted) {
-            log("Start rejected: game already started.");
+        if (lobby == null) {
             session.send(new Message(
                     Message.Type.ERROR,
-                    "Game already started."
+                    "You are not in a lobby."
+            ).encode());
+            return;
+        }
+
+        log(session.getPlayerName() + " requested game start in lobby " + lobby.getLobbyId() + ".");
+
+        // 🔥 FIX: use lobby-specific gameStarted
+        if (lobby.isGameStarted()) {
+            log("Start rejected: game already started in lobby " + lobby.getLobbyId() + ".");
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Game already started in this lobby."
             ).encode());
             return;
         }
 
         if (lobby.getPlayerCount() < 2) {
-            log("Start rejected: not enough players.");
+            log("Start rejected in lobby " + lobby.getLobbyId() + ": not enough players.");
             session.send(new Message(
                     Message.Type.ERROR,
-                    "Need at least 2 players to start."
+                    "Need at least 2 players in the lobby to start."
             ).encode());
             return;
         }
 
-        gameStarted = true;
-        log("Game started with " + lobby.getPlayerCount() + " players.");
+        // 🔥 FIX: set gameStarted per lobby
+        lobby.setGameStarted(true);
 
-        broadcast(new Message(
+        log("Game started in lobby " + lobby.getLobbyId()
+                + " with " + lobby.getPlayerCount() + " players.");
+
+        broadcastToLobby(lobby, new Message(
                 Message.Type.GAME,
                 "Starting prototype game..."
         ));
-        broadcast(new Message(
+        broadcastToLobby(lobby, new Message(
                 Message.Type.GAME,
-                "Connected players: " + lobby.getPlayerCount()
+                "Connected players in lobby: " + lobby.getPlayerCount()
         ));
-        broadcast(new Message(
+        broadcastToLobby(lobby, new Message(
                 Message.Type.GAME,
                 "This is where actual game initialization will go."
         ));
     }
-
-
-
-    /**
-     * Broadcasts the current list of connected players to all clients.
-     *
-     * <p>The player list is encoded as a comma-separated string in a
-     * {@link Message.Type#PLAYERS} message. This allows all connected
-     * clients to refresh their lobby player list automatically whenever
-     * the lobby membership changes.</p>
-     */
-    private void broadcastPlayerList() {
-        List<String> names = new ArrayList<>();
-        for (Player player : lobby.getPlayers()) {
-            names.add(player.name());
-        }
-
-        broadcast(new Message(
-                Message.Type.PLAYERS,
-                String.join(",", names)
-        ));
-    }
-
-    /**
-     * Sends a structured message to all connected clients.
-     *
-     * @param message the message to broadcast
-     */
-    private void broadcast(Message message) {
-        log("Broadcast: " + message.encode());
-        for (ClientSession session : lobby.getSessions()) {
-            session.send(message.encode());
-        }
-    }
-
-
 }

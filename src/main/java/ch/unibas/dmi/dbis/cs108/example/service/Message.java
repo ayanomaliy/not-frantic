@@ -27,6 +27,12 @@ public record Message(Type type, String content) {
         /** Message used to leave the server. */
         QUIT,
 
+        /** Message used to create a new lobby. */
+        CREATE,
+
+        /** Message used to join an existing lobby. */
+        JOIN,
+
         /** Heartbeat ping message. */
         PING,
 
@@ -97,6 +103,8 @@ public record Message(Type type, String content) {
                 case "/players" -> new Message(Type.PLAYERS, "");
                 case "/start" -> new Message(Type.START, "");
                 case "/quit" -> new Message(Type.QUIT, "");
+                case "/create" -> new Message(Type.CREATE, payload);
+                case "/join" -> new Message(Type.JOIN, payload);
                 default -> new Message(Type.UNKNOWN, trimmed);
             };
         }
@@ -104,6 +112,12 @@ public record Message(Type type, String content) {
         return new Message(Type.UNKNOWN, trimmed);
     }
 
+    /**
+     * Parses a protocol type string into a message type.
+     *
+     * @param typeText the raw type text
+     * @return the corresponding message type or {@link Type#UNKNOWN}
+     */
     private static Type parseType(String typeText) {
         return switch (typeText) {
             case "NAME" -> Type.NAME;
@@ -111,6 +125,8 @@ public record Message(Type type, String content) {
             case "PLAYERS" -> Type.PLAYERS;
             case "START" -> Type.START;
             case "QUIT" -> Type.QUIT;
+            case "CREATE" -> Type.CREATE;
+            case "JOIN" -> Type.JOIN;
             case "PING" -> Type.PING;
             case "PONG" -> Type.PONG;
             case "INFO" -> Type.INFO;
@@ -136,7 +152,7 @@ public record Message(Type type, String content) {
      */
     public boolean expectsContent() {
         return switch (type) {
-            case NAME, CHAT, PLAYERS, INFO, ERROR, GAME -> true;
+            case NAME, CHAT, PLAYERS, INFO, ERROR, GAME, CREATE, JOIN -> true;
             case START, QUIT, PING, PONG, UNKNOWN -> false;
         };
     }
@@ -157,7 +173,7 @@ public record Message(Type type, String content) {
 
         return switch (type) {
             case START, QUIT, PING, PONG -> safe(content).isBlank();
-            case NAME, CHAT, PLAYERS, INFO, ERROR, GAME -> true;
+            case NAME, CHAT, PLAYERS, INFO, ERROR, GAME, CREATE, JOIN -> true;
             case UNKNOWN -> false;
         };
     }
@@ -179,6 +195,12 @@ public record Message(Type type, String content) {
         return new String[]{parts[0], parts[1]};
     }
 
+    /**
+     * Returns a non-null string for the given text.
+     *
+     * @param text the input text
+     * @return the same text, or an empty string if null
+     */
     private static String safe(String text) {
         return text == null ? "" : text;
     }
