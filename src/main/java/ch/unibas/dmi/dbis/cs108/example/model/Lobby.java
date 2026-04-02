@@ -1,13 +1,12 @@
 package ch.unibas.dmi.dbis.cs108.example.model;
 
-
 import ch.unibas.dmi.dbis.cs108.example.controller.ClientSession;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Represents the game lobby containing all connected players.
+ * Represents one game lobby containing the connected players of that game.
  * <p>
  * Maintains a list of active client sessions and provides methods to add/remove
  * clients and query the current set of players.
@@ -15,7 +14,45 @@ import java.util.List;
  */
 public class Lobby {
 
+    private final String lobbyId;
     private final List<ClientSession> sessions = new ArrayList<>();
+    private boolean gameStarted = false;
+
+    /**
+     * Creates a new lobby with a unique lobby id.
+     *
+     * @param lobbyId the id of this lobby
+     */
+    public Lobby(String lobbyId) {
+        this.lobbyId = lobbyId;
+    }
+
+    /**
+     * Returns the id of this lobby.
+     *
+     * @return the lobby id
+     */
+    public String getLobbyId() {
+        return lobbyId;
+    }
+
+    /**
+     * Returns whether the game of this lobby has already started.
+     *
+     * @return true if the game has started, otherwise false
+     */
+    public boolean isGameStarted() {
+        return gameStarted;
+    }
+
+    /**
+     * Sets whether the game of this lobby has started.
+     *
+     * @param gameStarted the new started state
+     */
+    public void setGameStarted(boolean gameStarted) {
+        this.gameStarted = gameStarted;
+    }
 
     /**
      * Adds a client session to the lobby.
@@ -38,7 +75,7 @@ public class Lobby {
     /**
      * Gets all active client sessions in the lobby.
      *
-     * @return an unmodifiable copy of the sessions list
+     * @return a copy of the sessions list
      */
     public List<ClientSession> getSessions() {
         return new ArrayList<>(sessions);
