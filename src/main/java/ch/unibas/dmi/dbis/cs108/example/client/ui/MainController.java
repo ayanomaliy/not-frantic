@@ -8,6 +8,7 @@ import ch.unibas.dmi.dbis.cs108.example.client.ui.ConnectView;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import javafx.scene.control.TextInputDialog;
 
 /**
  * Coordinates JavaFX view changes and user interaction for the graphical
@@ -66,10 +67,14 @@ public class MainController {
     /**
      * Shows the lobby screen.
      */
+    /**
+     * Shows the lobby screen.
+     */
     public void showLobbyView() {
         LobbyView view = new LobbyView();
 
         view.getPlayersList().setItems(state.getPlayers());
+        view.getLobbiesList().setItems(state.getLobbies());
         view.getChatList().setItems(state.getChatMessages());
         view.getInfoList().setItems(state.getGameMessages());
 
@@ -80,11 +85,46 @@ public class MainController {
         view.getCommandInput().setOnAction(e -> sendCommand(view));
 
         view.getRefreshPlayersButton().setOnAction(e -> networkClient.requestPlayers());
+        view.getRefreshLobbiesButton().setOnAction(e -> networkClient.requestLobbies());
+
+        view.getJoinLobbyButton().setOnAction(e -> {
+            String selectedLobby = view.getLobbiesList().getSelectionModel().getSelectedItem();
+            if (selectedLobby != null && !selectedLobby.isBlank()) {
+                networkClient.sendCommand("/join " + selectedLobby);
+            }
+        });
+
+        view.getLobbiesList().setOnMouseClicked(e -> {
+            if (e.getClickCount() == 2) {
+                String selectedLobby = view.getLobbiesList().getSelectionModel().getSelectedItem();
+                if (selectedLobby != null && !selectedLobby.isBlank()) {
+                    networkClient.sendCommand("/join " + selectedLobby);
+                }
+            }
+        });
+
+        view.getCreateLobbyButton().setOnAction(e -> {
+            TextInputDialog dialog = new TextInputDialog();
+            dialog.setTitle("Create Lobby");
+            dialog.setHeaderText("Create a new lobby");
+            dialog.setContentText("Lobby name:");
+
+            dialog.showAndWait().ifPresent(name -> {
+                String trimmed = name.trim();
+                if (!trimmed.isBlank()) {
+                    networkClient.sendCommand("/create " + trimmed);
+                }
+            });
+        });
+
         view.getStartButton().setOnAction(e -> networkClient.startGame());
         view.getDisconnectButton().setOnAction(e -> {
             networkClient.disconnect();
             showConnectView();
         });
+
+        networkClient.requestPlayers();
+        networkClient.requestLobbies();
 
         Scene scene = createStyledScene(view, 1280, 800);
         stage.setScene(scene);

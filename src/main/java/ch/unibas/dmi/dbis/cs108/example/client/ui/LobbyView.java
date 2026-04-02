@@ -34,8 +34,16 @@ public class LobbyView extends BorderPane {
     private final Button startButton = new Button("Start Game");
     private final Button disconnectButton = new Button("Disconnect");
 
+    private final ListView<String> lobbiesList = new ListView<>();
+    private final Button refreshLobbiesButton = new Button("Refresh Lobbies");
+    private final Button joinLobbyButton = new Button("Join Selected Lobby");
+    private final Button createLobbyButton = new Button("Create New Lobby");
+
     /**
      * Creates the lobby view.
+     *
+     * <p>This screen contains the player list, lobby list, chat area,
+     * informational messages, and controls for lobby and game actions.</p>
      */
     public LobbyView() {
         getStyleClass().addAll("screen", "lobby-screen");
@@ -47,10 +55,20 @@ public class LobbyView extends BorderPane {
                 12,
                 createSectionTitle("Players"),
                 playersList,
-                refreshPlayersButton
+                refreshPlayersButton,
+                createSectionTitle("Lobbies"),
+                lobbiesList,
+                refreshLobbiesButton,
+                joinLobbyButton,
+                createLobbyButton
         );
         leftPanel.getStyleClass().add("panel");
-        leftPanel.setPrefWidth(240);
+        leftPanel.setPrefWidth(260);
+
+        VBox.setVgrow(playersList, Priority.ALWAYS);
+        lobbiesList.setPrefHeight(180);
+
+
         VBox.setVgrow(playersList, Priority.ALWAYS);
 
         HBox chatBox = new HBox(10, chatInput, sendButton);
@@ -109,7 +127,13 @@ public class LobbyView extends BorderPane {
         disconnectButton.getStyleClass().addAll("frantic-button", "danger-button");
 
         chatInput.setPromptText("Type a message...");
-        commandInput.setPromptText("/name Alice, /players, /start, /quit");
+        commandInput.setPromptText("/name Alice, /lobbies, /create Lobby1, /join Lobby1, /players, /start, /quit");
+
+        lobbiesList.getStyleClass().add("frantic-list-view");
+
+        refreshLobbiesButton.getStyleClass().addAll("frantic-button", "secondary-button");
+        joinLobbyButton.getStyleClass().addAll("frantic-button", "primary-button");
+        createLobbyButton.getStyleClass().addAll("frantic-button", "primary-button");
     }
 
     /**
@@ -212,5 +236,41 @@ public class LobbyView extends BorderPane {
      */
     public Button getDisconnectButton() {
         return disconnectButton;
+    }
+
+    /**
+     * Returns the list view showing the available lobbies.
+     *
+     * @return the lobby list view
+     */
+    public ListView<String> getLobbiesList() {
+        return lobbiesList;
+    }
+
+    /**
+     * Returns the button used to refresh the lobby list manually.
+     *
+     * @return the refresh lobbies button
+     */
+    public Button getRefreshLobbiesButton() {
+        return refreshLobbiesButton;
+    }
+
+    /**
+     * Returns the button used to join the currently selected lobby.
+     *
+     * @return the join lobby button
+     */
+    public Button getJoinLobbyButton() {
+        return joinLobbyButton;
+    }
+
+    /**
+     * Returns the button used to create a new lobby.
+     *
+     * @return the create lobby button
+     */
+    public Button getCreateLobbyButton() {
+        return createLobbyButton;
     }
 }

@@ -19,6 +19,8 @@ public class ClientState {
     private final ObservableList<String> players = FXCollections.observableArrayList();
     private final ObservableList<String> chatMessages = FXCollections.observableArrayList();
     private final ObservableList<String> gameMessages = FXCollections.observableArrayList();
+    private final ObservableList<String> lobbies = FXCollections.observableArrayList();
+
 
     /**
      * Returns the observable connection status property.
@@ -66,4 +68,8 @@ public class ClientState {
 
     public String getStatusText() { return statusText.get(); }
     public void setStatusText(String value) { statusText.set(value); }
+
+    public ObservableList<String> getLobbies() {
+        return lobbies;
+    }
 }

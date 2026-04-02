@@ -30,6 +30,9 @@ public record Message(Type type, String content) {
         /** Message used to create a new lobby. */
         CREATE,
 
+        /** Message to give a list of all existing lobbies*/
+        LOBBIES,
+
         /** Message used to join an existing lobby. */
         JOIN,
 
@@ -105,6 +108,7 @@ public record Message(Type type, String content) {
                 case "/quit" -> new Message(Type.QUIT, "");
                 case "/create" -> new Message(Type.CREATE, payload);
                 case "/join" -> new Message(Type.JOIN, payload);
+                case "/lobbies" -> new Message(Type.LOBBIES, "");
                 default -> new Message(Type.UNKNOWN, trimmed);
             };
         }
@@ -127,6 +131,7 @@ public record Message(Type type, String content) {
             case "QUIT" -> Type.QUIT;
             case "CREATE" -> Type.CREATE;
             case "JOIN" -> Type.JOIN;
+            case "LOBBIES" -> Type.LOBBIES;
             case "PING" -> Type.PING;
             case "PONG" -> Type.PONG;
             case "INFO" -> Type.INFO;
@@ -152,7 +157,7 @@ public record Message(Type type, String content) {
      */
     public boolean expectsContent() {
         return switch (type) {
-            case NAME, CHAT, PLAYERS, INFO, ERROR, GAME, CREATE, JOIN -> true;
+            case NAME, CHAT, PLAYERS, INFO, ERROR, GAME, CREATE, LOBBIES, JOIN -> true;
             case START, QUIT, PING, PONG, UNKNOWN -> false;
         };
     }
@@ -173,7 +178,7 @@ public record Message(Type type, String content) {
 
         return switch (type) {
             case START, QUIT, PING, PONG -> safe(content).isBlank();
-            case NAME, CHAT, PLAYERS, INFO, ERROR, GAME, CREATE, JOIN -> true;
+            case NAME, CHAT, PLAYERS, INFO, ERROR, GAME, CREATE,LOBBIES, JOIN -> true;
             case UNKNOWN -> false;
         };
     }

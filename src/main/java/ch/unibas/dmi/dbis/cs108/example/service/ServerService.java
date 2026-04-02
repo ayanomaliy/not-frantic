@@ -27,6 +27,8 @@ public class ServerService {
     /** Maps each connected client session to the id of its current lobby. */
     private final Map<ClientSession, String> playerLobbyMap = new HashMap<>();
 
+    private final List<ClientSession> connectedClients = new ArrayList<>();
+
 
 
     /**
@@ -117,6 +119,7 @@ public class ServerService {
         if (currentLobby.getPlayerCount() == 0) {
             lobbies.remove(currentLobby.getLobbyId());
             log("Removed empty lobby: " + currentLobby.getLobbyId());
+            broadcastLobbyListToAllClients();
         }
     }
 
@@ -129,12 +132,16 @@ public class ServerService {
      * @param session the client session to register
      */
     public synchronized void registerClient(ClientSession session) {
+        connectedClients.add(session);
+
         log("Client connected without lobby yet: " + session.getPlayerName());
 
         session.send(new Message(
                 Message.Type.INFO,
                 "Connected to server. Use /create <lobby> or /join <lobby>."
         ).encode());
+
+        sendLobbyList(session);
     }
 
     /**
@@ -170,7 +177,10 @@ public class ServerService {
             lobbies.remove(lobby.getLobbyId());
             log("Removed empty lobby: " + lobby.getLobbyId());
         }
+
+        broadcastLobbyListToAllClients();
     }
+
 
     /**
      * Processes an incoming message from a client.
@@ -198,6 +208,16 @@ public class ServerService {
             case CHAT -> handleChat(session, message.content());
             case CREATE -> handleCreateLobby(session, message.content());
             case JOIN -> handleJoinLobby(session, message.content());
+            case LOBBIES -> {
+                if (!message.content().isBlank()) {
+                    session.send(new Message(
+                            Message.Type.ERROR,
+                            "LOBBIES must not contain content."
+                    ).encode());
+                    return;
+                }
+                sendLobbyList(session);
+            }
 
             case PLAYERS -> {
                 if (!message.content().isBlank()) {
@@ -316,6 +336,7 @@ public class ServerService {
         ));
 
         broadcastPlayerList(newLobby);
+        broadcastLobbyListToAllClients();
     }
 
     /**
@@ -334,6 +355,16 @@ public class ServerService {
         }
 
         String cleanLobbyId = lobbyId.trim();
+
+        String currentLobbyId = playerLobbyMap.get(session);
+        if (currentLobbyId != null && currentLobbyId.equals(cleanLobbyId)) {
+            session.send(new Message(
+                    Message.Type.INFO,
+                    "You are already in lobby: " + cleanLobbyId
+            ).encode());
+            return;
+        }
+
         Lobby lobby = lobbies.get(cleanLobbyId);
 
         if (lobby == null) {
@@ -360,6 +391,21 @@ public class ServerService {
         ));
 
         broadcastPlayerList(lobby);
+    }
+
+    private void sendLobbyList(ClientSession session) {
+        List<String> lobbyNames = new ArrayList<>(lobbies.keySet());
+        session.send(new Message(
+                Message.Type.LOBBIES,
+                String.join(",", lobbyNames)
+        ).encode());
+    }
+
+
+    private void broadcastLobbyListToAllClients() {
+        for (ClientSession client : connectedClients) {
+            sendLobbyList(client);
+        }
     }
 
     /**
@@ -510,11 +556,9 @@ public class ServerService {
      * @return {@code true} if the name is already taken, otherwise {@code false}
      */
     private boolean isNameTaken(String name, ClientSession currentSession) {
-        for (Lobby lobby : lobbies.values()) {
-            for (ClientSession session : lobby.getSessions()) {
-                if (session != currentSession && session.getPlayerName().equalsIgnoreCase(name)) {
-                    return true;
-                }
+        for (ClientSession session : connectedClients) {
+            if (session != currentSession && session.getPlayerName().equalsIgnoreCase(name)) {
+                return true;
             }
         }
         return false;

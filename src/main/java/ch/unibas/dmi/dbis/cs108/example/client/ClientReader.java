@@ -77,6 +77,13 @@ public class ClientReader implements Runnable {
                             System.out.println("[PLAYERS] " + message.content());
                         }
                     }
+                    case LOBBIES -> {
+                        if (message.content().isBlank()) {
+                            System.out.println("[LOBBIES] none");
+                        } else {
+                            System.out.println("[LOBBIES] " + message.content());
+                        }
+                    }
                     case GAME -> System.out.println("[GAME] " + message.content());
                     case NAME, START, QUIT, UNKNOWN ->
                             System.out.println("[CLIENT] Unexpected server message: " + line);

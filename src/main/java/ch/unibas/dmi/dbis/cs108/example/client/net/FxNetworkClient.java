@@ -80,6 +80,7 @@ public class FxNetworkClient {
         heartbeatThread.start();
 
         requestPlayers();
+        requestLobbies();
     }
     /**
      * Disconnects from the server and updates the client state.
@@ -142,6 +143,12 @@ public class FxNetworkClient {
      */
     public void requestPlayers() {
         send(new Message(Message.Type.PLAYERS, ""));
+    }
+    /**
+     * Requests the current lobby list from the server.
+     */
+    public void requestLobbies() {
+        send(new Message(Message.Type.LOBBIES, ""));
     }
     /**
      * Sends a request to start the game.
@@ -268,6 +275,16 @@ public class FxNetworkClient {
 
             case PLAYERS -> Platform.runLater(() -> {
                 state.getPlayers().setAll(
+                        message.content().isBlank()
+                                ? java.util.List.of()
+                                : Arrays.stream(message.content().split(","))
+                                .map(String::trim)
+                                .filter(s -> !s.isBlank())
+                                .toList()
+                );
+            });
+            case LOBBIES -> Platform.runLater(() -> {
+                state.getLobbies().setAll(
                         message.content().isBlank()
                                 ? java.util.List.of()
                                 : Arrays.stream(message.content().split(","))
