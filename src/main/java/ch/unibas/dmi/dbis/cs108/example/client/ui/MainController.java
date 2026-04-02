@@ -1,33 +1,34 @@
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
 
+import animatefx.animation.FadeIn;
+import animatefx.animation.FadeInUp;
 import ch.unibas.dmi.dbis.cs108.example.client.net.FxNetworkClient;
 import ch.unibas.dmi.dbis.cs108.example.client.ClientState;
+import ch.unibas.dmi.dbis.cs108.example.client.ui.ConnectView;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 /**
- * Main GUI controller for the Frantic^-1 JavaFX client.
+ * Coordinates JavaFX view changes and user interaction for the graphical
+ * Frantic^-1 client.
  *
- * <p>This controller is responsible for switching between the connect
- * screen and the lobby screen, wiring user interface events to the
- * network client, and binding the shared {@link ClientState} to the
- * corresponding JavaFX views.</p>
+ * <p>This controller connects the visual components to the client state and
+ * the network layer. It also applies the shared stylesheet and simple
+ * AnimateFX transitions whenever a new screen is shown.</p>
  */
 public class MainController {
 
-    /** Primary application window. */
+    private static final String THEME_STYLESHEET = "/css/frantic-theme.css";
+
     private final Stage stage;
-
-    /** Shared client state used by the GUI. */
     private final ClientState state;
-
-    /** Network client handling communication with the server. */
     private final FxNetworkClient networkClient;
 
     /**
      * Creates a new main controller.
      *
-     * @param stage the primary JavaFX stage
+     * @param stage the primary stage
      * @param state the shared client state
      * @param networkClient the network client used for server communication
      */
@@ -38,11 +39,7 @@ public class MainController {
     }
 
     /**
-     * Displays the initial connect view.
-     *
-     * <p>This method creates a {@link ConnectView}, binds its status label
-     * to the shared client state, and configures the connect button to
-     * establish a server connection. On success, the lobby view is shown.</p>
+     * Shows the connect screen.
      */
     public void showConnectView() {
         ConnectView view = new ConnectView();
@@ -61,16 +58,13 @@ public class MainController {
             }
         });
 
-        stage.setScene(new Scene(view, 500, 300));
+        Scene scene = createStyledScene(view, 640, 420);
+        stage.setScene(scene);
+        new FadeInUp(view).play();
     }
 
     /**
-     * Displays the lobby view after a successful connection.
-     *
-     * <p>This method creates a {@link LobbyView}, binds its lists to the
-     * shared client state, and wires its buttons and input field to the
-     * appropriate network actions such as sending chat messages, refreshing
-     * the player list, starting the game, or disconnecting.</p>
+     * Shows the lobby screen.
      */
     public void showLobbyView() {
         LobbyView view = new LobbyView();
@@ -92,15 +86,15 @@ public class MainController {
             showConnectView();
         });
 
-        stage.setScene(new Scene(view, 1000, 700));
+        Scene scene = createStyledScene(view, 1280, 800);
+        stage.setScene(scene);
+        new FadeIn(view).play();
     }
 
     /**
-     * Sends the current chat input to the server if it is not blank.
+     * Sends the content of the chat input field as a chat message.
      *
-     * <p>After sending the message, the chat input field is cleared.</p>
-     *
-     * @param view the lobby view containing the chat input field
+     * @param view the lobby view containing the chat input
      */
     private void sendChat(LobbyView view) {
         String text = view.getChatInput().getText().trim();
@@ -111,13 +105,13 @@ public class MainController {
     }
 
     /**
-     * Executes a terminal-style client command entered in the command field.
+     * Executes the content of the command field as a terminal-style client
+     * command.
      *
-     * <p>The command is parsed and handled by the network client using the same
-     * rules as the console client. If the command disconnects the client, the
-     * GUI returns to the connect view.</p>
+     * <p>If the command disconnects the client, the connect screen is shown
+     * again.</p>
      *
-     * @param view the lobby view containing the command input field
+     * @param view the lobby view containing the command input
      */
     private void sendCommand(LobbyView view) {
         String command = view.getCommandInput().getText().trim();
@@ -131,5 +125,27 @@ public class MainController {
         if (disconnected) {
             showConnectView();
         }
+    }
+
+    /**
+     * Creates a scene and attaches the shared CSS theme if the resource is
+     * available.
+     *
+     * @param root the root node of the scene
+     * @param width the initial scene width
+     * @param height the initial scene height
+     * @return the configured scene
+     */
+    private Scene createStyledScene(Parent root, double width, double height) {
+        Scene scene = new Scene(root, width, height);
+
+        scene.setFill(javafx.scene.paint.Paint.valueOf("#bfc5ff"));
+
+        var stylesheet = getClass().getResource(THEME_STYLESHEET);
+        if (stylesheet != null) {
+            scene.getStylesheets().add(stylesheet.toExternalForm());
+        }
+
+        return scene;
     }
 }

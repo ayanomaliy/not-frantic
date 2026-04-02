@@ -150,6 +150,8 @@ public class FxNetworkClient {
         send(new Message(Message.Type.START, ""));
     }
 
+
+
     /**
      * Sends a protocol message to the server if an output stream is available.
      *

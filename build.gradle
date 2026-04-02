@@ -29,6 +29,7 @@ javafx {
 dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.10.0")
+    implementation 'io.github.typhon0:AnimateFX:1.2.4'
 }
 
 test {

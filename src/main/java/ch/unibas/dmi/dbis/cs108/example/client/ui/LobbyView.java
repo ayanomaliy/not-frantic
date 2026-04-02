@@ -1,115 +1,158 @@
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
 
 import javafx.geometry.Insets;
-import javafx.scene.control.*;
-import javafx.scene.layout.*;
+import javafx.geometry.Pos;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 
 /**
- * JavaFX view representing the lobby screen of the Frantic^-1 client.
+ * Lobby view for the Frantic^-1 GUI client.
  *
- * <p>This view displays the list of connected players, the chat area,
- * and a panel for game-related information and controls. It is shown
- * after a successful connection to the server.</p>
+ * <p>This screen shows the connected players, chat, informational messages,
+ * and client controls such as start, disconnect, and slash-style command
+ * execution. The visual appearance is controlled through JavaFX CSS.</p>
  */
 public class LobbyView extends BorderPane {
 
-    /** List view displaying all currently connected players. */
     private final ListView<String> playersList = new ListView<>();
-
-    /** List view displaying chat messages exchanged in the lobby. */
     private final ListView<String> chatList = new ListView<>();
-
-    /** List view displaying informational and game-related messages. */
     private final ListView<String> infoList = new ListView<>();
 
-    /** Text field for entering a chat message. */
     private final TextField chatInput = new TextField();
-
-    /** Button for sending the current chat message. */
     private final Button sendButton = new Button("Send");
-
-    /** Button for manually requesting the current player list from the server. */
-    private final Button refreshPlayersButton = new Button("Refresh Players");
-
-    /** Button for sending a game start request to the server. */
-    private final Button startButton = new Button("Start Game");
-
-    /** Button for disconnecting from the server and returning to the connect screen. */
-    private final Button disconnectButton = new Button("Disconnect");
 
     private final TextField commandInput = new TextField();
     private final Button commandButton = new Button("Run");
 
+    private final Button refreshPlayersButton = new Button("Refresh Players");
+    private final Button startButton = new Button("Start Game");
+    private final Button disconnectButton = new Button("Disconnect");
+
     /**
-     * Creates the lobby view and initializes its layout and controls.
-     *
-     * <p>The layout consists of three main areas: a player list on the left,
-     * a chat section in the center, and a game/info panel on the right.</p>
+     * Creates the lobby view.
      */
     public LobbyView() {
-        setPadding(new Insets(12));
+        getStyleClass().addAll("screen", "lobby-screen");
+        setPadding(new Insets(16));
 
-        VBox left = new VBox(10, new Label("Players"), playersList, refreshPlayersButton);
-        left.setPrefWidth(220);
+        configureControls();
 
-        VBox center = new VBox(10, new Label("Chat"), chatList);
+        VBox leftPanel = new VBox(
+                12,
+                createSectionTitle("Players"),
+                playersList,
+                refreshPlayersButton
+        );
+        leftPanel.getStyleClass().add("panel");
+        leftPanel.setPrefWidth(240);
+        VBox.setVgrow(playersList, Priority.ALWAYS);
+
         HBox chatBox = new HBox(10, chatInput, sendButton);
-        VBox chatSection = new VBox(10, center, chatBox);
-        VBox.setVgrow(center, Priority.ALWAYS);
+        chatBox.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(chatInput, Priority.ALWAYS);
+
+        VBox centerPanel = new VBox(
+                12,
+                createSectionTitle("Chat"),
+                chatList,
+                chatBox
+        );
+        centerPanel.getStyleClass().add("panel");
         VBox.setVgrow(chatList, Priority.ALWAYS);
 
         HBox commandBox = new HBox(10, commandInput, commandButton);
-        VBox right = new VBox(
-                10,
-                new Label("Game / Info"),
+        commandBox.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(commandInput, Priority.ALWAYS);
+
+        VBox rightPanel = new VBox(
+                12,
+                createSectionTitle("Game / Info"),
                 infoList,
-                new Label("Command"),
+                createSectionTitle("Command"),
                 commandBox,
                 startButton,
                 disconnectButton
         );
-        right.setPrefWidth(280);
+        rightPanel.getStyleClass().add("panel");
+        rightPanel.setPrefWidth(310);
+        VBox.setVgrow(infoList, Priority.ALWAYS);
 
-        setLeft(left);
-        setCenter(chatSection);
-        setRight(right);
+        setLeft(leftPanel);
+        setCenter(centerPanel);
+        setRight(rightPanel);
 
-        BorderPane.setMargin(left, new Insets(0, 10, 0, 0));
-        BorderPane.setMargin(chatSection, new Insets(0, 10, 0, 0));
+        BorderPane.setMargin(leftPanel, new Insets(0, 12, 0, 0));
+        BorderPane.setMargin(centerPanel, new Insets(0, 12, 0, 0));
+    }
+
+    /**
+     * Applies CSS style classes and prompt texts to the controls of this view.
+     */
+    private void configureControls() {
+        playersList.getStyleClass().add("frantic-list-view");
+        chatList.getStyleClass().add("frantic-list-view");
+        infoList.getStyleClass().add("frantic-list-view");
+
+        chatInput.getStyleClass().add("frantic-text-field");
+        commandInput.getStyleClass().add("frantic-text-field");
+
+        sendButton.getStyleClass().addAll("frantic-button", "primary-button");
+        commandButton.getStyleClass().addAll("frantic-button", "secondary-button");
+        refreshPlayersButton.getStyleClass().addAll("frantic-button", "secondary-button");
+        startButton.getStyleClass().addAll("frantic-button", "primary-button");
+        disconnectButton.getStyleClass().addAll("frantic-button", "danger-button");
 
         chatInput.setPromptText("Type a message...");
         commandInput.setPromptText("/name Alice, /players, /start, /quit");
     }
 
     /**
-     * Returns the list view displaying connected players.
+     * Creates a styled section title label.
      *
-     * @return the player list view
+     * @param text the visible title text
+     * @return the configured label
+     */
+    private Label createSectionTitle(String text) {
+        Label label = new Label(text);
+        label.getStyleClass().add("section-title");
+        return label;
+    }
+
+    /**
+     * Returns the players list view.
+     *
+     * @return the players list
      */
     public ListView<String> getPlayersList() {
         return playersList;
     }
 
     /**
-     * Returns the list view displaying chat messages.
+     * Returns the chat list view.
      *
-     * @return the chat list view
+     * @return the chat list
      */
     public ListView<String> getChatList() {
         return chatList;
     }
 
     /**
-     * Returns the list view displaying informational and game-related messages.
+     * Returns the game/info list view.
      *
-     * @return the info list view
+     * @return the info list
      */
     public ListView<String> getInfoList() {
         return infoList;
     }
 
     /**
-     * Returns the text field used for entering chat messages.
+     * Returns the chat input field.
      *
      * @return the chat input field
      */
@@ -127,18 +170,36 @@ public class LobbyView extends BorderPane {
     }
 
     /**
+     * Returns the command input field.
+     *
+     * @return the command input field
+     */
+    public TextField getCommandInput() {
+        return commandInput;
+    }
+
+    /**
+     * Returns the button used to execute terminal-style commands.
+     *
+     * @return the command button
+     */
+    public Button getCommandButton() {
+        return commandButton;
+    }
+
+    /**
      * Returns the button used to refresh the player list manually.
      *
-     * @return the refresh players button
+     * @return the refresh button
      */
     public Button getRefreshPlayersButton() {
         return refreshPlayersButton;
     }
 
     /**
-     * Returns the button used to request the start of the game.
+     * Returns the button used to start the game.
      *
-     * @return the start game button
+     * @return the start button
      */
     public Button getStartButton() {
         return startButton;
@@ -151,23 +212,5 @@ public class LobbyView extends BorderPane {
      */
     public Button getDisconnectButton() {
         return disconnectButton;
-    }
-
-    /**
-     * Returns the text field used to enter terminal-style client commands.
-     *
-     * @return the command input field
-     */
-    public TextField getCommandInput() {
-        return commandInput;
-    }
-
-    /**
-     * Returns the button that submits the command entered in the command field.
-     *
-     * @return the command submit button
-     */
-    public Button getCommandButton() {
-        return commandButton;
     }
 }

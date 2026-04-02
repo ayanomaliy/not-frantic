@@ -4,7 +4,10 @@ import ch.unibas.dmi.dbis.cs108.example.client.net.FxNetworkClient;
 import ch.unibas.dmi.dbis.cs108.example.client.ClientState;
 import ch.unibas.dmi.dbis.cs108.example.client.ui.MainController;
 import javafx.application.Application;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
+
+import java.io.InputStream;
 
 /**
  * Main JavaFX application for the Frantic^-1 GUI client.
@@ -38,6 +41,7 @@ public class FranticFxApp extends Application {
         stage.setTitle("Frantic^-1");
         stage.setMinWidth(1000);
         stage.setMinHeight(700);
+        loadWindowIcon(stage);
         stage.show();
     }
 
@@ -50,5 +54,23 @@ public class FranticFxApp extends Application {
     @Override
     public void stop() {
         networkClient.disconnect();
+    }
+
+
+
+    /**
+     * Attempts to load a window icon from the application resources.
+     *
+     * <p>If the icon does not exist yet, this method does nothing.</p>
+     *
+     * @param stage the application stage
+     */
+    private void loadWindowIcon(Stage stage) {
+        try (InputStream in = getClass().getResourceAsStream("/images/app/icon.png")) {
+            if (in != null) {
+                stage.getIcons().add(new Image(in));
+            }
+        } catch (Exception ignored) {
+        }
     }
 }
