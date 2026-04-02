@@ -15,8 +15,16 @@ public record Message(Type type, String content) {
         /** Message used to set or change a player's display name. */
         NAME,
 
-        /** Message containing a chat text. */
-        CHAT,
+
+
+        /** Message containing a global chat text. */
+        GLOBALCHAT,
+
+        /** Message containing a lobby chat text. */
+        LOBBYCHAT,
+
+        /** Message containing a whisper chat payload. */
+        WHISPERCHAT,
 
         /** Message used to request or transmit the player list. */
         PLAYERS,
@@ -102,7 +110,18 @@ public record Message(Type type, String content) {
 
             return switch (command) {
                 case "/name" -> new Message(Type.NAME, payload);
-                case "/chat" -> new Message(Type.CHAT, payload);
+                case "/chat", "/g", "/global" -> new Message(Type.GLOBALCHAT, payload);
+
+                case "/l", "/lobby" -> new Message(Type.LOBBYCHAT, payload);
+
+                case "/w", "/whisper", "/msg", "/tell" -> {
+                    String[] whisperParts = payload.split("\\s+", 2);
+                    if (whisperParts.length < 2) {
+                        yield new Message(Type.WHISPERCHAT, "");
+                    }
+                    yield new Message(Type.WHISPERCHAT, whisperParts[0].trim() + "|" + whisperParts[1].trim());
+                }
+
                 case "/players" -> new Message(Type.PLAYERS, "");
                 case "/start" -> new Message(Type.START, "");
                 case "/quit" -> new Message(Type.QUIT, "");
@@ -125,7 +144,9 @@ public record Message(Type type, String content) {
     private static Type parseType(String typeText) {
         return switch (typeText) {
             case "NAME" -> Type.NAME;
-            case "CHAT" -> Type.CHAT;
+            case "GLOBALCHAT" -> Type.GLOBALCHAT;
+            case "LOBBYCHAT" -> Type.LOBBYCHAT;
+            case "WHISPERCHAT" -> Type.WHISPERCHAT;
             case "PLAYERS" -> Type.PLAYERS;
             case "START" -> Type.START;
             case "QUIT" -> Type.QUIT;
@@ -157,7 +178,7 @@ public record Message(Type type, String content) {
      */
     public boolean expectsContent() {
         return switch (type) {
-            case NAME, CHAT, PLAYERS, INFO, ERROR, GAME, CREATE, LOBBIES, JOIN -> true;
+            case NAME, GLOBALCHAT, LOBBYCHAT, WHISPERCHAT, PLAYERS, INFO, ERROR, GAME, CREATE, LOBBIES, JOIN -> true;
             case START, QUIT, PING, PONG, UNKNOWN -> false;
         };
     }
@@ -178,7 +199,7 @@ public record Message(Type type, String content) {
 
         return switch (type) {
             case START, QUIT, PING, PONG -> safe(content).isBlank();
-            case NAME, CHAT, PLAYERS, INFO, ERROR, GAME, CREATE,LOBBIES, JOIN -> true;
+            case NAME, GLOBALCHAT, LOBBYCHAT, WHISPERCHAT, PLAYERS, INFO, ERROR, GAME, CREATE, LOBBIES, JOIN -> true;
             case UNKNOWN -> false;
         };
     }

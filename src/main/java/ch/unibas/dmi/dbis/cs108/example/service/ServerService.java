@@ -92,6 +92,18 @@ public class ServerService {
     }
 
     /**
+     * Broadcasts a structured message to all connected clients.
+     *
+     * @param message the message to broadcast
+     */
+    private void broadcastToAllClients(Message message) {
+        log("Broadcast to all clients: " + message.encode());
+        for (ClientSession session : connectedClients) {
+            session.send(message.encode());
+        }
+    }
+
+    /**
      * Removes the client from its current lobby, if any.
      *
      * <p>The remaining players in that lobby are informed about the departure,
@@ -153,6 +165,8 @@ public class ServerService {
      * @param session the client session to unregister
      */
     public synchronized void unregisterClient(ClientSession session) {
+        connectedClients.remove(session);
+
         Lobby lobby = getLobbyOf(session);
 
         if (lobby == null) {
@@ -181,6 +195,97 @@ public class ServerService {
         broadcastLobbyListToAllClients();
     }
 
+    /**
+     * Handles a global chat message from a client.
+     *
+     * <p>Global chat is broadcast to all connected clients, regardless of lobby.</p>
+     *
+     * @param session the client session sending the message
+     * @param text the chat message content
+     */
+    private void handleGlobalChat(ClientSession session, String text) {
+        if (text == null || text.isBlank()) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Global chat message cannot be empty."
+            ).encode());
+            return;
+        }
+
+        String cleanText = text.trim();
+
+        if (cleanText.length() > 200) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Global chat message is too long. Maximum 200 characters."
+            ).encode());
+            return;
+        }
+
+        if (cleanText.contains("\n") || cleanText.contains("\r")) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Global chat message contains invalid characters."
+            ).encode());
+            return;
+        }
+
+        broadcastToAllClients(new Message(
+                Message.Type.GLOBALCHAT,
+                session.getPlayerName() + "|" + cleanText
+        ));
+    }
+
+    private void handleLobbyChat(ClientSession session, String text) {
+        Lobby lobby = getLobbyOf(session);
+
+        if (lobby == null) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "You are not in a lobby."
+            ).encode());
+            return;
+        }
+
+        if (text == null || text.isBlank()) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Lobby chat message cannot be empty."
+            ).encode());
+            return;
+        }
+
+        String cleanText = text.trim();
+
+        if (cleanText.length() > 200) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Lobby chat message is too long. Maximum 200 characters."
+            ).encode());
+            return;
+        }
+
+        if (cleanText.contains("\n") || cleanText.contains("\r")) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Lobby chat message contains invalid characters."
+            ).encode());
+            return;
+        }
+
+        broadcastToLobby(lobby, new Message(
+                Message.Type.LOBBYCHAT,
+                session.getPlayerName() + "|" + cleanText
+        ));
+    }
+
+    private void handleWhisperChat(ClientSession session, String payload) {
+        session.send(new Message(
+                Message.Type.ERROR,
+                "Whisper chat is not implemented yet."
+        ).encode());
+    }
+
 
     /**
      * Processes an incoming message from a client.
@@ -205,7 +310,9 @@ public class ServerService {
 
         switch (message.type()) {
             case NAME -> handleName(session, message.content());
-            case CHAT -> handleChat(session, message.content());
+            case GLOBALCHAT -> handleGlobalChat(session, message.content());
+            case LOBBYCHAT -> handleLobbyChat(session, message.content());
+            case WHISPERCHAT -> handleWhisperChat(session, message.content());
             case CREATE -> handleCreateLobby(session, message.content());
             case JOIN -> handleJoinLobby(session, message.content());
             case LOBBIES -> {
@@ -564,57 +671,6 @@ public class ServerService {
         return false;
     }
 
-    /**
-     * Handles a chat message from a client.
-     *
-     * <p>Chat is only allowed inside a lobby and is only broadcast to the
-     * sender's current lobby.</p>
-     *
-     * @param session the client session sending the chat
-     * @param text the chat message content
-     */
-    private void handleChat(ClientSession session, String text) {
-        Lobby lobby = getLobbyOf(session);
-
-        if (lobby == null) {
-            session.send(new Message(
-                    Message.Type.ERROR,
-                    "You are not in a lobby."
-            ).encode());
-            return;
-        }
-
-        if (text == null || text.isBlank()) {
-            session.send(new Message(
-                    Message.Type.ERROR,
-                    "Chat message cannot be empty."
-            ).encode());
-            return;
-        }
-
-        String cleanText = text.trim();
-
-        if (cleanText.length() > 200) {
-            session.send(new Message(
-                    Message.Type.ERROR,
-                    "Chat message is too long. Maximum 200 characters."
-            ).encode());
-            return;
-        }
-
-        if (cleanText.contains("\n") || cleanText.contains("\r")) {
-            session.send(new Message(
-                    Message.Type.ERROR,
-                    "Chat message contains invalid characters."
-            ).encode());
-            return;
-        }
-
-        broadcastToLobby(lobby, new Message(
-                Message.Type.CHAT,
-                session.getPlayerName() + "|" + cleanText
-        ));
-    }
 
     /**
      * Handles a request to list all connected players in the current lobby.

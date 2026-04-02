@@ -62,12 +62,20 @@ public class ClientReader implements Runnable {
                     case PONG -> {
                         lastServerPongTime.set(System.currentTimeMillis());
                     }
-                    case CHAT -> {
+                    case GLOBALCHAT -> {
                         String[] parts = message.splitChatPayload();
                         String sender = parts[0];
                         String text = parts[1];
-                        System.out.println(sender + ": " + text);
+                        System.out.println("[Global] " + sender + ": " + text);
                     }
+                    case LOBBYCHAT -> {
+                        String[] parts = message.splitChatPayload();
+                        String sender = parts[0];
+                        String text = parts[1];
+                        System.out.println("[Lobby] " + sender + ": " + text);
+                    }
+                    case WHISPERCHAT -> System.out.println("[Whisper] " + message.content());
+
                     case INFO -> System.out.println("[INFO] " + message.content());
                     case ERROR -> System.out.println("[ERROR] " + message.content());
                     case PLAYERS -> {

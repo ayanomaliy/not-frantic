@@ -123,10 +123,23 @@ public class FxNetworkClient {
         } catch (IOException ignored) {
         }
 
+        socket = null;
+        serverIn = null;
+        serverOut = null;
+
         Platform.runLater(() -> {
             state.setConnected(false);
             state.setStatusText("Disconnected");
+            state.setChatMode("Global");
+
             state.getPlayers().clear();
+            state.getLobbies().clear();
+
+            state.getGlobalChatMessages().clear();
+            state.getLobbyChatMessages().clear();
+            state.getWhisperChatMessages().clear();
+
+            state.getGameMessages().clear();
         });
     }
 
@@ -135,9 +148,23 @@ public class FxNetworkClient {
      *
      * @param text the chat message text
      */
-    public void sendChat(String text) {
-        send(new Message(Message.Type.CHAT, text));
+    /**
+     * Sends a global chat message to the server.
+     *
+     * @param text the chat message text
+     */
+    public void sendGlobalChat(String text) {
+        send(new Message(Message.Type.GLOBALCHAT, text));
     }
+    public void sendLobbyChat(String text) {
+        send(new Message(Message.Type.LOBBYCHAT, text));
+    }
+
+    public void sendWhisperChat(String payload) {
+        send(new Message(Message.Type.WHISPERCHAT, payload));
+    }
+
+
     /**
      * Requests the current player list from the server.
      */
@@ -261,11 +288,23 @@ public class FxNetworkClient {
             case PING -> send(new Message(Message.Type.PONG, ""));
             case PONG -> lastServerPongTime.set(System.currentTimeMillis());
 
-            case CHAT -> {
+            case GLOBALCHAT -> {
                 String[] parts = message.splitChatPayload();
                 Platform.runLater(() ->
-                        state.getChatMessages().add(parts[0] + ": " + parts[1]));
+                        state.getGlobalChatMessages().add(parts[0] + ": " + parts[1]));
+
             }
+
+            case LOBBYCHAT -> {
+                String[] parts = message.splitChatPayload();
+                Platform.runLater(() ->
+                        state.getLobbyChatMessages().add(parts[0] + ": " + parts[1]));
+
+            }
+
+            case WHISPERCHAT -> Platform.runLater(() ->
+                    state.getWhisperChatMessages().add(message.content()));
+
 
             case INFO -> Platform.runLater(() ->
                     state.getGameMessages().add("[INFO] " + message.content()));

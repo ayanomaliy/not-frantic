@@ -4,7 +4,6 @@ import animatefx.animation.FadeIn;
 import animatefx.animation.FadeInUp;
 import ch.unibas.dmi.dbis.cs108.example.client.net.FxNetworkClient;
 import ch.unibas.dmi.dbis.cs108.example.client.ClientState;
-import ch.unibas.dmi.dbis.cs108.example.client.ui.ConnectView;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
@@ -67,16 +66,18 @@ public class MainController {
     /**
      * Shows the lobby screen.
      */
-    /**
-     * Shows the lobby screen.
-     */
     public void showLobbyView() {
         LobbyView view = new LobbyView();
 
         view.getPlayersList().setItems(state.getPlayers());
         view.getLobbiesList().setItems(state.getLobbies());
-        view.getChatList().setItems(state.getChatMessages());
         view.getInfoList().setItems(state.getGameMessages());
+
+        if ("Lobby".equals(state.getChatMode())) {
+            view.getChatList().setItems(state.getLobbyChatMessages());
+        } else {
+            view.getChatList().setItems(state.getGlobalChatMessages());
+        }
 
         view.getSendButton().setOnAction(e -> sendChat(view));
         view.getChatInput().setOnAction(e -> sendChat(view));
@@ -86,6 +87,18 @@ public class MainController {
 
         view.getRefreshPlayersButton().setOnAction(e -> networkClient.requestPlayers());
         view.getRefreshLobbiesButton().setOnAction(e -> networkClient.requestLobbies());
+
+        view.getChatModeButton().textProperty().bind(state.chatModeProperty());
+
+        view.getChatModeButton().setOnAction(e -> {
+            if ("Global".equals(state.getChatMode())) {
+                state.setChatMode("Lobby");
+                view.getChatList().setItems(state.getLobbyChatMessages());
+            } else {
+                state.setChatMode("Global");
+                view.getChatList().setItems(state.getGlobalChatMessages());
+            }
+        });
 
         view.getJoinLobbyButton().setOnAction(e -> {
             String selectedLobby = view.getLobbiesList().getSelectionModel().getSelectedItem();
@@ -132,16 +145,23 @@ public class MainController {
     }
 
     /**
-     * Sends the content of the chat input field as a chat message.
+     * Sends the content of the chat input field using the currently selected chat mode.
      *
      * @param view the lobby view containing the chat input
      */
     private void sendChat(LobbyView view) {
         String text = view.getChatInput().getText().trim();
-        if (!text.isBlank()) {
-            networkClient.sendChat(text);
-            view.getChatInput().clear();
+        if (text.isBlank()) {
+            return;
         }
+
+        if ("Lobby".equals(state.getChatMode())) {
+            networkClient.sendLobbyChat(text);
+        } else {
+            networkClient.sendGlobalChat(text);
+        }
+
+        view.getChatInput().clear();
     }
 
     /**

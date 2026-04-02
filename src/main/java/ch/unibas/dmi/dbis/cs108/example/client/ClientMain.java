@@ -136,7 +136,6 @@ public class ClientMain {
             heartbeatThread.setDaemon(true);
             heartbeatThread.start();
 
-            printCommandHelp();
             String line;
             while ((line = userIn.readLine()) != null) {
                 String trimmed = line.trim();
@@ -170,15 +169,4 @@ public class ClientMain {
         }
     }
 
-    /**
-     * Prints the list of supported client commands to standard output.
-     */
-    private static void printCommandHelp() {
-        System.out.println("Commands:");
-        System.out.println("  /name Alice");
-        System.out.println("  /chat Hello");
-        System.out.println("  /players");
-        System.out.println("  /start");
-        System.out.println("  /quit");
-    }
 }

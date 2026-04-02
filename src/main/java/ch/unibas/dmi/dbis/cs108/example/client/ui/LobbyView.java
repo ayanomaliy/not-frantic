@@ -39,6 +39,8 @@ public class LobbyView extends BorderPane {
     private final Button joinLobbyButton = new Button("Join Selected Lobby");
     private final Button createLobbyButton = new Button("Create New Lobby");
 
+    private final Button chatModeButton = new Button("Global");
+
     /**
      * Creates the lobby view.
      *
@@ -77,10 +79,11 @@ public class LobbyView extends BorderPane {
 
         VBox centerPanel = new VBox(
                 12,
-                createSectionTitle("Chat"),
+                createChatHeader(),
                 chatList,
                 chatBox
         );
+
         centerPanel.getStyleClass().add("panel");
         VBox.setVgrow(chatList, Priority.ALWAYS);
 
@@ -134,6 +137,8 @@ public class LobbyView extends BorderPane {
         refreshLobbiesButton.getStyleClass().addAll("frantic-button", "secondary-button");
         joinLobbyButton.getStyleClass().addAll("frantic-button", "primary-button");
         createLobbyButton.getStyleClass().addAll("frantic-button", "primary-button");
+
+        chatModeButton.getStyleClass().addAll("frantic-button", "secondary-button");
     }
 
     /**
@@ -146,6 +151,18 @@ public class LobbyView extends BorderPane {
         Label label = new Label(text);
         label.getStyleClass().add("section-title");
         return label;
+    }
+
+    /**
+     * Creates the header row for the chat section.
+     *
+     * @return the configured chat header row
+     */
+    private HBox createChatHeader() {
+        Label title = createSectionTitle("Chat");
+        HBox header = new HBox(10, title, chatModeButton);
+        header.setAlignment(Pos.CENTER_LEFT);
+        return header;
     }
 
     /**
@@ -272,5 +289,14 @@ public class LobbyView extends BorderPane {
      */
     public Button getCreateLobbyButton() {
         return createLobbyButton;
+    }
+
+    /**
+     * Returns the button used to toggle between global and lobby chat mode.
+     *
+     * @return the chat mode toggle button
+     */
+    public Button getChatModeButton() {
+        return chatModeButton;
     }
 }
