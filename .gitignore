@@ -22,3 +22,5 @@ Thumbs.db
 
 # Local scripts
 *.ps1
+
+all_sources_concatenated.txt
