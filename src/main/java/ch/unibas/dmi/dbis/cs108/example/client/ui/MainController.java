@@ -73,11 +73,7 @@ public class MainController {
         view.getLobbiesList().setItems(state.getLobbies());
         view.getInfoList().setItems(state.getGameMessages());
 
-        if ("Lobby".equals(state.getChatMode())) {
-            view.getChatList().setItems(state.getLobbyChatMessages());
-        } else {
-            view.getChatList().setItems(state.getGlobalChatMessages());
-        }
+        updateDisplayedChat(view);
 
         view.getSendButton().setOnAction(e -> sendChat(view));
         view.getChatInput().setOnAction(e -> sendChat(view));
@@ -91,13 +87,13 @@ public class MainController {
         view.getChatModeButton().textProperty().bind(state.chatModeProperty());
 
         view.getChatModeButton().setOnAction(e -> {
-            if ("Global".equals(state.getChatMode())) {
-                state.setChatMode("Lobby");
-                view.getChatList().setItems(state.getLobbyChatMessages());
-            } else {
-                state.setChatMode("Global");
-                view.getChatList().setItems(state.getGlobalChatMessages());
+            switch (state.getChatMode()) {
+                case "Global" -> state.setChatMode("Lobby");
+                case "Lobby" -> state.setChatMode("Whisper");
+                default -> state.setChatMode("Global");
             }
+
+            updateDisplayedChat(view);
         });
 
         view.getJoinLobbyButton().setOnAction(e -> {
@@ -145,10 +141,24 @@ public class MainController {
     }
 
     /**
+     * Updates the chat list view to display the message list of the currently selected chat mode.
+     *
+     * @param view the lobby view containing the chat list
+     */
+    private void updateDisplayedChat(LobbyView view) {
+        switch (state.getChatMode()) {
+            case "Lobby" -> view.getChatList().setItems(state.getLobbyChatMessages());
+            case "Whisper" -> view.getChatList().setItems(state.getWhisperChatMessages());
+            default -> view.getChatList().setItems(state.getGlobalChatMessages());
+        }
+    }
+
+    /**
      * Sends the content of the chat input field using the currently selected chat mode.
      *
-     * <p>If the input starts with a whisper command, it is sent as a command
-     * instead of a normal chat message.</p>
+     * <p>If the current mode is Whisper, the input must be a whisper command such as
+     * {@code /w Alice hello}. In Global or Lobby mode, normal text is sent to the
+     * corresponding chat channel.</p>
      *
      * @param view the lobby view containing the chat input
      */
@@ -159,16 +169,18 @@ public class MainController {
         }
 
         String lower = text.toLowerCase();
-        if (lower.startsWith("/w ")
-                || lower.startsWith("/whisper ")
-                || lower.startsWith("/msg ")
-                || lower.startsWith("/tell ")) {
-            networkClient.sendCommand(text);
-            view.getChatInput().clear();
-            return;
-        }
 
-        if ("Lobby".equals(state.getChatMode())) {
+        if ("Whisper".equals(state.getChatMode())) {
+            if (lower.startsWith("/w ")
+                    || lower.startsWith("/whisper ")
+                    || lower.startsWith("/msg ")
+                    || lower.startsWith("/tell ")) {
+                networkClient.sendCommand(text);
+            } else {
+                state.getGameMessages().add("[CLIENT] Whisper mode expects: /w <player> <message>");
+                return;
+            }
+        } else if ("Lobby".equals(state.getChatMode())) {
             networkClient.sendLobbyChat(text);
         } else {
             networkClient.sendGlobalChat(text);
