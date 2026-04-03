@@ -69,7 +69,8 @@ public class MainController {
     public void showLobbyView() {
         LobbyView view = new LobbyView();
 
-        view.getPlayersList().setItems(state.getPlayers());
+        view.getLobbyPlayersList().setItems(state.getPlayers());
+        view.getAllPlayersList().setItems(state.getAllPlayers());
         view.getLobbiesList().setItems(state.getLobbies());
         view.getInfoList().setItems(state.getGameMessages());
 
@@ -133,6 +134,7 @@ public class MainController {
         });
 
         networkClient.requestPlayers();
+        networkClient.requestAllPlayers();
         networkClient.requestLobbies();
 
         Scene scene = createStyledScene(view, 1280, 800);

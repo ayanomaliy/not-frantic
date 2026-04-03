@@ -20,7 +20,8 @@ import javafx.scene.layout.VBox;
  */
 public class LobbyView extends BorderPane {
 
-    private final ListView<String> playersList = new ListView<>();
+    private final ListView<String> lobbyPlayersList = new ListView<>();
+    private final ListView<String> allPlayersList = new ListView<>();
     private final ListView<String> chatList = new ListView<>();
     private final ListView<String> infoList = new ListView<>();
 
@@ -53,25 +54,31 @@ public class LobbyView extends BorderPane {
 
         configureControls();
 
-        VBox leftPanel = new VBox(
-                12,
-                createSectionTitle("Players"),
-                playersList,
+        VBox leftPanel = new VBox(12);
+        leftPanel.getStyleClass().add("panel");
+        leftPanel.setPrefWidth(260);
+
+        Label playersTitle = createSectionTitle("Players");
+        Label lobbyPlayersTitle = createSectionTitle("Lobby");
+        Label allPlayersTitle = createSectionTitle("Global");
+
+        lobbyPlayersList.setPrefHeight(180);
+        allPlayersList.setPrefHeight(180);
+        lobbiesList.setPrefHeight(160);
+
+        leftPanel.getChildren().addAll(
+                playersTitle,
+                lobbyPlayersTitle,
+                lobbyPlayersList,
                 refreshPlayersButton,
+                allPlayersTitle,
+                allPlayersList,
                 createSectionTitle("Lobbies"),
                 lobbiesList,
                 refreshLobbiesButton,
                 joinLobbyButton,
                 createLobbyButton
         );
-        leftPanel.getStyleClass().add("panel");
-        leftPanel.setPrefWidth(260);
-
-        VBox.setVgrow(playersList, Priority.ALWAYS);
-        lobbiesList.setPrefHeight(180);
-
-
-        VBox.setVgrow(playersList, Priority.ALWAYS);
 
         HBox chatBox = new HBox(10, chatInput, sendButton);
         chatBox.setAlignment(Pos.CENTER_LEFT);
@@ -116,7 +123,8 @@ public class LobbyView extends BorderPane {
      * Applies CSS style classes and prompt texts to the controls of this view.
      */
     private void configureControls() {
-        playersList.getStyleClass().add("frantic-list-view");
+        lobbyPlayersList.getStyleClass().add("frantic-list-view");
+        allPlayersList.getStyleClass().add("frantic-list-view");
         chatList.getStyleClass().add("frantic-list-view");
         infoList.getStyleClass().add("frantic-list-view");
 
@@ -166,13 +174,23 @@ public class LobbyView extends BorderPane {
     }
 
     /**
-     * Returns the players list view.
+     * Returns the list view showing players in the current lobby.
      *
-     * @return the players list
+     * @return the lobby players list
      */
-    public ListView<String> getPlayersList() {
-        return playersList;
+    public ListView<String> getLobbyPlayersList() {
+        return lobbyPlayersList;
     }
+
+    /**
+     * Returns the list view showing all connected players on the server.
+     *
+     * @return the global players list
+     */
+    public ListView<String> getAllPlayersList() {
+        return allPlayersList;
+    }
+
 
     /**
      * Returns the chat list view.

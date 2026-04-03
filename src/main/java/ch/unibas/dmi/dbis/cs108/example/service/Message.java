@@ -26,8 +26,11 @@ public record Message(Type type, String content) {
         /** Message containing a whisper chat payload. */
         WHISPERCHAT,
 
-        /** Message used to request or transmit the player list. */
+        /** Message used to request or transmit the player list of the lobby. */
         PLAYERS,
+
+        /** Message used to request or transmit the global player list. */
+        ALLPLAYERS,
 
         /** Message used to request the start of the game. */
         START,
@@ -123,6 +126,7 @@ public record Message(Type type, String content) {
                 }
 
                 case "/players" -> new Message(Type.PLAYERS, "");
+                case "/allplayers" -> new Message(Type.ALLPLAYERS, "");
                 case "/start" -> new Message(Type.START, "");
                 case "/quit" -> new Message(Type.QUIT, "");
                 case "/create" -> new Message(Type.CREATE, payload);
@@ -148,6 +152,7 @@ public record Message(Type type, String content) {
             case "LOBBYCHAT" -> Type.LOBBYCHAT;
             case "WHISPERCHAT" -> Type.WHISPERCHAT;
             case "PLAYERS" -> Type.PLAYERS;
+            case "ALLPLAYERS" -> Type.ALLPLAYERS;
             case "START" -> Type.START;
             case "QUIT" -> Type.QUIT;
             case "CREATE" -> Type.CREATE;
@@ -178,7 +183,7 @@ public record Message(Type type, String content) {
      */
     public boolean expectsContent() {
         return switch (type) {
-            case NAME, GLOBALCHAT, LOBBYCHAT, WHISPERCHAT, PLAYERS, INFO, ERROR, GAME, CREATE, LOBBIES, JOIN -> true;
+            case NAME, GLOBALCHAT, LOBBYCHAT, WHISPERCHAT, PLAYERS, ALLPLAYERS, INFO, ERROR, GAME, CREATE, LOBBIES, JOIN -> true;
             case START, QUIT, PING, PONG, UNKNOWN -> false;
         };
     }
@@ -199,7 +204,7 @@ public record Message(Type type, String content) {
 
         return switch (type) {
             case START, QUIT, PING, PONG -> safe(content).isBlank();
-            case NAME, GLOBALCHAT, LOBBYCHAT, WHISPERCHAT, PLAYERS, INFO, ERROR, GAME, CREATE, LOBBIES, JOIN -> true;
+            case NAME, GLOBALCHAT, LOBBYCHAT, WHISPERCHAT, PLAYERS, ALLPLAYERS, INFO, ERROR, GAME, CREATE, LOBBIES, JOIN -> true;
             case UNKNOWN -> false;
         };
     }

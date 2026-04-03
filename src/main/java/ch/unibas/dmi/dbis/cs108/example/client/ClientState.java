@@ -1,8 +1,12 @@
 package ch.unibas.dmi.dbis.cs108.example.client;
 
-import javafx.beans.property.*;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+
 /**
  * Shared observable state for the Frantic^-1 GUI client.
  *
@@ -16,40 +20,81 @@ public class ClientState {
     private final BooleanProperty connected = new SimpleBooleanProperty(false);
     private final StringProperty username = new SimpleStringProperty("");
     private final StringProperty statusText = new SimpleStringProperty("Not connected");
+
+    /** Players in the currently joined lobby. */
     private final ObservableList<String> players = FXCollections.observableArrayList();
+
+    /** All connected players on the server across all lobbies. */
+    private final ObservableList<String> allPlayers = FXCollections.observableArrayList();
+
+    /** Messages from the global chat channel. */
     private final ObservableList<String> globalChatMessages = FXCollections.observableArrayList();
+
+    /** Messages from the current lobby chat channel. */
     private final ObservableList<String> lobbyChatMessages = FXCollections.observableArrayList();
+
+    /** Private whisper messages. */
     private final ObservableList<String> whisperChatMessages = FXCollections.observableArrayList();
+
+    /** Informational and game-related messages. */
     private final ObservableList<String> gameMessages = FXCollections.observableArrayList();
+
+    /** Available lobby names on the server. */
     private final ObservableList<String> lobbies = FXCollections.observableArrayList();
+
+    /** Currently selected chat mode in the GUI. */
     private final StringProperty chatMode = new SimpleStringProperty("Global");
+
+    /**
+     * Creates a new shared client state object.
+     */
+    public ClientState() {
+    }
 
     /**
      * Returns the observable connection status property.
      *
      * @return the connected property
      */
-    public BooleanProperty connectedProperty() { return connected; }
+    public BooleanProperty connectedProperty() {
+        return connected;
+    }
+
     /**
      * Returns the observable username property.
      *
      * @return the username property
      */
-    public StringProperty usernameProperty() { return username; }
+    public StringProperty usernameProperty() {
+        return username;
+    }
+
     /**
      * Returns the observable status text property.
      *
      * @return the status text property
      */
-    public StringProperty statusTextProperty() { return statusText; }
+    public StringProperty statusTextProperty() {
+        return statusText;
+    }
 
     /**
-     * Returns the observable list of connected players.
+     * Returns the observable list of players in the current lobby.
      *
-     * @return the player list
+     * @return the lobby player list
      */
-    public ObservableList<String> getPlayers() { return players; }
+    public ObservableList<String> getPlayers() {
+        return players;
+    }
 
+    /**
+     * Returns the observable list of all connected players on the server.
+     *
+     * @return the global player list
+     */
+    public ObservableList<String> getAllPlayers() {
+        return allPlayers;
+    }
 
     /**
      * Returns the observable list of global chat messages.
@@ -94,20 +139,73 @@ public class ClientState {
      *
      * @return the game message list
      */
-    public ObservableList<String> getGameMessages() { return gameMessages; }
+    public ObservableList<String> getGameMessages() {
+        return gameMessages;
+    }
 
-    public boolean isConnected() { return connected.get(); }
-    public void setConnected(boolean value) { connected.set(value); }
-
-    public String getUsername() { return username.get(); }
-    public void setUsername(String value) { username.set(value); }
-
-    public String getStatusText() { return statusText.get(); }
-    public void setStatusText(String value) { statusText.set(value); }
-
+    /**
+     * Returns the observable list of available lobbies.
+     *
+     * @return the lobby list
+     */
     public ObservableList<String> getLobbies() {
         return lobbies;
     }
+
+    /**
+     * Returns whether the client is currently connected.
+     *
+     * @return {@code true} if connected, otherwise {@code false}
+     */
+    public boolean isConnected() {
+        return connected.get();
+    }
+
+    /**
+     * Updates the connection state.
+     *
+     * @param value the new connection state
+     */
+    public void setConnected(boolean value) {
+        connected.set(value);
+    }
+
+    /**
+     * Returns the current username.
+     *
+     * @return the username
+     */
+    public String getUsername() {
+        return username.get();
+    }
+
+    /**
+     * Updates the current username.
+     *
+     * @param value the new username
+     */
+    public void setUsername(String value) {
+        username.set(value);
+    }
+
+    /**
+     * Returns the current status text.
+     *
+     * @return the status text
+     */
+    public String getStatusText() {
+        return statusText.get();
+    }
+
+    /**
+     * Updates the current status text.
+     *
+     * @param value the new status text
+     */
+    public void setStatusText(String value) {
+        statusText.set(value);
+    }
+
     /**
      * Returns the observable chat mode property.
      *

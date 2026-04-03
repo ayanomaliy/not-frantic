@@ -85,6 +85,13 @@ public class ClientReader implements Runnable {
                             System.out.println("[PLAYERS] " + message.content());
                         }
                     }
+                    case ALLPLAYERS -> {
+                        if (message.content().isBlank()) {
+                            System.out.println("[ALLPLAYERS] none");
+                        } else {
+                            System.out.println("[ALLPLAYERS] " + message.content());
+                        }
+                    }
                     case LOBBIES -> {
                         if (message.content().isBlank()) {
                             System.out.println("[LOBBIES] none");

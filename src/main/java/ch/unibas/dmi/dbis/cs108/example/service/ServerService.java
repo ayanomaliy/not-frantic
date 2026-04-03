@@ -154,6 +154,8 @@ public class ServerService {
         ).encode());
 
         sendLobbyList(session);
+        sendAllPlayersList(session);
+        broadcastAllPlayersListToAllClients();
     }
 
     /**
@@ -193,6 +195,7 @@ public class ServerService {
         }
 
         broadcastLobbyListToAllClients();
+        broadcastAllPlayersListToAllClients();
     }
 
     /**
@@ -422,6 +425,17 @@ public class ServerService {
                 handlePlayers(session);
             }
 
+            case ALLPLAYERS -> {
+                if (!message.content().isBlank()) {
+                    session.send(new Message(
+                            Message.Type.ERROR,
+                            "ALLPLAYERS must not contain content."
+                    ).encode());
+                    return;
+                }
+                handleAllPlayers(session);
+            }
+
             case START -> {
                 if (!message.content().isBlank()) {
                     session.send(new Message(
@@ -593,6 +607,24 @@ public class ServerService {
         ).encode());
     }
 
+    private void sendAllPlayersList(ClientSession session) {
+        List<String> names = new ArrayList<>();
+        for (ClientSession client : connectedClients) {
+            names.add(client.getPlayerName());
+        }
+
+        session.send(new Message(
+                Message.Type.ALLPLAYERS,
+                String.join(",", names)
+        ).encode());
+    }
+
+    private void broadcastAllPlayersListToAllClients() {
+        for (ClientSession client : connectedClients) {
+            sendAllPlayersList(client);
+        }
+    }
+
 
     private void broadcastLobbyListToAllClients() {
         for (ClientSession client : connectedClients) {
@@ -700,6 +732,7 @@ public class ServerService {
 
             broadcastPlayerList(lobby);
         }
+        broadcastAllPlayersListToAllClients();
     }
 
     /**
@@ -783,6 +816,25 @@ public class ServerService {
 
         session.send(new Message(
                 Message.Type.PLAYERS,
+                String.join(",", names)
+        ).encode());
+    }
+
+    /**
+     * Handles a request to list all connected players on the server.
+     *
+     * @param session the client session requesting the global player list
+     */
+    private void handleAllPlayers(ClientSession session) {
+        List<String> names = new ArrayList<>();
+        for (ClientSession client : connectedClients) {
+            names.add(client.getPlayerName());
+        }
+
+        log(session.getPlayerName() + " requested global player list: " + names);
+
+        session.send(new Message(
+                Message.Type.ALLPLAYERS,
                 String.join(",", names)
         ).encode());
     }

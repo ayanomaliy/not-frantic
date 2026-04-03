@@ -80,6 +80,7 @@ public class FxNetworkClient {
         heartbeatThread.start();
 
         requestPlayers();
+        requestAllPlayers();
         requestLobbies();
     }
     /**
@@ -133,6 +134,7 @@ public class FxNetworkClient {
             state.setChatMode("Global");
 
             state.getPlayers().clear();
+            state.getAllPlayers().clear();
             state.getLobbies().clear();
 
             state.getGlobalChatMessages().clear();
@@ -171,6 +173,12 @@ public class FxNetworkClient {
     public void requestPlayers() {
         send(new Message(Message.Type.PLAYERS, ""));
     }
+
+    public void requestAllPlayers() {
+        send(new Message(Message.Type.ALLPLAYERS, ""));
+    }
+
+
     /**
      * Requests the current lobby list from the server.
      */
@@ -339,6 +347,18 @@ public class FxNetworkClient {
                                 .toList()
                 );
             });
+
+            case ALLPLAYERS -> Platform.runLater(() -> {
+                state.getAllPlayers().setAll(
+                        message.content().isBlank()
+                                ? java.util.List.of()
+                                : Arrays.stream(message.content().split(","))
+                                .map(String::trim)
+                                .filter(s -> !s.isBlank())
+                                .toList()
+                );
+            });
+
             case LOBBIES -> Platform.runLater(() -> {
                 state.getLobbies().setAll(
                         message.content().isBlank()
