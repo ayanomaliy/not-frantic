@@ -1,9 +1,12 @@
 package ch.unibas.dmi.dbis.cs108.example.model;
 
 import ch.unibas.dmi.dbis.cs108.example.controller.ClientSession;
+import ch.unibas.dmi.dbis.cs108.example.model.game.GameState;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Represents one game lobby containing the connected players of that game.
@@ -17,6 +20,19 @@ public class Lobby {
     private final String lobbyId;
     private final List<ClientSession> sessions = new ArrayList<>();
     private boolean gameStarted = false;
+
+    /** Live game state for the current round, or {@code null} before the game starts. */
+    private GameState gameState;
+
+    /** Round counter, incremented at the start of each new round (1-based). */
+    private int currentRound = 0;
+
+    /**
+     * Cumulative scores carried across rounds.
+     * Key = player name, value = total score so far.
+     * Populated after each round ends.
+     */
+    private final Map<String, Integer> cumulativeScores = new HashMap<>();
 
     /**
      * Creates a new lobby with a unique lobby id.
@@ -89,6 +105,23 @@ public class Lobby {
     public int getPlayerCount() {
         return sessions.size();
     }
+
+    // ---- Game state accessors ----
+
+    /** Returns the live {@link GameState} for the current round, or {@code null} if not started. */
+    public GameState getGameState() { return gameState; }
+
+    /** Sets the live {@link GameState} (called by ServerService at round start). */
+    public void setGameState(GameState gameState) { this.gameState = gameState; }
+
+    /** Returns the current round number (1-based; 0 = game not yet started). */
+    public int getCurrentRound() { return currentRound; }
+
+    /** Increments the round counter and returns the new value. */
+    public int nextRound() { return ++currentRound; }
+
+    /** Returns a live view of the cumulative score map (player name → total score). */
+    public Map<String, Integer> getCumulativeScores() { return cumulativeScores; }
 
     /**
      * Gets all players currently in the lobby as {@link Player} records.

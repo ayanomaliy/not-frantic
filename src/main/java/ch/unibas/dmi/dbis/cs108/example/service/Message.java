@@ -62,6 +62,40 @@ public record Message(Type type, String content) {
         /** Game-related message sent by the server. */
         GAME,
 
+        // ---- Game-action messages (client → server) ----
+
+        /** Client requests to play a card. Payload: card id. */
+        PLAY_CARD,
+
+        /** Client requests to draw a card. No payload. */
+        DRAW_CARD,
+
+        /** Client explicitly ends their turn (used after drawing without playing). No payload. */
+        END_TURN,
+
+        /** Client submits arguments for a pending special effect. Payload: effect|arg1|arg2|… */
+        EFFECT_RESPONSE,
+
+        /** Client requests their current hand. Server responds with HAND_UPDATE. No payload. */
+        GET_HAND,
+
+        // ---- Game-state messages (server → client) ----
+
+        /** Server broadcasts the public game state. Payload: serialized key:value pairs. */
+        GAME_STATE,
+
+        /** Server sends a player's private hand. Payload: comma-separated card ids. */
+        HAND_UPDATE,
+
+        /** Server requests effect-resolution arguments from the acting player. Payload: effect|context. */
+        EFFECT_REQUEST,
+
+        /** Server broadcasts end-of-round scores. Payload: name:roundScore:totalScore per player. */
+        ROUND_END,
+
+        /** Server broadcasts the game-over result. Payload: winner name. */
+        GAME_END,
+
         /** Fallback type for unrecognized or malformed messages. */
         UNKNOWN
     }
@@ -125,6 +159,7 @@ public record Message(Type type, String content) {
                     yield new Message(Type.WHISPERCHAT, whisperParts[0].trim() + "|" + whisperParts[1].trim());
                 }
 
+                case "/hand" -> new Message(Type.GET_HAND, "");
                 case "/players" -> new Message(Type.PLAYERS, "");
                 case "/allplayers" -> new Message(Type.ALLPLAYERS, "");
                 case "/start" -> new Message(Type.START, "");
@@ -163,6 +198,16 @@ public record Message(Type type, String content) {
             case "INFO" -> Type.INFO;
             case "ERROR" -> Type.ERROR;
             case "GAME" -> Type.GAME;
+            case "PLAY_CARD" -> Type.PLAY_CARD;
+            case "DRAW_CARD" -> Type.DRAW_CARD;
+            case "END_TURN" -> Type.END_TURN;
+            case "EFFECT_RESPONSE" -> Type.EFFECT_RESPONSE;
+            case "GET_HAND" -> Type.GET_HAND;
+            case "GAME_STATE" -> Type.GAME_STATE;
+            case "HAND_UPDATE" -> Type.HAND_UPDATE;
+            case "EFFECT_REQUEST" -> Type.EFFECT_REQUEST;
+            case "ROUND_END" -> Type.ROUND_END;
+            case "GAME_END" -> Type.GAME_END;
             default -> Type.UNKNOWN;
         };
     }
@@ -183,8 +228,11 @@ public record Message(Type type, String content) {
      */
     public boolean expectsContent() {
         return switch (type) {
-            case NAME, GLOBALCHAT, LOBBYCHAT, WHISPERCHAT, PLAYERS, ALLPLAYERS, INFO, ERROR, GAME, CREATE, LOBBIES, JOIN -> true;
-            case START, QUIT, PING, PONG, UNKNOWN -> false;
+            case NAME, GLOBALCHAT, LOBBYCHAT, WHISPERCHAT, PLAYERS, ALLPLAYERS,
+                 INFO, ERROR, GAME, CREATE, LOBBIES, JOIN,
+                 PLAY_CARD, EFFECT_RESPONSE,
+                 GAME_STATE, HAND_UPDATE, EFFECT_REQUEST, ROUND_END, GAME_END -> true;
+            case START, QUIT, DRAW_CARD, END_TURN, GET_HAND, PING, PONG, UNKNOWN -> false;
         };
     }
 
@@ -203,8 +251,11 @@ public record Message(Type type, String content) {
         }
 
         return switch (type) {
-            case START, QUIT, PING, PONG -> safe(content).isBlank();
-            case NAME, GLOBALCHAT, LOBBYCHAT, WHISPERCHAT, PLAYERS, ALLPLAYERS, INFO, ERROR, GAME, CREATE, LOBBIES, JOIN -> true;
+            case START, QUIT, DRAW_CARD, END_TURN, GET_HAND, PING, PONG -> safe(content).isBlank();
+            case NAME, GLOBALCHAT, LOBBYCHAT, WHISPERCHAT, PLAYERS, ALLPLAYERS,
+                 INFO, ERROR, GAME, CREATE, LOBBIES, JOIN,
+                 PLAY_CARD, EFFECT_RESPONSE,
+                 GAME_STATE, HAND_UPDATE, EFFECT_REQUEST, ROUND_END, GAME_END -> true;
             case UNKNOWN -> false;
         };
     }

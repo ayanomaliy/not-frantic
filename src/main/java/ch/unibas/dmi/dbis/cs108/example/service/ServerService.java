@@ -3,11 +3,13 @@ package ch.unibas.dmi.dbis.cs108.example.service;
 import ch.unibas.dmi.dbis.cs108.example.controller.ClientSession;
 import ch.unibas.dmi.dbis.cs108.example.model.Lobby;
 import ch.unibas.dmi.dbis.cs108.example.model.Player;
+import ch.unibas.dmi.dbis.cs108.example.model.game.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 /**
  * Manages server-side game state, client connections, and message handling.
@@ -463,11 +465,23 @@ public class ServerService {
                 ).encode());
             }
 
+            case PLAY_CARD     -> handlePlayCard(session, message.content());
+            case DRAW_CARD     -> handleDrawCard(session);
+            case END_TURN      -> handleEndTurn(session);
+            case EFFECT_RESPONSE -> handleEffectResponse(session, message.content());
+            case GET_HAND      -> handleGetHand(session);
+
             case PING, PONG -> {
                 // Heartbeat messages are handled in ClientSession / ClientReader.
                 log("Heartbeat message reached ServerService from "
                         + session.getPlayerName() + ": " + message.type());
             }
+
+            case GAME_STATE, HAND_UPDATE, EFFECT_REQUEST, ROUND_END, GAME_END ->
+                session.send(new Message(
+                        Message.Type.ERROR,
+                        "Client may not send server-only message types."
+                ).encode());
 
             case INFO, ERROR, GAME -> session.send(new Message(
                     Message.Type.ERROR,
@@ -879,23 +893,294 @@ public class ServerService {
             return;
         }
 
-        // 🔥 FIX: set gameStarted per lobby
         lobby.setGameStarted(true);
+        int round = lobby.nextRound();
+
+        List<String> playerNames = new ArrayList<>();
+        for (Player p : lobby.getPlayers()) playerNames.add(p.name());
+
+        GameState gameState = GameInitializer.initialize(
+                playerNames, round, lobby.getCumulativeScores(), new Random());
+        lobby.setGameState(gameState);
 
         log("Game started in lobby " + lobby.getLobbyId()
-                + " with " + lobby.getPlayerCount() + " players.");
+                + " with " + lobby.getPlayerCount() + " players (round " + round + ").");
 
-        broadcastToLobby(lobby, new Message(
-                Message.Type.GAME,
-                "Starting prototype game..."
-        ));
-        broadcastToLobby(lobby, new Message(
-                Message.Type.GAME,
-                "Connected players in lobby: " + lobby.getPlayerCount()
-        ));
-        broadcastToLobby(lobby, new Message(
-                Message.Type.GAME,
-                "This is where actual game initialization will go."
-        ));
+        broadcastGameState(lobby);
+        broadcastAllHands(lobby);
+
+        // Prompt the first player to start their turn
+        TurnEngine.startTurn(gameState);
+        broadcastGameState(lobby);
+    }
+
+    // -------------------------------------------------------------------------
+    // Game-action handlers
+    // -------------------------------------------------------------------------
+
+    /**
+     * Handles a {@code GET_HAND} message: sends the requesting player their current hand.
+     */
+    private void handleGetHand(ClientSession session) {
+        Lobby lobby = getLobbyOf(session);
+        if (lobby == null || lobby.getGameState() == null) {
+            session.send(new Message(Message.Type.ERROR, "No active game.").encode());
+            return;
+        }
+        try {
+            PlayerGameState p = lobby.getGameState().getPlayer(session.getPlayerName());
+            session.send(new Message(Message.Type.HAND_UPDATE,
+                    GameStateSerializer.serializeHand(p)).encode());
+        } catch (IllegalArgumentException e) {
+            session.send(new Message(Message.Type.ERROR, "You are not in this game.").encode());
+        }
+    }
+
+    /**
+     * Handles a {@code PLAY_CARD} message: the acting player plays one card.
+     * Broadcasts updated game state (and hands if needed) to the whole lobby.
+     */
+    private void handlePlayCard(ClientSession session, String payload) {
+        Lobby lobby = getLobbyOf(session);
+        if (lobby == null || lobby.getGameState() == null) {
+            session.send(new Message(Message.Type.ERROR, "No active game.").encode());
+            return;
+        }
+
+        int cardId = GameMessageParser.parsePlayCard(payload);
+        if (cardId < 0) {
+            session.send(new Message(Message.Type.ERROR, "Invalid card id.").encode());
+            return;
+        }
+
+        GameState state = lobby.getGameState();
+        String playerName = session.getPlayerName();
+
+        // Find the card in the player's hand
+        Card card = state.getPlayer(playerName).getHand().stream()
+                .filter(c -> c.id() == cardId)
+                .findFirst().orElse(null);
+        if (card == null) {
+            session.send(new Message(Message.Type.ERROR,
+                    "Card " + cardId + " not in your hand.").encode());
+            return;
+        }
+
+        List<GameEvent> events = TurnEngine.playCard(state, playerName, card);
+        broadcastEvents(lobby, events);
+        broadcastGameState(lobby);
+
+        if (state.getPhase() == GamePhase.ROUND_END) {
+            handleRoundEnd(lobby);
+        } else if (state.getPhase() == GamePhase.RESOLVING_EFFECT) {
+            // Prompt the acting player for effect arguments
+            String effectName = state.getPendingEffects().isEmpty()
+                    ? "UNKNOWN" : state.getPendingEffects().peek().name();
+            broadcastToLobby(lobby, new Message(Message.Type.EFFECT_REQUEST,
+                    GameStateSerializer.serializeEffectRequest(effectName, playerName)));
+        } else if (state.getPhase() == GamePhase.TURN_START) {
+            TurnEngine.startTurn(state);
+            broadcastGameState(lobby);
+        }
+    }
+
+    /**
+     * Handles a {@code DRAW_CARD} message: the acting player draws one card.
+     */
+    private void handleDrawCard(ClientSession session) {
+        Lobby lobby = getLobbyOf(session);
+        if (lobby == null || lobby.getGameState() == null) {
+            session.send(new Message(Message.Type.ERROR, "No active game.").encode());
+            return;
+        }
+
+        GameState state = lobby.getGameState();
+        String playerName = session.getPlayerName();
+
+        List<GameEvent> events = TurnEngine.drawCard(state, playerName);
+        broadcastEvents(lobby, events);
+
+        // Send updated hand only to the drawing player
+        session.send(new Message(Message.Type.HAND_UPDATE,
+                GameStateSerializer.serializeHand(state.getPlayer(playerName))).encode());
+        broadcastGameState(lobby);
+
+        if (state.getPhase() == GamePhase.ROUND_END) {
+            handleRoundEnd(lobby);
+        }
+    }
+
+    /**
+     * Handles an {@code END_TURN} message: the acting player explicitly ends
+     * their turn after drawing without playing.
+     */
+    private void handleEndTurn(ClientSession session) {
+        Lobby lobby = getLobbyOf(session);
+        if (lobby == null || lobby.getGameState() == null) {
+            session.send(new Message(Message.Type.ERROR, "No active game.").encode());
+            return;
+        }
+
+        GameState state = lobby.getGameState();
+        String playerName = session.getPlayerName();
+
+        if (!state.getCurrentPlayer().getPlayerName().equals(playerName)) {
+            session.send(new Message(Message.Type.ERROR, "Not your turn.").encode());
+            return;
+        }
+        if (state.getPhase() != GamePhase.AWAITING_PLAY) {
+            session.send(new Message(Message.Type.ERROR,
+                    "Cannot end turn in phase " + state.getPhase()).encode());
+            return;
+        }
+
+        List<GameEvent> events = TurnEngine.endTurn(state);
+        broadcastEvents(lobby, events);
+        TurnEngine.startTurn(state);
+        broadcastGameState(lobby);
+    }
+
+    /**
+     * Handles an {@code EFFECT_RESPONSE} message: the acting player supplies
+     * arguments to resolve a pending special effect.
+     */
+    private void handleEffectResponse(ClientSession session, String payload) {
+        Lobby lobby = getLobbyOf(session);
+        if (lobby == null || lobby.getGameState() == null) {
+            session.send(new Message(Message.Type.ERROR, "No active game.").encode());
+            return;
+        }
+
+        GameState state = lobby.getGameState();
+        String playerName = session.getPlayerName();
+
+        Object[] parsed = GameMessageParser.parseEffectResponse(payload, state, playerName);
+        if (parsed == null) {
+            session.send(new Message(Message.Type.ERROR,
+                    "Malformed effect response.").encode());
+            return;
+        }
+
+        String effectName = (String) parsed[0];
+        EffectArgs args   = (EffectArgs) parsed[1];
+
+        SpecialEffect effect;
+        try {
+            effect = SpecialEffect.valueOf(effectName);
+        } catch (IllegalArgumentException e) {
+            session.send(new Message(Message.Type.ERROR,
+                    "Unknown effect: " + effectName).encode());
+            return;
+        }
+
+        List<GameEvent> events = EffectResolver.resolve(effect, state, playerName, args);
+        broadcastEvents(lobby, events);
+        broadcastGameState(lobby);
+
+        if (state.getPhase() == GamePhase.ROUND_END) {
+            handleRoundEnd(lobby);
+        } else if (state.getPhase() == GamePhase.RESOLVING_EFFECT
+                && !state.getPendingEffects().isEmpty()) {
+            // More effects pending — prompt for next one
+            String nextEffect = state.getPendingEffects().peek().name();
+            String target = state.getPendingEffectTarget() != null
+                    ? state.getPendingEffectTarget() : playerName;
+            broadcastToLobby(lobby, new Message(Message.Type.EFFECT_REQUEST,
+                    GameStateSerializer.serializeEffectRequest(nextEffect, target)));
+        } else if (state.getPhase() == GamePhase.TURN_START) {
+            TurnEngine.startTurn(state);
+            broadcastGameState(lobby);
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Round / game end
+    // -------------------------------------------------------------------------
+
+    /**
+     * Called when the game state transitions to {@link GamePhase#ROUND_END}.
+     * Calculates scores, broadcasts results, and either starts a new round or
+     * declares the game over.
+     */
+    private void handleRoundEnd(Lobby lobby) {
+        GameState state = lobby.getGameState();
+
+        Map<String, Integer> roundScores =
+                ScoreCalculator.calculateRoundScores(state.getPlayerOrder());
+
+        // Update cumulative scores in the lobby
+        for (PlayerGameState p : state.getPlayerOrder()) {
+            lobby.getCumulativeScores().put(p.getPlayerName(), p.getTotalScore());
+        }
+
+        String roundEndPayload = GameStateSerializer.serializeRoundEnd(
+                roundScores, state.getPlayerOrder());
+        broadcastToLobby(lobby, new Message(Message.Type.ROUND_END, roundEndPayload));
+
+        if (ScoreCalculator.isGameOver(lobby.getCumulativeScores(), state.getMaxScore())) {
+            String winner = ScoreCalculator.getWinner(lobby.getCumulativeScores());
+            broadcastToLobby(lobby, new Message(Message.Type.GAME_END, winner));
+            state.setPhase(GamePhase.GAME_OVER);
+            lobby.setGameState(null);
+            lobby.setGameStarted(false);
+            log("Game over in lobby " + lobby.getLobbyId() + ". Winner: " + winner);
+        } else {
+            // Start the next round
+            int nextRound = lobby.nextRound();
+            List<String> playerNames = new ArrayList<>();
+            for (Player p : lobby.getPlayers()) playerNames.add(p.name());
+
+            GameState nextState = GameInitializer.initialize(
+                    playerNames, nextRound, lobby.getCumulativeScores(), new Random());
+            lobby.setGameState(nextState);
+
+            log("Starting round " + nextRound + " in lobby " + lobby.getLobbyId());
+            broadcastGameState(lobby);
+            broadcastAllHands(lobby);
+            TurnEngine.startTurn(nextState);
+            broadcastGameState(lobby);
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Broadcast helpers
+    // -------------------------------------------------------------------------
+
+    /**
+     * Broadcasts the public game state snapshot to every player in the lobby.
+     */
+    private void broadcastGameState(Lobby lobby) {
+        GameState state = lobby.getGameState();
+        if (state == null) return;
+        broadcastToLobby(lobby, new Message(Message.Type.GAME_STATE,
+                GameStateSerializer.serializePublicState(state)));
+    }
+
+    /**
+     * Sends each player their private hand update.
+     */
+    private void broadcastAllHands(Lobby lobby) {
+        GameState state = lobby.getGameState();
+        if (state == null) return;
+        for (ClientSession s : lobby.getSessions()) {
+            try {
+                PlayerGameState p = state.getPlayer(s.getPlayerName());
+                s.send(new Message(Message.Type.HAND_UPDATE,
+                        GameStateSerializer.serializeHand(p)).encode());
+            } catch (IllegalArgumentException ignored) {
+                // session has a name not yet in game state — skip
+            }
+        }
+    }
+
+    /**
+     * Converts a list of {@link GameEvent}s into {@code GAME} messages and
+     * broadcasts each one to the whole lobby.
+     */
+    private void broadcastEvents(Lobby lobby, List<GameEvent> events) {
+        for (GameEvent event : events) {
+            broadcastToLobby(lobby, new Message(Message.Type.GAME,
+                    event.type().name() + ":" + event.detail()));
+        }
     }
 }

@@ -100,7 +100,13 @@ public class ClientReader implements Runnable {
                         }
                     }
                     case GAME -> System.out.println("[GAME] " + message.content());
-                    case NAME, START, QUIT, UNKNOWN ->
+                    case HAND_UPDATE -> System.out.println("[HAND] " + message.content());
+                    case GAME_STATE -> System.out.println("[GAME_STATE] " + message.content());
+                    case EFFECT_REQUEST -> System.out.println("[EFFECT_REQUEST] " + message.content());
+                    case ROUND_END -> System.out.println("[ROUND_END] " + message.content());
+                    case GAME_END -> System.out.println("[GAME_END] " + message.content());
+                    case NAME, START, QUIT, CREATE, JOIN,
+                         PLAY_CARD, DRAW_CARD, END_TURN, EFFECT_RESPONSE, GET_HAND, UNKNOWN ->
                             System.out.println("[CLIENT] Unexpected server message: " + line);
                 }
             }

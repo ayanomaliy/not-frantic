@@ -71,3 +71,28 @@ or use the jar to run:
 java -jar build\libs\not-frantic.jar client localhost:5555
 
 java -jar build\libs\not-frantic.jar client localhost:5555 Alice
+
+### Figure out Cards Cheat-Sheet
+
+1. 0-71: normal color cards (two copies of 1-9 in RED, GREEN, BLUE, YELLOW blocks)
+2. 72-80: BLACK 1-9
+3. 81-100: single-color specials
+4. 101-123: four-color specials
+5. 124: FUCK_YOU
+
+### Quick Protocol Command list
+
+1. PLAY_CARD|<cardId>
+2. DRAW_CARD|
+3. END_TURN|
+4. EFFECT_RESPONSE 
+- EFFECT_RESPONSE|SKIP|<targetPlayer>
+- EFFECT_RESPONSE|COUNTERATTACK|<targetPlayer>
+- EFFECT_RESPONSE|NICE_TRY|<targetPlayer>
+- EFFECT_RESPONSE|GIFT|<targetPlayer>|<cardId1>[,<cardId2>]
+- EFFECT_RESPONSE|EXCHANGE|<targetPlayer>|<cardId1>,<cardId2>
+- EFFECT_RESPONSE|FANTASTIC|<COLOR> or EFFECT_RESPONSE|
+- FANTASTIC|<COLOR>|<number>
+- EFFECT_RESPONSE|FANTASTIC_FOUR|<COLOR> or EFFECT_RESPONSE|- FANTASTIC_FOUR|<COLOR>|<number>
+- EFFECT_RESPONSE|EQUALITY|<targetPlayer>|<COLOR>
+- EFFECT_RESPONSE|SECOND_CHANCE|<cardId> (or empty card part for draw penalty)
