@@ -233,3 +233,32 @@ Today, I focused on building the JavaFX GUI for the client and integrating it wi
   - handling turn-based interactions
   - visualizing game events and effects
 - Possibly refactor UI components further to keep them modular and extensible
+
+## Date: April 2, 2026
+
+### GUI Lobby System, Player Lists, and Multi-Channel Chat (Aiysha)
+
+#### What did we do today?
+
+Today, I worked mainly on the GUI and the communication features around lobbies and chat. The goal was to make the client feel more usable without relying only on terminal commands.
+
+#### Work Summary
+
+* I added GUI support for creating and joining lobbies, so lobbies can now be managed directly from the interface.
+* I implemented lobby listing in the GUI and connected it to the server-side lobby data.
+* I extended the player listing so that the client can now distinguish between players in the current lobby and all connected players on the server.
+* I reworked the left GUI panel so lobby players and global players are shown in separate proper list panels instead of being mixed into one list.
+
+I also expanded the chat system beyond the original single chat channel.
+
+* I introduced separate global chat, lobby chat, and whisper chat message types in the protocol.
+* I made global chat available independently of lobby membership.
+* I added lobby chat so messages can be restricted to the current lobby.
+* I implemented whisper chat for direct private messages between individual players.
+* I updated the GUI chat area so it can switch between global, lobby, and whisper chat views.
+
+In addition, I fixed several smaller synchronization issues between GUI and server state.
+
+* I fixed disconnect handling so old chat and lobby data no longer remain visible after reconnecting.
+* I fixed stale player list updates by making sure global player lists are refreshed after renames and connection changes.
+* I also improved the handling of lobby/player list refreshes so GUI state now matches the server state more reliably.
