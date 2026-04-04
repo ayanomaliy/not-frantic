@@ -96,3 +96,4 @@ java -jar build\libs\not-frantic.jar client localhost:5555 Alice
 - EFFECT_RESPONSE|FANTASTIC_FOUR|<COLOR> or EFFECT_RESPONSE|- FANTASTIC_FOUR|<COLOR>|<number>
 - EFFECT_RESPONSE|EQUALITY|<targetPlayer>|<COLOR>
 - EFFECT_RESPONSE|SECOND_CHANCE|<cardId> (or empty card part for draw penalty)
+5. /hand to get hand
