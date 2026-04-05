@@ -262,3 +262,12 @@ In addition, I fixed several smaller synchronization issues between GUI and serv
 * I fixed disconnect handling so old chat and lobby data no longer remain visible after reconnecting.
 * I fixed stale player list updates by making sure global player lists are refreshed after renames and connection changes.
 * I also improved the handling of lobby/player list refreshes so GUI state now matches the server state more reliably.
+
+## Date: April 5, 2026
+
+### QA Concept (Sevval)
+
+#### What did we do today?
+
+The past days, I was working on our QA Concept, started with the "about the project" continued with our Coding Standards and moved on with Code Review and Versions Control.
+The coming days, I will keep working on our QA Concept and add our measurements.
