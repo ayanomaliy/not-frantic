@@ -4,12 +4,18 @@ import animatefx.animation.FadeIn;
 import animatefx.animation.FadeInUp;
 import ch.unibas.dmi.dbis.cs108.example.client.ClientState;
 import ch.unibas.dmi.dbis.cs108.example.client.net.FxNetworkClient;
+import ch.unibas.dmi.dbis.cs108.example.model.game.GameInitializer;
 import ch.unibas.dmi.dbis.cs108.example.model.game.GameState;
+import ch.unibas.dmi.dbis.cs108.example.model.game.TurnEngine;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextInputDialog;
 import javafx.stage.Stage;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 /**
  * Coordinates JavaFX view changes and user interaction for the graphical
@@ -155,6 +161,15 @@ public class MainController {
      */
     public void showGameView() {
         GameView view = new GameView();
+
+        localGameState = GameInitializer.initialize(
+                List.of("User 1", "User 2"),
+                1,
+                Map.of(),
+                new Random()
+        );
+
+        TurnEngine.startTurn(localGameState);
 
         state.setCurrentPlayer("User 1");
         state.setCurrentPhase("AWAITING_PLAY");
