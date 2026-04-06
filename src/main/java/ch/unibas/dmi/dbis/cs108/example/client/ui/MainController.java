@@ -4,6 +4,7 @@ import animatefx.animation.FadeIn;
 import animatefx.animation.FadeInUp;
 import ch.unibas.dmi.dbis.cs108.example.client.ClientState;
 import ch.unibas.dmi.dbis.cs108.example.client.net.FxNetworkClient;
+import ch.unibas.dmi.dbis.cs108.example.model.game.Card;
 import ch.unibas.dmi.dbis.cs108.example.model.game.GameInitializer;
 import ch.unibas.dmi.dbis.cs108.example.model.game.GameState;
 import ch.unibas.dmi.dbis.cs108.example.model.game.TurnEngine;
@@ -171,9 +172,11 @@ public class MainController {
 
         TurnEngine.startTurn(localGameState);
 
-        state.setCurrentPlayer("User 1");
-        state.setCurrentPhase("AWAITING_PLAY");
-        state.setTopCardText("RED 5");
+        state.setCurrentPlayer(localGameState.getCurrentPlayer().getPlayerName());
+        state.setCurrentPhase(localGameState.getPhase().name());
+
+        var topCard = localGameState.peekDiscardPile();
+        state.setTopCardText(cardToText(topCard));
 
         refreshGameLabels(view);
 
@@ -255,6 +258,21 @@ public class MainController {
         view.getCurrentPlayerLabel().setText("Current Player: " + state.getCurrentPlayer());
         view.getPhaseLabel().setText("Phase: " + state.getCurrentPhase());
         view.getDiscardTopLabel().setText("Top Card: " + state.getTopCardText());
+    }
+
+    private String cardToText(Card card) {
+        if (card == null) {
+            return "-";
+        }
+
+        return switch (card.type()) {
+            case COLOR -> card.color() + " " + card.value();
+            case BLACK -> "BLACK " + card.value();
+            case SPECIAL_SINGLE -> card.color() + " " + card.effect();
+            case SPECIAL_FOUR -> String.valueOf(card.effect());
+            case FUCK_YOU -> "FUCK YOU";
+            case EVENT -> "EVENT " + card.id();
+        };
     }
 
     /**
