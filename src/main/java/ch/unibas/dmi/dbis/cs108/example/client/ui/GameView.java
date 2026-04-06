@@ -4,28 +4,29 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
 /**
- * First basic game screen for the JavaFX Frantic client.
- *
- * <p>This class currently contains only the visual skeleton of the game table.
- * Real game data will be connected later.</p>
+ * Game screen layout with:
+ * - game area on the left
+ * - players / game info / chat on the right
  */
 public class GameView extends StackPane {
 
     private final BorderPane mainLayout = new BorderPane();
 
-    private final HBox topOpponentsBox = new HBox();
-    private final VBox leftOpponentsBox = new VBox();
-    private final VBox rightPanelBox = new VBox();
-
+    // LEFT SIDE - GAME AREA
+    private final VBox gameArea = new VBox();
     private final StackPane centerTablePane = new StackPane();
     private final VBox centerInfoBox = new VBox();
+    private final VBox handSection = new VBox();
 
     private final Label currentPlayerLabel = new Label("Current Player: -");
     private final Label phaseLabel = new Label("Phase: -");
@@ -37,6 +38,18 @@ public class GameView extends StackPane {
 
     private final FlowPane playerHandPane = new FlowPane();
 
+    // RIGHT SIDE - SIDEBAR
+    private final VBox sideBar = new VBox();
+
+    private final ListView<String> playersList = new ListView<>();
+    private final Button leaveButton = new Button("Leave");
+
+    private final ListView<String> gameInfoList = new ListView<>();
+
+    private final ListView<String> chatList = new ListView<>();
+    private final TextField chatInput = new TextField();
+    private final Button sendButton = new Button("Send");
+
     public GameView() {
         buildLayout();
         getChildren().add(mainLayout);
@@ -44,51 +57,31 @@ public class GameView extends StackPane {
 
     private void buildLayout() {
         setPadding(new Insets(20));
-
         mainLayout.setPadding(new Insets(20));
 
-        buildTopArea();
-        buildLeftArea();
-        buildRightArea();
+        buildGameArea();
+        buildRightSidebar();
+
+        mainLayout.setCenter(gameArea);
+        mainLayout.setRight(sideBar);
+    }
+
+    private void buildGameArea() {
+        gameArea.setSpacing(20);
+        gameArea.setPadding(new Insets(10));
+
         buildCenterArea();
-        buildBottomArea();
-    }
+        buildBottomHandArea();
 
-    private void buildTopArea() {
-        topOpponentsBox.setAlignment(Pos.CENTER);
-        topOpponentsBox.setSpacing(20);
-        topOpponentsBox.setPadding(new Insets(10));
+        VBox.setVgrow(centerTablePane, Priority.ALWAYS);
+        centerTablePane.setMaxWidth(Double.MAX_VALUE);
 
-        topOpponentsBox.getChildren().add(createOpponentPlaceholder("Top Opponent"));
-        mainLayout.setTop(topOpponentsBox);
-    }
-
-    private void buildLeftArea() {
-        leftOpponentsBox.setAlignment(Pos.CENTER);
-        leftOpponentsBox.setSpacing(20);
-        leftOpponentsBox.setPadding(new Insets(10));
-
-        leftOpponentsBox.getChildren().add(createOpponentPlaceholder("Left Opponent"));
-        mainLayout.setLeft(leftOpponentsBox);
-    }
-
-    private void buildRightArea() {
-        rightPanelBox.setSpacing(15);
-        rightPanelBox.setPadding(new Insets(10));
-        rightPanelBox.setPrefWidth(220);
-
-        Label rightTitle = new Label("Opponents / Info");
-        rightTitle.getStyleClass().add("section-title");
-
-        VBox rightOpponentBox = createOpponentPlaceholder("Right Opponent");
-
-        rightPanelBox.getChildren().addAll(rightTitle, rightOpponentBox);
-        mainLayout.setRight(rightPanelBox);
+        gameArea.getChildren().addAll(centerTablePane, handSection);
     }
 
     private void buildCenterArea() {
-        centerTablePane.setMinHeight(350);
-        centerTablePane.setPrefHeight(400);
+        centerTablePane.setMinHeight(420);
+        centerTablePane.setPrefHeight(500);
 
         HBox pilesBox = new HBox(30);
         pilesBox.setAlignment(Pos.CENTER);
@@ -104,18 +97,23 @@ public class GameView extends StackPane {
         HBox buttonRow = new HBox(10, drawButton, endTurnButton, backToLobbyButton);
         buttonRow.setAlignment(Pos.CENTER);
 
-        centerInfoBox.getChildren().addAll(currentPlayerLabel, phaseLabel, discardTopLabel, buttonRow);
-
-        VBox centerWrapper = new VBox(20, pilesBox, centerInfoBox);
+        VBox centerWrapper = new VBox(
+                20,
+                pilesBox,
+                currentPlayerLabel,
+                phaseLabel,
+                discardTopLabel,
+                buttonRow
+        );
         centerWrapper.setAlignment(Pos.CENTER);
+        centerWrapper.setMaxWidth(600);
 
         centerTablePane.getChildren().add(centerWrapper);
-        mainLayout.setCenter(centerTablePane);
     }
 
-    private void buildBottomArea() {
-        VBox bottomBox = new VBox(10);
-        bottomBox.setPadding(new Insets(15));
+    private void buildBottomHandArea() {
+        handSection.setSpacing(10);
+        handSection.setPadding(new Insets(10));
 
         Label handTitle = new Label("Your Hand");
         handTitle.getStyleClass().add("section-title");
@@ -124,8 +122,54 @@ public class GameView extends StackPane {
         playerHandPane.setVgap(10);
         playerHandPane.setPrefWrapLength(900);
 
-        bottomBox.getChildren().addAll(handTitle, playerHandPane);
-        mainLayout.setBottom(bottomBox);
+        handSection.getChildren().addAll(handTitle, playerHandPane);
+    }
+
+    private void buildRightSidebar() {
+        sideBar.setSpacing(20);
+        sideBar.setPadding(new Insets(10));
+        sideBar.setPrefWidth(320);
+
+        // Players section
+        playersList.setPrefHeight(140);
+        VBox playersContent = new VBox(10, playersList, leaveButton);
+        VBox playersBox = createSection("Players in Lobby", playersContent);
+
+        // Game info section
+        gameInfoList.setPrefHeight(180);
+        VBox infoContent = new VBox(gameInfoList);
+        VBox infoBox = createSection("Game Info", infoContent);
+
+        // Chat section
+        chatList.setPrefHeight(220);
+
+        HBox chatInputRow = new HBox(10, chatInput, sendButton);
+        HBox.setHgrow(chatInput, Priority.ALWAYS);
+
+        VBox chatContent = new VBox(10, chatList, chatInputRow);
+        VBox.setVgrow(chatList, Priority.ALWAYS);
+
+        VBox chatBox = createSection("Chat", chatContent);
+        VBox.setVgrow(chatBox, Priority.ALWAYS);
+
+        sideBar.getChildren().addAll(playersBox, infoBox, chatBox);
+    }
+
+    private VBox createSection(String titleText, VBox content) {
+        Label title = new Label(titleText);
+        title.getStyleClass().add("section-title");
+
+        VBox box = new VBox(10, title, content);
+        box.setPadding(new Insets(12));
+
+        box.setStyle(
+                "-fx-background-color: rgba(255,255,255,0.55);" +
+                        "-fx-background-radius: 16;" +
+                        "-fx-border-color: #aab0d6;" +
+                        "-fx-border-radius: 16;"
+        );
+
+        return box;
     }
 
     private VBox createPileBox(String titleText) {
@@ -135,6 +179,7 @@ public class GameView extends StackPane {
         cardPlaceholder.setPrefSize(100, 140);
         cardPlaceholder.setMinSize(100, 140);
         cardPlaceholder.setMaxSize(100, 140);
+
         cardPlaceholder.setStyle(
                 "-fx-background-color: rgba(255,255,255,0.65);" +
                         "-fx-background-radius: 14;" +
@@ -147,23 +192,7 @@ public class GameView extends StackPane {
         return box;
     }
 
-    private VBox createOpponentPlaceholder(String name) {
-        Label nameLabel = new Label(name);
-        Label cardCountLabel = new Label("Cards: -");
-
-        VBox box = new VBox(8, nameLabel, cardCountLabel);
-        box.setAlignment(Pos.CENTER);
-        box.setPadding(new Insets(12));
-        box.setMinWidth(140);
-        box.setStyle(
-                "-fx-background-color: rgba(255,255,255,0.45);" +
-                        "-fx-background-radius: 14;" +
-                        "-fx-border-color: #aab0d6;" +
-                        "-fx-border-radius: 14;"
-        );
-
-        return box;
-    }
+    // --- Getters ---
 
     public Label getCurrentPlayerLabel() {
         return currentPlayerLabel;
@@ -191,5 +220,29 @@ public class GameView extends StackPane {
 
     public FlowPane getPlayerHandPane() {
         return playerHandPane;
+    }
+
+    public ListView<String> getPlayersList() {
+        return playersList;
+    }
+
+    public Button getLeaveButton() {
+        return leaveButton;
+    }
+
+    public ListView<String> getGameInfoList() {
+        return gameInfoList;
+    }
+
+    public ListView<String> getChatList() {
+        return chatList;
+    }
+
+    public TextField getChatInput() {
+        return chatInput;
+    }
+
+    public Button getSendButton() {
+        return sendButton;
     }
 }

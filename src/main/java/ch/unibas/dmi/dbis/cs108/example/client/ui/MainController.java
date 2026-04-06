@@ -6,6 +6,7 @@ import ch.unibas.dmi.dbis.cs108.example.client.net.FxNetworkClient;
 import ch.unibas.dmi.dbis.cs108.example.client.ClientState;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.stage.Stage;
 import javafx.scene.control.TextInputDialog;
 
@@ -153,6 +154,10 @@ public class MainController {
         view.getPhaseLabel().setText("Phase: AWAITING_PLAY");
         view.getDiscardTopLabel().setText("Top Card: RED 5");
 
+        view.getPlayersList().setItems(state.getPlayers());
+        view.getGameInfoList().setItems(state.getGameMessages());
+        view.getChatList().setItems(state.getGlobalChatMessages());
+
         view.getDrawButton().setOnAction(e ->
                 state.getGameMessages().add("[CLIENT] Draw button clicked.")
         );
@@ -162,12 +167,40 @@ public class MainController {
         );
 
         view.getBackToLobbyButton().setOnAction(e -> showLobbyView());
+        view.getLeaveButton().setOnAction(e -> showLobbyView());
+
+        view.getSendButton().setOnAction(e -> {
+            String text = view.getChatInput().getText().trim();
+            if (!text.isBlank()) {
+                networkClient.sendGlobalChat(text);
+                view.getChatInput().clear();
+            }
+        });
 
         Scene scene = createStyledScene(view, 1280, 800);
         stage.setScene(scene);
         new FadeIn(view).play();
-    }
 
+        // TEMP: fake cards
+        for (int i = 1; i <= 7; i++) {
+            final int cardNumber = i;
+            Button cardBtn = new Button("RED " + cardNumber);
+
+            cardBtn.setPrefSize(80, 120);
+            cardBtn.setStyle(
+                    "-fx-background-color: white;" +
+                            "-fx-border-color: black;" +
+                            "-fx-background-radius: 10;" +
+                            "-fx-border-radius: 10;"
+            );
+
+            cardBtn.setOnAction(e ->
+                    state.getGameMessages().add("[CLIENT] Played card: RED " + cardNumber)
+            );
+
+            view.getPlayerHandPane().getChildren().add(cardBtn);
+        }
+    }
     /**
      * Updates the chat list view to display the message list of the currently selected chat mode.
      *
