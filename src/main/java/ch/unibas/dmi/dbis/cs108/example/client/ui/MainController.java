@@ -2,13 +2,14 @@ package ch.unibas.dmi.dbis.cs108.example.client.ui;
 
 import animatefx.animation.FadeIn;
 import animatefx.animation.FadeInUp;
-import ch.unibas.dmi.dbis.cs108.example.client.net.FxNetworkClient;
 import ch.unibas.dmi.dbis.cs108.example.client.ClientState;
+import ch.unibas.dmi.dbis.cs108.example.client.net.FxNetworkClient;
+import ch.unibas.dmi.dbis.cs108.example.model.game.GameState;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.stage.Stage;
 import javafx.scene.control.TextInputDialog;
+import javafx.stage.Stage;
 
 /**
  * Coordinates JavaFX view changes and user interaction for the graphical
@@ -25,6 +26,8 @@ public class MainController {
     private final Stage stage;
     private final ClientState state;
     private final FxNetworkClient networkClient;
+
+    private GameState localGameState;
 
     /**
      * Creates a new main controller.
@@ -128,11 +131,11 @@ public class MainController {
             });
         });
 
-        // view.getStartButton().setOnAction(e -> networkClient.startGame());
         view.getStartButton().setOnAction(e -> {
             networkClient.startGame();
             showGameView();
         });
+
         view.getDisconnectButton().setOnAction(e -> {
             networkClient.disconnect();
             showConnectView();
@@ -147,24 +150,50 @@ public class MainController {
         new FadeIn(view).play();
     }
 
+    /**
+     * Shows the game screen.
+     */
     public void showGameView() {
         GameView view = new GameView();
 
-        view.getCurrentPlayerLabel().setText("Current Player: HP");
-        view.getPhaseLabel().setText("Phase: AWAITING_PLAY");
-        view.getDiscardTopLabel().setText("Top Card: RED 5");
+        state.setCurrentPlayer("User 1");
+        state.setCurrentPhase("AWAITING_PLAY");
+        state.setTopCardText("RED 5");
+
+        refreshGameLabels(view);
 
         view.getPlayersList().setItems(state.getPlayers());
         view.getGameInfoList().setItems(state.getGameMessages());
         view.getChatList().setItems(state.getGlobalChatMessages());
 
-        view.getDrawButton().setOnAction(e ->
-                state.getGameMessages().add("[CLIENT] Draw button clicked.")
-        );
+        view.getDrawButton().setOnAction(e -> {
+            int nextCardNumber = view.getPlayerHandPane().getChildren().size() + 1;
 
-        view.getEndTurnButton().setOnAction(e ->
-                state.getGameMessages().add("[CLIENT] End turn clicked.")
-        );
+            Button newCard = new Button("RED " + nextCardNumber);
+            newCard.setPrefSize(80, 120);
+            newCard.setFocusTraversable(false);
+
+            newCard.setOnAction(cardEvent -> {
+                state.setTopCardText("RED " + nextCardNumber);
+                state.getGameMessages().add("[CLIENT] Played card: RED " + nextCardNumber);
+
+                refreshGameLabels(view);
+                view.getPlayerHandPane().getChildren().remove(newCard);
+                view.getGameInfoList().scrollTo(state.getGameMessages().size() - 1);
+            });
+
+            view.getPlayerHandPane().getChildren().add(newCard);
+            state.getGameMessages().add("[CLIENT] Drew card: RED " + nextCardNumber);
+            view.getGameInfoList().scrollTo(state.getGameMessages().size() - 1);
+        });
+
+        view.getEndTurnButton().setOnAction(e -> {
+            state.getGameMessages().add("[CLIENT] End turn clicked.");
+            state.setCurrentPlayer("Next Player");
+
+            refreshGameLabels(view);
+            view.getGameInfoList().scrollTo(state.getGameMessages().size() - 1);
+        });
 
         view.getBackToLobbyButton().setOnAction(e -> showLobbyView());
         view.getLeaveButton().setOnAction(e -> showLobbyView());
@@ -181,26 +210,38 @@ public class MainController {
         stage.setScene(scene);
         new FadeIn(view).play();
 
-        // TEMP: fake cards
+        // Initial fake hand
         for (int i = 1; i <= 7; i++) {
             final int cardNumber = i;
+
             Button cardBtn = new Button("RED " + cardNumber);
-
             cardBtn.setPrefSize(80, 120);
-            cardBtn.setStyle(
-                    "-fx-background-color: white;" +
-                            "-fx-border-color: black;" +
-                            "-fx-background-radius: 10;" +
-                            "-fx-border-radius: 10;"
-            );
+            cardBtn.setFocusTraversable(false);
 
-            cardBtn.setOnAction(e ->
-                    state.getGameMessages().add("[CLIENT] Played card: RED " + cardNumber)
-            );
+            cardBtn.setOnAction(e -> {
+                state.setTopCardText("RED " + cardNumber);
+                state.getGameMessages().add("[CLIENT] Played card: RED " + cardNumber);
+
+                refreshGameLabels(view);
+                view.getPlayerHandPane().getChildren().remove(cardBtn);
+                view.getGameInfoList().scrollTo(state.getGameMessages().size() - 1);
+            });
 
             view.getPlayerHandPane().getChildren().add(cardBtn);
         }
     }
+
+    /**
+     * Refreshes the game labels from the shared client state.
+     *
+     * @param view the game view to update
+     */
+    private void refreshGameLabels(GameView view) {
+        view.getCurrentPlayerLabel().setText("Current Player: " + state.getCurrentPlayer());
+        view.getPhaseLabel().setText("Phase: " + state.getCurrentPhase());
+        view.getDiscardTopLabel().setText("Top Card: " + state.getTopCardText());
+    }
+
     /**
      * Updates the chat list view to display the message list of the currently selected chat mode.
      *
@@ -216,10 +257,6 @@ public class MainController {
 
     /**
      * Sends the content of the chat input field using the currently selected chat mode.
-     *
-     * <p>If the current mode is Whisper, the input must be a whisper command such as
-     * {@code /w Alice hello}. In Global or Lobby mode, normal text is sent to the
-     * corresponding chat channel.</p>
      *
      * @param view the lobby view containing the chat input
      */
@@ -251,11 +288,7 @@ public class MainController {
     }
 
     /**
-     * Executes the content of the command field as a terminal-style client
-     * command.
-     *
-     * <p>If the command disconnects the client, the connect screen is shown
-     * again.</p>
+     * Executes the content of the command field as a terminal-style client command.
      *
      * @param view the lobby view containing the command input
      */
@@ -274,8 +307,7 @@ public class MainController {
     }
 
     /**
-     * Creates a scene and attaches the shared CSS theme if the resource is
-     * available.
+     * Creates a scene and attaches the shared CSS theme if the resource is available.
      *
      * @param root the root node of the scene
      * @param width the initial scene width
