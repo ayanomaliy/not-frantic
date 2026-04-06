@@ -127,7 +127,11 @@ public class MainController {
             });
         });
 
-        view.getStartButton().setOnAction(e -> networkClient.startGame());
+        // view.getStartButton().setOnAction(e -> networkClient.startGame());
+        view.getStartButton().setOnAction(e -> {
+            networkClient.startGame();
+            showGameView();
+        });
         view.getDisconnectButton().setOnAction(e -> {
             networkClient.disconnect();
             showConnectView();
@@ -136,6 +140,28 @@ public class MainController {
         networkClient.requestPlayers();
         networkClient.requestAllPlayers();
         networkClient.requestLobbies();
+
+        Scene scene = createStyledScene(view, 1280, 800);
+        stage.setScene(scene);
+        new FadeIn(view).play();
+    }
+
+    public void showGameView() {
+        GameView view = new GameView();
+
+        view.getCurrentPlayerLabel().setText("Current Player: HP");
+        view.getPhaseLabel().setText("Phase: AWAITING_PLAY");
+        view.getDiscardTopLabel().setText("Top Card: RED 5");
+
+        view.getDrawButton().setOnAction(e ->
+                state.getGameMessages().add("[CLIENT] Draw button clicked.")
+        );
+
+        view.getEndTurnButton().setOnAction(e ->
+                state.getGameMessages().add("[CLIENT] End turn clicked.")
+        );
+
+        view.getBackToLobbyButton().setOnAction(e -> showLobbyView());
 
         Scene scene = createStyledScene(view, 1280, 800);
         stage.setScene(scene);
