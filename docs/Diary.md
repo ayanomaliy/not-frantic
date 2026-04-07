@@ -314,3 +314,28 @@ Today, I focused on integrating the game state into the client and improving the
 - Improve turn logic and enforce rules such as turn-based actions.
 - Enhance UI with interactive elements (clickable cards, animations).
 - Continue refining the overall game flow and user experience.
+
+## Date: April 7, 2026
+
+### Client Restructuring and GameView Rework (Aiysha)
+
+#### What did we do today?
+
+Today, I focused on restructuring the client architecture and improving the game UI. The main goal was to remove redundant client logic between CLI and GUI, unify the networking flow, and rework the `GameView` so it fits the rest of the application visually and starts displaying actual game data instead of only placeholders.
+
+#### Work Summary
+
+* Restructured the client logic to remove redundancy between the **CLI client** and the **GUI client**.
+* Unified the client flow so communication now goes through **`ClientProtocolClient`**, **`NetworkClientCore`**, and **`ClientMain`** instead of having two mostly separate client implementations.
+* Cleaned up the architecture so the shared client/network logic is reused more consistently.
+* Reworked Sena’s **`GameView`** so it now uses the shared **CSS styling** like the other views.
+* Improved the **GameView layout and presentation** so it is closer to the actual in-game interface.
+* Started replacing placeholder-style display logic so the **game view reflects the game state more directly** instead of showing only static placeholders.
+
+#### Future Plans
+
+* Improve the layout of the **player list** and **Game Info** area, since it currently feels too cramped.
+* Add a **Settings** option with features such as **dark mode** and later settings like **music volume**.
+* Implement proper **effect resolution in the GUI**, since it currently still has to be done through the CLI.
+* Investigate and fix the **effect resolution bug** where the player sometimes gets kicked while resolving an effect.
+* Continue refining the overall in-game UI so it becomes clearer and more comfortable to use.
