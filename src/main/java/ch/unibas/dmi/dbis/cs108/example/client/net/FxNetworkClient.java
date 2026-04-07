@@ -4,64 +4,63 @@ import ch.unibas.dmi.dbis.cs108.example.client.ClientState;
 import ch.unibas.dmi.dbis.cs108.example.service.Message;
 import javafx.application.Platform;
 
-import java.io.*;
-import java.net.Socket;
-import java.nio.charset.StandardCharsets;
+import java.io.IOException;
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicLong;
-
+import java.util.List;
 
 /**
- * JavaFX-aware network client for the Frantic^-1 GUI.
+ * JavaFX adapter around the shared protocol client.
  *
- * <p>This class manages the TCP connection to the game server, sends
- * protocol messages, receives server responses, and updates the shared
- * {@link ClientState} on the JavaFX application thread.</p>
- *
- * <p>It also maintains a heartbeat mechanism to detect lost server
- * connections automatically.</p>
+ * <p>This class contains GUI-specific behavior only. All socket management,
+ * message transport, heartbeat handling, and uniform protocol sending are
+ * delegated to {@link ClientProtocolClient}.</p>
  */
-public class FxNetworkClient {
+public class FxNetworkClient implements ClientMessageHandler {
 
     /** Shared GUI state updated from incoming server messages. */
     private final ClientState state;
-    /** TCP socket connected to the game server. */
-    private Socket socket;
-    /** Reader for incoming server messages. */
-    private BufferedReader serverIn;
-    /** Writer for outgoing client messages. */
-    private PrintWriter serverOut;
-    /** Timestamp of the last received pong message from the server. */
-    private final AtomicLong lastServerPongTime = new AtomicLong(System.currentTimeMillis());
+
+    /** Shared typed protocol client used by the GUI. */
+    private final ClientProtocolClient protocolClient;
+
+    /** Callback triggered once the first real game state arrives. */
+    private Runnable gameStartListener;
+
+    /** Prevents reopening the game view for every GAME_STATE update. */
+    private boolean gameViewShown = false;
 
     /**
-     * Creates a new GUI network client.
+     * Creates a new GUI network adapter.
      *
-     * @param state the shared client state to update from network events
+     * @param state the shared client state
      */
     public FxNetworkClient(ClientState state) {
         this.state = state;
+        this.protocolClient = new ClientProtocolClient(this);
     }
 
     /**
-     * Connects to the server and initializes background reader and heartbeat threads.
+     * Registers a callback that is invoked when the server confirms that a game
+     * has started by sending a {@code GAME_STATE} message.
      *
-     * <p>After the connection is established, the client sends its initial
-     * player name, starts a reader thread for incoming messages, starts a
-     * heartbeat thread for connection monitoring, and requests the current
-     * player list from the server.</p>
+     * @param gameStartListener the callback to invoke
+     */
+    public void setGameStartListener(Runnable gameStartListener) {
+        this.gameStartListener = gameStartListener;
+    }
+
+    /**
+     * Connects to the server and initializes the GUI state.
      *
-     * @param host the server host name or IP address
+     * @param host the server host
      * @param port the server port
-     * @param username the desired player name
-     * @throws IOException if the socket connection cannot be established
+     * @param username the desired username
+     * @throws IOException if the connection fails
      */
     public void connect(String host, int port, String username) throws IOException {
-        socket = new Socket(host, port);
-        serverIn = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
-        serverOut = new PrintWriter(socket.getOutputStream(), true, StandardCharsets.UTF_8);
+        protocolClient.connect(host, port);
 
-        lastServerPongTime.set(System.currentTimeMillis());
+        gameViewShown = false;
 
         Platform.runLater(() -> {
             state.setConnected(true);
@@ -69,245 +68,185 @@ public class FxNetworkClient {
             state.setStatusText("Connected to " + host + ":" + port);
         });
 
-        send(new Message(Message.Type.NAME, username));
-
-        Thread readerThread = new Thread(this::readLoop, "client-reader");
-        readerThread.setDaemon(true);
-        readerThread.start();
-
-        Thread heartbeatThread = new Thread(this::heartbeatLoop, "client-heartbeat");
-        heartbeatThread.setDaemon(true);
-        heartbeatThread.start();
-
-        requestPlayers();
-        requestAllPlayers();
-        requestLobbies();
+        setName(username);
     }
+
     /**
-     * Disconnects from the server and updates the client state.
-     *
-     * <p>If a connection is currently active, a quit message is sent first.
-     * The socket is then closed and the GUI state is reset to a disconnected
-     * status.</p>
-     */
-    /**
-     * Disconnects this client from the server and updates the local GUI state.
-     *
-     * <p>This method sends a {@code QUIT} message before closing the socket.</p>
+     * Disconnects this client from the server.
      */
     public void disconnect() {
-        disconnect(true);
+        protocolClient.disconnect();
+        clearLocalState("Disconnected");
     }
 
     /**
-     * Disconnects this client from the server and updates the local GUI state.
+     * Sends a request to set or change the player name.
      *
-     * <p>If {@code notifyServer} is {@code true}, a {@code QUIT} message is
-     * sent before the socket is closed. This is useful for distinguishing
-     * between an explicit quit command and a local shutdown after the command
-     * was already sent.</p>
-     *
-     * @param notifyServer whether a {@code QUIT} message should be sent first
+     * @param username the desired player name
      */
-    private void disconnect(boolean notifyServer) {
-        try {
-            if (notifyServer && serverOut != null) {
-                send(new Message(Message.Type.QUIT, ""));
-            }
-        } catch (Exception ignored) {
-        }
-
-        try {
-            if (socket != null && !socket.isClosed()) {
-                socket.close();
-            }
-        } catch (IOException ignored) {
-        }
-
-        socket = null;
-        serverIn = null;
-        serverOut = null;
-
-        Platform.runLater(() -> {
-            state.setConnected(false);
-            state.setStatusText("Disconnected");
-            state.setChatMode("Global");
-
-            state.getPlayers().clear();
-            state.getAllPlayers().clear();
-            state.getLobbies().clear();
-
-            state.getGlobalChatMessages().clear();
-            state.getLobbyChatMessages().clear();
-            state.getWhisperChatMessages().clear();
-
-            state.getGameMessages().clear();
-        });
+    public void setName(String username) {
+        protocolClient.setName(username);
     }
 
     /**
-     * Sends a chat message to the server.
+     * Sends a global chat message.
      *
-     * @param text the chat message text
-     */
-    /**
-     * Sends a global chat message to the server.
-     *
-     * @param text the chat message text
+     * @param text the chat text
      */
     public void sendGlobalChat(String text) {
-        send(new Message(Message.Type.GLOBALCHAT, text));
+        protocolClient.sendGlobalChat(text);
     }
-    public void sendLobbyChat(String text) {
-        send(new Message(Message.Type.LOBBYCHAT, text));
-    }
-
-    public void sendWhisperChat(String payload) {
-        send(new Message(Message.Type.WHISPERCHAT, payload));
-    }
-
 
     /**
-     * Requests the current player list from the server.
+     * Sends a lobby chat message.
+     *
+     * @param text the chat text
+     */
+    public void sendLobbyChat(String text) {
+        protocolClient.sendLobbyChat(text);
+    }
+
+    /**
+     * Sends a whisper message.
+     *
+     * @param targetPlayer the whisper target
+     * @param text the whisper text
+     */
+    public void sendWhisperChat(String targetPlayer, String text) {
+        protocolClient.sendWhisperChat(targetPlayer, text);
+    }
+
+    /**
+     * Requests the current lobby player list.
      */
     public void requestPlayers() {
-        send(new Message(Message.Type.PLAYERS, ""));
+        protocolClient.requestPlayers();
     }
-
-    public void requestAllPlayers() {
-        send(new Message(Message.Type.ALLPLAYERS, ""));
-    }
-
 
     /**
-     * Requests the current lobby list from the server.
+     * Requests the global player list.
+     */
+    public void requestAllPlayers() {
+        protocolClient.requestAllPlayers();
+    }
+
+    /**
+     * Requests the lobby list.
      */
     public void requestLobbies() {
-        send(new Message(Message.Type.LOBBIES, ""));
+        protocolClient.requestLobbies();
     }
+
     /**
-     * Sends a request to start the game.
+     * Creates a new lobby.
+     *
+     * @param lobbyId the desired lobby id
+     */
+    public void createLobby(String lobbyId) {
+        protocolClient.createLobby(lobbyId);
+    }
+
+    /**
+     * Joins an existing lobby.
+     *
+     * @param lobbyId the lobby id
+     */
+    public void joinLobby(String lobbyId) {
+        protocolClient.joinLobby(lobbyId);
+    }
+
+    /**
+     * Leaves the current lobby.
+     */
+    public void leaveLobby() {
+        protocolClient.leaveLobby();
+    }
+
+    /**
+     * Requests a game start.
      */
     public void startGame() {
-        send(new Message(Message.Type.START, ""));
+        protocolClient.startGame();
     }
 
-
-
     /**
-     * Sends a protocol message to the server if an output stream is available.
-     *
-     * @param message the message to send
+     * Requests the current hand from the server.
      */
-    private void send(Message message) {
-        if (serverOut != null) {
-            serverOut.println(message.encode());
-        }
+    public void requestHand() {
+        protocolClient.requestHand();
     }
 
     /**
-     * Parses and executes a raw client command using the same rules as the
-     * terminal client.
+     * Requests to draw one card.
+     */
+    public void drawCard() {
+        protocolClient.drawCard();
+    }
+
+    /**
+     * Requests to end the current turn.
+     */
+    public void endTurn() {
+        protocolClient.endTurn();
+    }
+
+    /**
+     * Requests to play the given card.
      *
-     * <p>Supported input includes both slash commands such as
-     * {@code /name Alice} and the structured protocol format parsed by
-     * {@link Message#parse(String)}. Invalid input and unknown commands are
-     * reported to the GUI. Manual heartbeat commands are rejected because
-     * heartbeat handling is automatic.</p>
+     * @param cardId the card id to play
+     */
+    public void playCard(int cardId) {
+        protocolClient.playCard(cardId);
+    }
+
+    /**
+     * Parses and executes a raw terminal-style command for the manual command field.
      *
-     * <p>If the command is {@code /quit}, the method closes the local
-     * connection after sending the quit request and returns {@code true} so the
-     * caller can switch back to the connect view.</p>
-     *
-     * @param rawInput the raw command entered by the user
-     * @return {@code true} if the command caused a disconnect, otherwise {@code false}
+     * @param rawInput the raw command
+     * @return {@code true} if the command caused a disconnect
      */
     public boolean sendCommand(String rawInput) {
-        Message message = Message.parse(rawInput);
+        Message message = protocolClient.parseRawCommand(rawInput);
 
         if (message == null) {
-            Platform.runLater(() ->
-                    state.getGameMessages().add("[CLIENT] Invalid input."));
+            onLocalMessage("[CLIENT] Invalid input.");
             return false;
         }
 
         if (message.type() == Message.Type.UNKNOWN) {
-            Platform.runLater(() ->
-                    state.getGameMessages().add("[CLIENT] Unknown command."));
+            onLocalMessage("[CLIENT] Unknown command.");
             return false;
         }
 
         if (message.type() == Message.Type.PING || message.type() == Message.Type.PONG) {
-            Platform.runLater(() ->
-                    state.getGameMessages().add("[CLIENT] Heartbeat messages are handled automatically."));
+            onLocalMessage("[CLIENT] Heartbeat messages are handled automatically.");
             return false;
         }
 
-        send(message);
+        protocolClient.send(message);
 
         if (message.type() == Message.Type.QUIT) {
-            disconnect(false);
+            protocolClient.disconnect(false);
+            clearLocalState("Disconnected");
             return true;
         }
 
         return false;
     }
 
-    /**
-     * Continuously reads incoming server messages and processes them.
-     *
-     * <p>Malformed messages are reported in the GUI state. Valid messages
-     * are forwarded to {@link #handleIncoming(Message)}. If the connection
-     * is lost, the client state is updated accordingly.</p>
-     */
-    private void readLoop() {
-        try {
-            String line;
-            while ((line = serverIn.readLine()) != null) {
-                Message message = Message.parse(line);
-
-                if (message == null || !message.hasValidStructure()) {
-                    final String invalidLine = line;
-                    Platform.runLater(() ->
-                            state.getGameMessages().add("[CLIENT] Invalid server message: " + invalidLine));
-                    continue;
-                }
-
-                handleIncoming(message);
-            }
-        } catch (Exception e) {
-            Platform.runLater(() -> {
-                state.setConnected(false);
-                state.setStatusText("Connection closed: " + e.getMessage());
-            });
-        }
-    }
-    /**
-     * Handles a single incoming protocol message from the server.
-     *
-     * <p>Depending on the message type, this method may respond to
-     * heartbeat messages, update the chat view, refresh the player list,
-     * or append informational/game messages to the GUI state.</p>
-     *
-     * @param message the parsed incoming message
-     */
-    private void handleIncoming(Message message) {
+    @Override
+    public void onMessage(Message message) {
         switch (message.type()) {
-            case PING -> send(new Message(Message.Type.PONG, ""));
-            case PONG -> lastServerPongTime.set(System.currentTimeMillis());
-
             case GLOBALCHAT -> {
                 String[] parts = message.splitChatPayload();
                 Platform.runLater(() ->
                         state.getGlobalChatMessages().add(parts[0] + ": " + parts[1]));
-
             }
 
             case LOBBYCHAT -> {
                 String[] parts = message.splitChatPayload();
                 Platform.runLater(() ->
                         state.getLobbyChatMessages().add(parts[0] + ": " + parts[1]));
-
             }
 
             case WHISPERCHAT -> Platform.runLater(() -> {
@@ -330,78 +269,203 @@ public class FxNetworkClient {
                 }
             });
 
+            case INFO -> Platform.runLater(() -> {
+                String info = message.content();
+                state.getGameMessages().add("[INFO] " + info);
 
-            case INFO -> Platform.runLater(() ->
-                    state.getGameMessages().add("[INFO] " + message.content()));
+                if (info.startsWith("Lobby created and joined: ")) {
+                    state.setCurrentLobby(info.substring("Lobby created and joined: ".length()).trim());
+                } else if (info.startsWith("Joined lobby: ")) {
+                    state.setCurrentLobby(info.substring("Joined lobby: ".length()).trim());
+                } else if (info.startsWith("You are already in lobby: ")) {
+                    state.setCurrentLobby(info.substring("You are already in lobby: ".length()).trim());
+                } else if (info.startsWith("You left lobby: ")) {
+                    state.setCurrentLobby("");
+                }
+
+                if (info.startsWith("Your name has been set to ")) {
+                    state.setUsername(info.substring("Your name has been set to ".length()).trim());
+                } else if (info.startsWith("Your requested name was taken. Your name has been set to ")) {
+                    state.setUsername(info.substring(
+                            "Your requested name was taken. Your name has been set to ".length()
+                    ).trim());
+                } else if (info.startsWith("Your name is now ")) {
+                    state.setUsername(info.substring("Your name is now ".length()).trim());
+                } else if (info.startsWith("Your requested name was taken. Your name is now ")) {
+                    state.setUsername(info.substring(
+                            "Your requested name was taken. Your name is now ".length()
+                    ).trim());
+                }
+            });
 
             case ERROR -> Platform.runLater(() ->
                     state.getGameMessages().add("[ERROR] " + message.content()));
 
             case PLAYERS -> Platform.runLater(() -> {
-                state.getPlayers().setAll(
-                        message.content().isBlank()
-                                ? java.util.List.of()
-                                : Arrays.stream(message.content().split(","))
-                                .map(String::trim)
-                                .filter(s -> !s.isBlank())
-                                .toList()
-                );
+                List<String> updatedPlayers = message.content().isBlank()
+                        ? List.of()
+                        : Arrays.stream(message.content().split(","))
+                          .map(String::trim)
+                          .filter(s -> !s.isBlank())
+                          .toList();
+
+                state.getPlayers().setAll(updatedPlayers);
+
+                if (updatedPlayers.isEmpty()) {
+                    clearLocalGameOnly();
+                }
             });
 
             case ALLPLAYERS -> Platform.runLater(() -> {
                 state.getAllPlayers().setAll(
                         message.content().isBlank()
-                                ? java.util.List.of()
+                                ? List.of()
                                 : Arrays.stream(message.content().split(","))
-                                .map(String::trim)
-                                .filter(s -> !s.isBlank())
-                                .toList()
+                                  .map(String::trim)
+                                  .filter(s -> !s.isBlank())
+                                  .toList()
                 );
             });
 
             case LOBBIES -> Platform.runLater(() -> {
                 state.getLobbies().setAll(
                         message.content().isBlank()
-                                ? java.util.List.of()
+                                ? List.of()
                                 : Arrays.stream(message.content().split(","))
-                                .map(String::trim)
-                                .filter(s -> !s.isBlank())
-                                .toList()
+                                  .map(String::trim)
+                                  .filter(s -> !s.isBlank())
+                                  .toList()
                 );
+            });
+
+            case GAME_STATE -> Platform.runLater(() -> {
+                applyGameStatePayload(message.content());
+                state.getGameMessages().add("[GAME_STATE] " + message.content());
+
+                if (!gameViewShown) {
+                    gameViewShown = true;
+                    if (gameStartListener != null) {
+                        gameStartListener.run();
+                    }
+                }
+            });
+
+            case HAND_UPDATE -> Platform.runLater(() -> {
+                state.getCurrentHandCards().setAll(
+                        message.content().isBlank()
+                                ? List.of()
+                                : Arrays.stream(message.content().split(","))
+                                  .map(String::trim)
+                                  .filter(s -> !s.isBlank())
+                                  .toList()
+                );
+                state.getGameMessages().add("[HAND] " + message.content());
             });
 
             case GAME -> Platform.runLater(() ->
                     state.getGameMessages().add("[GAME] " + message.content()));
 
+            case EFFECT_REQUEST -> Platform.runLater(() ->
+                    state.getGameMessages().add("[EFFECT_REQUEST] " + message.content()));
+
+            case ROUND_END -> Platform.runLater(() ->
+                    state.getGameMessages().add("[ROUND_END] " + message.content()));
+
+            case GAME_END -> Platform.runLater(() ->
+                    state.getGameMessages().add("[GAME_END] " + message.content()));
+
             default -> Platform.runLater(() ->
                     state.getGameMessages().add("[CLIENT] Unexpected: " + message.encode()));
         }
     }
+
+    @Override
+    public void onLocalMessage(String text) {
+        Platform.runLater(() -> state.getGameMessages().add(text));
+    }
+
+    @Override
+    public void onDisconnected(String reason) {
+        clearLocalState(reason);
+    }
+
     /**
-     * Periodically sends heartbeat ping messages and checks server responsiveness.
+     * Applies the public-state payload from a {@code GAME_STATE} message to the GUI state.
      *
-     * <p>If no pong message is received within the configured timeout,
-     * the client disconnects automatically.</p>
+     * <p>The server currently serializes public state as comma-separated
+     * {@code key:value} pairs with a trailing {@code players:...} section.</p>
+     *
+     * @param payload the raw game-state payload
      */
-    private void heartbeatLoop() {
-        final long heartbeatIntervalMillis = 5000;
-        final long heartbeatTimeoutMillis = 15000;
-
-        try {
-            while (socket != null && !socket.isClosed()) {
-                send(new Message(Message.Type.PING, ""));
-
-                long now = System.currentTimeMillis();
-                long lastPong = lastServerPongTime.get();
-
-                if (now - lastPong > heartbeatTimeoutMillis) {
-                    disconnect();
-                    break;
-                }
-
-                Thread.sleep(heartbeatIntervalMillis);
-            }
-        } catch (Exception ignored) {
+    private void applyGameStatePayload(String payload) {
+        String prefix = payload;
+        int playersIndex = payload.indexOf(",players:");
+        if (playersIndex >= 0) {
+            prefix = payload.substring(0, playersIndex);
         }
+
+        for (String entry : prefix.split(",")) {
+            String[] parts = entry.split(":", 2);
+            if (parts.length != 2) {
+                continue;
+            }
+
+            String key = parts[0].trim();
+            String value = parts[1].trim();
+
+            switch (key) {
+                case "phase" -> state.setCurrentPhase(value);
+                case "currentPlayer" -> state.setCurrentPlayer(value);
+                case "discardTop" -> state.setTopCardText(
+                        "none".equalsIgnoreCase(value) ? "-" : "Card #" + value
+                );
+                default -> {
+                    // Ignore unknown fields for forward compatibility.
+                }
+            }
+        }
+    }
+
+    /**
+     * Clears only game-specific GUI state while keeping connection, lobby,
+     * and chat information intact.
+     */
+    private void clearLocalGameOnly() {
+        gameViewShown = false;
+        state.setCurrentPlayer("Unknown");
+        state.setCurrentPhase("WAITING");
+        state.setTopCardText("-");
+        state.getCurrentHandCards().clear();
+    }
+
+    /**
+     * Clears the local GUI state after a disconnect.
+     *
+     * @param statusText the new status text
+     */
+    private void clearLocalState(String statusText) {
+        gameViewShown = false;
+        state.setCurrentLobby("");
+
+        Platform.runLater(() -> {
+            state.setConnected(false);
+            state.setStatusText(statusText);
+            state.setChatMode("Global");
+
+            state.getPlayers().clear();
+            state.getAllPlayers().clear();
+            state.getLobbies().clear();
+            state.getCurrentHandCards().clear();
+
+            state.setCurrentPlayer("Unknown");
+            state.setCurrentPhase("WAITING");
+            state.setTopCardText("-");
+
+            state.getGlobalChatMessages().clear();
+            state.getLobbyChatMessages().clear();
+            state.getWhisperChatMessages().clear();
+
+            state.getGameMessages().clear();
+        });
     }
 }

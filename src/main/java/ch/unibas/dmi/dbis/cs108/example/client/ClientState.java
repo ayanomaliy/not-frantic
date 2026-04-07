@@ -21,6 +21,15 @@ public class ClientState {
     private final StringProperty username = new SimpleStringProperty("");
     private final StringProperty statusText = new SimpleStringProperty("Not connected");
 
+    /** Current player whose turn it is. */
+    private final StringProperty currentPlayer = new SimpleStringProperty("Unknown");
+
+    /** Current phase of the game. */
+    private final StringProperty currentPhase = new SimpleStringProperty("WAITING");
+
+    /** Text representation of the current top discard card. */
+    private final StringProperty topCardText = new SimpleStringProperty("-");
+
     /** Players in the currently joined lobby. */
     private final ObservableList<String> players = FXCollections.observableArrayList();
 
@@ -42,8 +51,14 @@ public class ClientState {
     /** Available lobby names on the server. */
     private final ObservableList<String> lobbies = FXCollections.observableArrayList();
 
+    /** Current hand as card-id strings received from HAND_UPDATE. */
+    private final ObservableList<String> currentHandCards = FXCollections.observableArrayList();
+
     /** Currently selected chat mode in the GUI. */
     private final StringProperty chatMode = new SimpleStringProperty("Global");
+
+    /** Name of the lobby the client is currently in, or empty if not in a lobby. */
+    private final StringProperty currentLobby = new SimpleStringProperty("");
 
     /**
      * Creates a new shared client state object.
@@ -79,6 +94,33 @@ public class ClientState {
     }
 
     /**
+     * Returns the observable current player property.
+     *
+     * @return the current player property
+     */
+    public StringProperty currentPlayerProperty() {
+        return currentPlayer;
+    }
+
+    /**
+     * Returns the observable current phase property.
+     *
+     * @return the current phase property
+     */
+    public StringProperty currentPhaseProperty() {
+        return currentPhase;
+    }
+
+    /**
+     * Returns the observable top card text property.
+     *
+     * @return the top card text property
+     */
+    public StringProperty topCardTextProperty() {
+        return topCardText;
+    }
+
+    /**
      * Returns the observable list of players in the current lobby.
      *
      * @return the lobby player list
@@ -99,9 +141,6 @@ public class ClientState {
     /**
      * Returns the observable list of global chat messages.
      *
-     * <p>This list contains messages received through the global chat channel.
-     * UI components can bind to this list to display updates automatically.</p>
-     *
      * @return the global chat message list
      */
     public ObservableList<String> getGlobalChatMessages() {
@@ -111,10 +150,6 @@ public class ClientState {
     /**
      * Returns the observable list of lobby chat messages.
      *
-     * <p>This list contains messages received through the currently joined lobby's
-     * chat channel. UI components can bind to this list to display updates
-     * automatically.</p>
-     *
      * @return the lobby chat message list
      */
     public ObservableList<String> getLobbyChatMessages() {
@@ -123,10 +158,6 @@ public class ClientState {
 
     /**
      * Returns the observable list of whisper chat messages.
-     *
-     * <p>This list contains private chat messages exchanged directly between
-     * players. UI components can bind to this list to display updates
-     * automatically.</p>
      *
      * @return the whisper chat message list
      */
@@ -153,9 +184,21 @@ public class ClientState {
     }
 
     /**
+     * Returns the observable list of current hand cards.
+     *
+     * <p>Each entry is the raw card id received from the server via
+     * {@code HAND_UPDATE}.</p>
+     *
+     * @return the current hand card list
+     */
+    public ObservableList<String> getCurrentHandCards() {
+        return currentHandCards;
+    }
+
+    /**
      * Returns whether the client is currently connected.
      *
-     * @return {@code true} if connected, otherwise {@code false}
+     * @return true if connected, otherwise false
      */
     public boolean isConnected() {
         return connected.get();
@@ -207,6 +250,60 @@ public class ClientState {
     }
 
     /**
+     * Returns the current player.
+     *
+     * @return the current player name
+     */
+    public String getCurrentPlayer() {
+        return currentPlayer.get();
+    }
+
+    /**
+     * Updates the current player.
+     *
+     * @param value the new current player
+     */
+    public void setCurrentPlayer(String value) {
+        currentPlayer.set(value);
+    }
+
+    /**
+     * Returns the current phase.
+     *
+     * @return the current phase
+     */
+    public String getCurrentPhase() {
+        return currentPhase.get();
+    }
+
+    /**
+     * Updates the current phase.
+     *
+     * @param value the new current phase
+     */
+    public void setCurrentPhase(String value) {
+        currentPhase.set(value);
+    }
+
+    /**
+     * Returns the current top card text.
+     *
+     * @return the top card text
+     */
+    public String getTopCardText() {
+        return topCardText.get();
+    }
+
+    /**
+     * Updates the current top card text.
+     *
+     * @param value the new top card text
+     */
+    public void setTopCardText(String value) {
+        topCardText.set(value);
+    }
+
+    /**
      * Returns the observable chat mode property.
      *
      * @return the chat mode property
@@ -231,5 +328,32 @@ public class ClientState {
      */
     public void setChatMode(String value) {
         chatMode.set(value);
+    }
+
+    /**
+     * Returns the observable current lobby property.
+     *
+     * @return the current lobby property
+     */
+    public StringProperty currentLobbyProperty() {
+        return currentLobby;
+    }
+
+    /**
+     * Returns the name of the current lobby, or an empty string if not in a lobby.
+     *
+     * @return the current lobby name
+     */
+    public String getCurrentLobby() {
+        return currentLobby.get();
+    }
+
+    /**
+     * Updates the current lobby name.
+     *
+     * @param value the new current lobby name
+     */
+    public void setCurrentLobby(String value) {
+        currentLobby.set(value == null ? "" : value);
     }
 }

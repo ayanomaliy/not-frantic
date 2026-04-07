@@ -39,6 +39,7 @@ public class LobbyView extends BorderPane {
     private final Button refreshLobbiesButton = new Button("Refresh Lobbies");
     private final Button joinLobbyButton = new Button("Join Selected Lobby");
     private final Button createLobbyButton = new Button("Create New Lobby");
+    private final Button leaveLobbyButton = new Button("Leave Lobby");
 
     private final Button chatModeButton = new Button("Global");
 
@@ -76,8 +77,9 @@ public class LobbyView extends BorderPane {
                 createSectionTitle("Lobbies"),
                 lobbiesList,
                 refreshLobbiesButton,
+                createLobbyButton,
                 joinLobbyButton,
-                createLobbyButton
+                leaveLobbyButton
         );
 
         HBox chatBox = new HBox(10, chatInput, sendButton);
@@ -145,6 +147,7 @@ public class LobbyView extends BorderPane {
         refreshLobbiesButton.getStyleClass().addAll("frantic-button", "secondary-button");
         joinLobbyButton.getStyleClass().addAll("frantic-button", "primary-button");
         createLobbyButton.getStyleClass().addAll("frantic-button", "primary-button");
+        leaveLobbyButton.getStyleClass().addAll("frantic-button", "danger-button");
 
         chatModeButton.getStyleClass().addAll("frantic-button", "secondary-button");
     }
@@ -316,5 +319,14 @@ public class LobbyView extends BorderPane {
      */
     public Button getChatModeButton() {
         return chatModeButton;
+    }
+
+    /**
+     * Returns the button used to leave the current lobby.
+     *
+     * @return the leave lobby button
+     */
+    public Button getLeaveLobbyButton() {
+        return leaveLobbyButton;
     }
 }

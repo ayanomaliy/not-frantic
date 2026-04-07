@@ -2,12 +2,18 @@ package ch.unibas.dmi.dbis.cs108.example.client.ui;
 
 import animatefx.animation.FadeIn;
 import animatefx.animation.FadeInUp;
-import ch.unibas.dmi.dbis.cs108.example.client.net.FxNetworkClient;
 import ch.unibas.dmi.dbis.cs108.example.client.ClientState;
+import ch.unibas.dmi.dbis.cs108.example.client.net.FxNetworkClient;
+import javafx.beans.binding.Bindings;
+import javafx.collections.ListChangeListener;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.stage.Stage;
+import javafx.scene.control.Button;
 import javafx.scene.control.TextInputDialog;
+import javafx.stage.Stage;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
+
 
 /**
  * Coordinates JavaFX view changes and user interaction for the graphical
@@ -25,6 +31,8 @@ public class MainController {
     private final ClientState state;
     private final FxNetworkClient networkClient;
 
+    private ListChangeListener<String> handCardsListener;
+
     /**
      * Creates a new main controller.
      *
@@ -36,6 +44,12 @@ public class MainController {
         this.stage = stage;
         this.state = state;
         this.networkClient = networkClient;
+
+        this.networkClient.setGameStartListener(() -> {
+            if (stage.getScene() == null || !(stage.getScene().getRoot() instanceof GameView)) {
+                showGameView();
+            }
+        });
     }
 
     /**
@@ -73,6 +87,20 @@ public class MainController {
         view.getAllPlayersList().setItems(state.getAllPlayers());
         view.getLobbiesList().setItems(state.getLobbies());
         view.getInfoList().setItems(state.getGameMessages());
+        installSelfHighlight(view.getLobbyPlayersList());
+        installSelfHighlight(view.getAllPlayersList());
+        installCurrentLobbyHighlight(view.getLobbiesList());
+
+        state.currentLobbyProperty().addListener((obs, oldValue, newValue) ->
+                view.getLobbiesList().refresh()
+        );
+
+        view.getLeaveLobbyButton().managedProperty().bind(
+                view.getLeaveLobbyButton().visibleProperty()
+        );
+        view.getLeaveLobbyButton().visibleProperty().bind(
+                Bindings.isNotEmpty(state.getPlayers())
+        );
 
         updateDisplayedChat(view);
 
@@ -100,7 +128,7 @@ public class MainController {
         view.getJoinLobbyButton().setOnAction(e -> {
             String selectedLobby = view.getLobbiesList().getSelectionModel().getSelectedItem();
             if (selectedLobby != null && !selectedLobby.isBlank()) {
-                networkClient.sendCommand("/join " + selectedLobby);
+                networkClient.joinLobby(selectedLobby);
             }
         });
 
@@ -108,7 +136,7 @@ public class MainController {
             if (e.getClickCount() == 2) {
                 String selectedLobby = view.getLobbiesList().getSelectionModel().getSelectedItem();
                 if (selectedLobby != null && !selectedLobby.isBlank()) {
-                    networkClient.sendCommand("/join " + selectedLobby);
+                    networkClient.joinLobby(selectedLobby);
                 }
             }
         });
@@ -122,24 +150,126 @@ public class MainController {
             dialog.showAndWait().ifPresent(name -> {
                 String trimmed = name.trim();
                 if (!trimmed.isBlank()) {
-                    networkClient.sendCommand("/create " + trimmed);
+                    networkClient.createLobby(trimmed);
                 }
             });
         });
 
+        view.getLeaveLobbyButton().setOnAction(e -> leaveCurrentLobbyAndShowLobbyView());
+
         view.getStartButton().setOnAction(e -> networkClient.startGame());
+
         view.getDisconnectButton().setOnAction(e -> {
             networkClient.disconnect();
             showConnectView();
         });
 
-        networkClient.requestPlayers();
-        networkClient.requestAllPlayers();
-        networkClient.requestLobbies();
+        Scene scene = createStyledScene(view, 1280, 800);
+        stage.setScene(scene);
+        new FadeIn(view).play();
+    }
+
+    /**
+     * Shows the game screen.
+     *
+     * <p>This view is driven by server-backed GUI state. It no longer creates a
+     * fake local game or fake demo hand.</p>
+     */
+    public void showGameView() {
+        GameView view = new GameView();
+
+        view.getPlayersList().setItems(state.getPlayers());
+        installSelfHighlight(view.getPlayersList());
+        view.getGameInfoList().setItems(state.getGameMessages());
+
+        view.getCurrentPlayerLabel().textProperty().bind(
+                Bindings.concat("Current Player: ", state.currentPlayerProperty())
+        );
+        view.getPhaseLabel().textProperty().bind(
+                Bindings.concat("Phase: ", state.currentPhaseProperty())
+        );
+        view.getDiscardTopLabel().textProperty().bind(
+                Bindings.concat("Top Card: ", state.topCardTextProperty())
+        );
+
+        if (handCardsListener != null) {
+            state.getCurrentHandCards().removeListener(handCardsListener);
+        }
+
+        handCardsListener = change -> renderHand(view);
+        state.getCurrentHandCards().addListener(handCardsListener);
+        renderHand(view);
+
+        updateDisplayedChat(view);
+
+        view.getChatModeButton().textProperty().bind(state.chatModeProperty());
+
+        view.getChatModeButton().setOnAction(e -> {
+            switch (state.getChatMode()) {
+                case "Global" -> state.setChatMode("Lobby");
+                case "Lobby" -> state.setChatMode("Whisper");
+                default -> state.setChatMode("Global");
+            }
+
+            updateDisplayedChat(view);
+        });
+
+        view.getSendButton().setOnAction(e -> sendChat(view));
+        view.getChatInput().setOnAction(e -> sendChat(view));
+
+        view.getCommandButton().setOnAction(e -> sendCommand(view));
+        view.getCommandInput().setOnAction(e -> sendCommand(view));
+
+        view.getDrawButton().setOnAction(e -> networkClient.drawCard());
+        view.getEndTurnButton().setOnAction(e -> networkClient.endTurn());
+
+        view.getLeaveButton().setOnAction(e -> leaveCurrentLobbyAndShowLobbyView());
 
         Scene scene = createStyledScene(view, 1280, 800);
         stage.setScene(scene);
         new FadeIn(view).play();
+
+        networkClient.requestHand();
+    }
+
+    /**
+     * Leaves the current lobby using the structured protocol and returns to the lobby view.
+     *
+     * <p>No extra refresh requests are sent here because the server already
+     * pushes the relevant list updates.</p>
+     */
+    private void leaveCurrentLobbyAndShowLobbyView() {
+        networkClient.leaveLobby();
+        showLobbyView();
+    }
+
+    /**
+     * Renders the current hand from {@link ClientState#getCurrentHandCards()}.
+     *
+     * @param view the game view whose hand area should be refreshed
+     */
+    private void renderHand(GameView view) {
+        view.getPlayerHandPane().getChildren().clear();
+
+        for (String cardIdText : state.getCurrentHandCards()) {
+            int cardId;
+            try {
+                cardId = Integer.parseInt(cardIdText);
+            } catch (NumberFormatException e) {
+                continue;
+            }
+
+            Button cardButton = new Button("Card #" + cardId);
+            cardButton.getStyleClass().add("game-card-button");
+            cardButton.setPrefSize(90, 130);
+            cardButton.setMinSize(90, 130);
+            cardButton.setMaxSize(90, 130);
+            cardButton.setFocusTraversable(false);
+            cardButton.setWrapText(true);
+            cardButton.setOnAction(e -> networkClient.playCard(cardId));
+
+            view.getPlayerHandPane().getChildren().add(cardButton);
+        }
     }
 
     /**
@@ -149,18 +279,47 @@ public class MainController {
      */
     private void updateDisplayedChat(LobbyView view) {
         switch (state.getChatMode()) {
-            case "Lobby" -> view.getChatList().setItems(state.getLobbyChatMessages());
-            case "Whisper" -> view.getChatList().setItems(state.getWhisperChatMessages());
-            default -> view.getChatList().setItems(state.getGlobalChatMessages());
+            case "Lobby" -> {
+                view.getChatList().setItems(state.getLobbyChatMessages());
+                view.getChatInput().setPromptText("Type a lobby message...");
+            }
+            case "Whisper" -> {
+                view.getChatList().setItems(state.getWhisperChatMessages());
+                view.getChatInput().setPromptText("player: message");
+            }
+            default -> {
+                view.getChatList().setItems(state.getGlobalChatMessages());
+                view.getChatInput().setPromptText("Type a global message...");
+            }
+        }
+    }
+
+
+    /**
+     * Updates the game-view chat list to display the message list of the
+     * currently selected chat mode.
+     *
+     * @param view the game view containing the chat list
+     */
+    private void updateDisplayedChat(GameView view) {
+        switch (state.getChatMode()) {
+            case "Lobby" -> {
+                view.getChatList().setItems(state.getLobbyChatMessages());
+                view.getChatInput().setPromptText("Type a lobby message...");
+            }
+            case "Whisper" -> {
+                view.getChatList().setItems(state.getWhisperChatMessages());
+                view.getChatInput().setPromptText("player: message");
+            }
+            default -> {
+                view.getChatList().setItems(state.getGlobalChatMessages());
+                view.getChatInput().setPromptText("Type a global message...");
+            }
         }
     }
 
     /**
      * Sends the content of the chat input field using the currently selected chat mode.
-     *
-     * <p>If the current mode is Whisper, the input must be a whisper command such as
-     * {@code /w Alice hello}. In Global or Lobby mode, normal text is sent to the
-     * corresponding chat channel.</p>
      *
      * @param view the lobby view containing the chat input
      */
@@ -170,18 +329,8 @@ public class MainController {
             return;
         }
 
-        String lower = text.toLowerCase();
-
         if ("Whisper".equals(state.getChatMode())) {
-            if (lower.startsWith("/w ")
-                    || lower.startsWith("/whisper ")
-                    || lower.startsWith("/msg ")
-                    || lower.startsWith("/tell ")) {
-                networkClient.sendCommand(text);
-            } else {
-                state.getGameMessages().add("[CLIENT] Whisper mode expects: /w <player> <message>");
-                return;
-            }
+            sendWhisperMessage(text);
         } else if ("Lobby".equals(state.getChatMode())) {
             networkClient.sendLobbyChat(text);
         } else {
@@ -192,11 +341,49 @@ public class MainController {
     }
 
     /**
-     * Executes the content of the command field as a terminal-style client
-     * command.
+     * Sends the content of the chat input field using the currently selected
+     * chat mode from the game view.
      *
-     * <p>If the command disconnects the client, the connect screen is shown
-     * again.</p>
+     * @param view the game view containing the chat input
+     */
+    private void sendChat(GameView view) {
+        String text = view.getChatInput().getText().trim();
+        if (text.isBlank()) {
+            return;
+        }
+
+        if ("Whisper".equals(state.getChatMode())) {
+            sendWhisperMessage(text);
+        } else if ("Lobby".equals(state.getChatMode())) {
+            networkClient.sendLobbyChat(text);
+        } else {
+            networkClient.sendGlobalChat(text);
+        }
+
+        view.getChatInput().clear();
+    }
+
+    /**
+     * Sends a whisper message using structured protocol sending instead of slash commands.
+     *
+     * <p>The GUI whisper format is {@code player: message}.</p>
+     *
+     * @param rawText the raw text entered in whisper mode
+     */
+    private void sendWhisperMessage(String rawText) {
+        String[] parts = rawText.split(":", 2);
+        if (parts.length < 2 || parts[0].isBlank() || parts[1].isBlank()) {
+            state.getGameMessages().add("[CLIENT] Whisper format: player: message");
+            return;
+        }
+
+        String target = parts[0].trim();
+        String message = parts[1].trim();
+        networkClient.sendWhisperChat(target, message);
+    }
+
+    /**
+     * Executes the content of the command field as a terminal-style client command.
      *
      * @param view the lobby view containing the command input
      */
@@ -215,8 +402,27 @@ public class MainController {
     }
 
     /**
-     * Creates a scene and attaches the shared CSS theme if the resource is
-     * available.
+     * Executes the content of the command field as a terminal-style client
+     * command from the game view.
+     *
+     * @param view the game view containing the command input
+     */
+    private void sendCommand(GameView view) {
+        String command = view.getCommandInput().getText().trim();
+        if (command.isBlank()) {
+            return;
+        }
+
+        boolean disconnected = networkClient.sendCommand(command);
+        view.getCommandInput().clear();
+
+        if (disconnected) {
+            showConnectView();
+        }
+    }
+
+    /**
+     * Creates a scene and attaches the shared CSS theme if the resource is available.
      *
      * @param root the root node of the scene
      * @param width the initial scene width
@@ -234,5 +440,64 @@ public class MainController {
         }
 
         return scene;
+    }
+
+    /**
+     * Installs a custom cell factory that highlights the current client's own name
+     * using the same background color as the hover state.
+     *
+     * @param listView the player list view to decorate
+     */
+    private void installSelfHighlight(ListView<String> listView) {
+        listView.setCellFactory(lv -> new ListCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+
+                getStyleClass().remove("self-player-cell");
+
+                if (empty || item == null) {
+                    setText(null);
+                    setGraphic(null);
+                    return;
+                }
+
+                setText(item);
+
+                if (item.equals(state.getUsername())) {
+                    getStyleClass().add("self-player-cell");
+                }
+            }
+        });
+    }
+
+    /**
+     * Installs a custom cell factory that highlights the lobby the client is
+     * currently in using the hover background color.
+     *
+     * @param listView the lobby list view to decorate
+     */
+    private void installCurrentLobbyHighlight(ListView<String> listView) {
+        listView.setCellFactory(lv -> new ListCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+
+                getStyleClass().remove("current-lobby-cell");
+
+                if (empty || item == null) {
+                    setText(null);
+                    setGraphic(null);
+                    return;
+                }
+
+                setText(item);
+
+                String currentLobby = state.getCurrentLobby();
+                if (!currentLobby.isBlank() && item.equals(currentLobby)) {
+                    getStyleClass().add("current-lobby-cell");
+                }
+            }
+        });
     }
 }

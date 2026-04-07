@@ -176,10 +176,67 @@
     -fx-background-color: transparent;
 }
 
+.list-view.frantic-list-view .list-cell.self-player-cell {
+    -fx-background-color: hover-bg;
+    -fx-font-weight: 700;
+}
+
+.list-view.frantic-list-view .list-cell.self-player-cell:filled:selected {
+    -fx-background-color: selection-bg;
+    -fx-text-fill: selection-text;
+}
+
+.list-view.frantic-list-view .list-cell.current-lobby-cell {
+    -fx-background-color: hover-bg;
+    -fx-font-weight: 700;
+}
+
+.list-view.frantic-list-view .list-cell.current-lobby-cell:filled:selected {
+    -fx-background-color: selection-bg;
+    -fx-text-fill: selection-text;
+}
+
 .connect-screen {
     -fx-padding: 36;
 }
 
 .lobby-screen {
     -fx-padding: 16;
+}
+
+.game-screen {
+    -fx-padding: 16;
+}
+
+.pile-placeholder {
+    -fx-background-color: surface-main;
+    -fx-background-radius: 16;
+    -fx-border-radius: 16;
+    -fx-border-color: border-main;
+    -fx-border-width: 1;
+}
+
+.hand-pane {
+    -fx-padding: 4 0 0 0;
+}
+
+.game-card-button {
+    -fx-background-color: surface-main;
+    -fx-text-fill: text-main;
+    -fx-background-radius: 16;
+    -fx-border-radius: 16;
+    -fx-border-color: border-main;
+    -fx-border-width: 1;
+    -fx-padding: 10 10 10 10;
+    -fx-font-weight: 700;
+    -fx-cursor: hand;
+}
+
+.game-card-button:hover {
+    -fx-background-color: bg-soft;
+    -fx-border-color: border-accent;
+}
+
+.game-card-button:pressed {
+    -fx-background-color: surface-soft;
 }
