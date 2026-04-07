@@ -51,6 +51,9 @@ public class ClientState {
     /** Available lobby names on the server. */
     private final ObservableList<String> lobbies = FXCollections.observableArrayList();
 
+    /** Current hand as card-id strings received from HAND_UPDATE. */
+    private final ObservableList<String> currentHandCards = FXCollections.observableArrayList();
+
     /** Currently selected chat mode in the GUI. */
     private final StringProperty chatMode = new SimpleStringProperty("Global");
 
@@ -175,6 +178,18 @@ public class ClientState {
      */
     public ObservableList<String> getLobbies() {
         return lobbies;
+    }
+
+    /**
+     * Returns the observable list of current hand cards.
+     *
+     * <p>Each entry is the raw card id received from the server via
+     * {@code HAND_UPDATE}.</p>
+     *
+     * @return the current hand card list
+     */
+    public ObservableList<String> getCurrentHandCards() {
+        return currentHandCards;
     }
 
     /**

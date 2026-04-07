@@ -4,20 +4,13 @@ import animatefx.animation.FadeIn;
 import animatefx.animation.FadeInUp;
 import ch.unibas.dmi.dbis.cs108.example.client.ClientState;
 import ch.unibas.dmi.dbis.cs108.example.client.net.FxNetworkClient;
-import ch.unibas.dmi.dbis.cs108.example.model.game.Card;
-import ch.unibas.dmi.dbis.cs108.example.model.game.GameInitializer;
-import ch.unibas.dmi.dbis.cs108.example.model.game.GameState;
-import ch.unibas.dmi.dbis.cs108.example.model.game.TurnEngine;
 import javafx.beans.binding.Bindings;
+import javafx.collections.ListChangeListener;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextInputDialog;
 import javafx.stage.Stage;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
 
 /**
  * Coordinates JavaFX view changes and user interaction for the graphical
@@ -35,7 +28,7 @@ public class MainController {
     private final ClientState state;
     private final FxNetworkClient networkClient;
 
-    private GameState localGameState;
+    private ListChangeListener<String> handCardsListener;
 
     /**
      * Creates a new main controller.
@@ -50,7 +43,7 @@ public class MainController {
         this.networkClient = networkClient;
 
         this.networkClient.setGameStartListener(() -> {
-            if (!(stage.getScene().getRoot() instanceof GameView)) {
+            if (stage.getScene() == null || !(stage.getScene().getRoot() instanceof GameView)) {
                 showGameView();
             }
         });
@@ -161,10 +154,6 @@ public class MainController {
             showConnectView();
         });
 
-        networkClient.requestPlayers();
-        networkClient.requestAllPlayers();
-        networkClient.requestLobbies();
-
         Scene scene = createStyledScene(view, 1280, 800);
         stage.setScene(scene);
         new FadeIn(view).play();
@@ -172,59 +161,37 @@ public class MainController {
 
     /**
      * Shows the game screen.
+     *
+     * <p>This view is driven by server-backed GUI state. It no longer creates a
+     * fake local game or fake demo hand.</p>
      */
     public void showGameView() {
         GameView view = new GameView();
-
-        localGameState = GameInitializer.initialize(
-                List.of("User 1", "User 2"),
-                1,
-                Map.of(),
-                new Random()
-        );
-
-        TurnEngine.startTurn(localGameState);
-
-        state.setCurrentPlayer(localGameState.getCurrentPlayer().getPlayerName());
-        state.setCurrentPhase(localGameState.getPhase().name());
-
-        Card topCard = localGameState.peekDiscardPile();
-        state.setTopCardText(cardToText(topCard));
-
-        refreshGameLabels(view);
 
         view.getPlayersList().setItems(state.getPlayers());
         view.getGameInfoList().setItems(state.getGameMessages());
         view.getChatList().setItems(state.getGlobalChatMessages());
 
-        view.getDrawButton().setOnAction(e -> {
-            int nextCardNumber = view.getPlayerHandPane().getChildren().size() + 1;
+        view.getCurrentPlayerLabel().textProperty().bind(
+                Bindings.concat("Current Player: ", state.currentPlayerProperty())
+        );
+        view.getPhaseLabel().textProperty().bind(
+                Bindings.concat("Phase: ", state.currentPhaseProperty())
+        );
+        view.getDiscardTopLabel().textProperty().bind(
+                Bindings.concat("Top Card: ", state.topCardTextProperty())
+        );
 
-            Button newCard = new Button("RED " + nextCardNumber);
-            newCard.setPrefSize(80, 120);
-            newCard.setFocusTraversable(false);
+        if (handCardsListener != null) {
+            state.getCurrentHandCards().removeListener(handCardsListener);
+        }
 
-            newCard.setOnAction(cardEvent -> {
-                state.setTopCardText("RED " + nextCardNumber);
-                state.getGameMessages().add("[CLIENT] Played card: RED " + nextCardNumber);
+        handCardsListener = change -> renderHand(view);
+        state.getCurrentHandCards().addListener(handCardsListener);
+        renderHand(view);
 
-                refreshGameLabels(view);
-                view.getPlayerHandPane().getChildren().remove(newCard);
-                view.getGameInfoList().scrollTo(state.getGameMessages().size() - 1);
-            });
-
-            view.getPlayerHandPane().getChildren().add(newCard);
-            state.getGameMessages().add("[CLIENT] Drew card: RED " + nextCardNumber);
-            view.getGameInfoList().scrollTo(state.getGameMessages().size() - 1);
-        });
-
-        view.getEndTurnButton().setOnAction(e -> {
-            state.getGameMessages().add("[CLIENT] End turn clicked.");
-            state.setCurrentPlayer("Next Player");
-
-            refreshGameLabels(view);
-            view.getGameInfoList().scrollTo(state.getGameMessages().size() - 1);
-        });
+        view.getDrawButton().setOnAction(e -> networkClient.drawCard());
+        view.getEndTurnButton().setOnAction(e -> networkClient.endTurn());
 
         view.getBackToLobbyButton().setOnAction(e -> showLobbyView());
         view.getLeaveButton().setOnAction(e -> leaveCurrentLobbyAndShowLobbyView());
@@ -241,68 +208,43 @@ public class MainController {
         stage.setScene(scene);
         new FadeIn(view).play();
 
-        for (int i = 1; i <= 7; i++) {
-            final int cardNumber = i;
-
-            Button cardBtn = new Button("RED " + cardNumber);
-            cardBtn.setPrefSize(80, 120);
-            cardBtn.setFocusTraversable(false);
-
-            cardBtn.setOnAction(e -> {
-                state.setTopCardText("RED " + cardNumber);
-                state.getGameMessages().add("[CLIENT] Played card: RED " + cardNumber);
-
-                refreshGameLabels(view);
-                view.getPlayerHandPane().getChildren().remove(cardBtn);
-                view.getGameInfoList().scrollTo(state.getGameMessages().size() - 1);
-            });
-
-            view.getPlayerHandPane().getChildren().add(cardBtn);
-        }
+        networkClient.requestHand();
     }
 
     /**
-     * Leaves the current lobby using the structured protocol, refreshes the
-     * server-backed lists, and then returns to the lobby screen.
+     * Leaves the current lobby using the structured protocol and returns to the lobby view.
+     *
+     * <p>No extra refresh requests are sent here because the server already
+     * pushes the relevant list updates.</p>
      */
     private void leaveCurrentLobbyAndShowLobbyView() {
         networkClient.leaveLobby();
-        networkClient.requestPlayers();
-        networkClient.requestAllPlayers();
-        networkClient.requestLobbies();
         showLobbyView();
     }
 
     /**
-     * Refreshes the game labels from the shared client state.
+     * Renders the current hand from {@link ClientState#getCurrentHandCards()}.
      *
-     * @param view the game view to update
+     * @param view the game view whose hand area should be refreshed
      */
-    private void refreshGameLabels(GameView view) {
-        view.getCurrentPlayerLabel().setText("Current Player: " + state.getCurrentPlayer());
-        view.getPhaseLabel().setText("Phase: " + state.getCurrentPhase());
-        view.getDiscardTopLabel().setText("Top Card: " + state.getTopCardText());
-    }
+    private void renderHand(GameView view) {
+        view.getPlayerHandPane().getChildren().clear();
 
-    /**
-     * Converts a card into a short human-readable label for the GUI.
-     *
-     * @param card the card to format
-     * @return the formatted card text, or {@code "-"} if the card is null
-     */
-    private String cardToText(Card card) {
-        if (card == null) {
-            return "-";
+        for (String cardIdText : state.getCurrentHandCards()) {
+            int cardId;
+            try {
+                cardId = Integer.parseInt(cardIdText);
+            } catch (NumberFormatException e) {
+                continue;
+            }
+
+            Button cardButton = new Button("Card #" + cardId);
+            cardButton.setPrefSize(80, 120);
+            cardButton.setFocusTraversable(false);
+            cardButton.setOnAction(e -> networkClient.playCard(cardId));
+
+            view.getPlayerHandPane().getChildren().add(cardButton);
         }
-
-        return switch (card.type()) {
-            case COLOR -> card.color() + " " + card.value();
-            case BLACK -> "BLACK " + card.value();
-            case SPECIAL_SINGLE -> card.color() + " " + card.effect();
-            case SPECIAL_FOUR -> String.valueOf(card.effect());
-            case FUCK_YOU -> "FUCK YOU";
-            case EVENT -> "EVENT " + card.id();
-        };
     }
 
     /**
@@ -312,9 +254,18 @@ public class MainController {
      */
     private void updateDisplayedChat(LobbyView view) {
         switch (state.getChatMode()) {
-            case "Lobby" -> view.getChatList().setItems(state.getLobbyChatMessages());
-            case "Whisper" -> view.getChatList().setItems(state.getWhisperChatMessages());
-            default -> view.getChatList().setItems(state.getGlobalChatMessages());
+            case "Lobby" -> {
+                view.getChatList().setItems(state.getLobbyChatMessages());
+                view.getChatInput().setPromptText("Type a lobby message...");
+            }
+            case "Whisper" -> {
+                view.getChatList().setItems(state.getWhisperChatMessages());
+                view.getChatInput().setPromptText("player: message");
+            }
+            default -> {
+                view.getChatList().setItems(state.getGlobalChatMessages());
+                view.getChatInput().setPromptText("Type a global message...");
+            }
         }
     }
 
@@ -329,18 +280,8 @@ public class MainController {
             return;
         }
 
-        String lower = text.toLowerCase();
-
         if ("Whisper".equals(state.getChatMode())) {
-            if (lower.startsWith("/w ")
-                    || lower.startsWith("/whisper ")
-                    || lower.startsWith("/msg ")
-                    || lower.startsWith("/tell ")) {
-                networkClient.sendCommand(text);
-            } else {
-                state.getGameMessages().add("[CLIENT] Whisper mode expects: /w <player> <message>");
-                return;
-            }
+            sendWhisperMessage(text);
         } else if ("Lobby".equals(state.getChatMode())) {
             networkClient.sendLobbyChat(text);
         } else {
@@ -348,6 +289,25 @@ public class MainController {
         }
 
         view.getChatInput().clear();
+    }
+
+    /**
+     * Sends a whisper message using structured protocol sending instead of slash commands.
+     *
+     * <p>The GUI whisper format is {@code player: message}.</p>
+     *
+     * @param rawText the raw text entered in whisper mode
+     */
+    private void sendWhisperMessage(String rawText) {
+        String[] parts = rawText.split(":", 2);
+        if (parts.length < 2 || parts[0].isBlank() || parts[1].isBlank()) {
+            state.getGameMessages().add("[CLIENT] Whisper format: player: message");
+            return;
+        }
+
+        String target = parts[0].trim();
+        String message = parts[1].trim();
+        networkClient.sendWhisperChat(target, message);
     }
 
     /**

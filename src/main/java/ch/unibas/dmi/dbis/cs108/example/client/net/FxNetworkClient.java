@@ -6,6 +6,7 @@ import javafx.application.Platform;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * JavaFX adapter around the shared protocol client.
@@ -68,9 +69,6 @@ public class FxNetworkClient implements ClientMessageHandler {
         });
 
         setName(username);
-
-        requestAllPlayers();
-        requestLobbies();
     }
 
     /**
@@ -172,6 +170,36 @@ public class FxNetworkClient implements ClientMessageHandler {
     }
 
     /**
+     * Requests the current hand from the server.
+     */
+    public void requestHand() {
+        protocolClient.requestHand();
+    }
+
+    /**
+     * Requests to draw one card.
+     */
+    public void drawCard() {
+        protocolClient.drawCard();
+    }
+
+    /**
+     * Requests to end the current turn.
+     */
+    public void endTurn() {
+        protocolClient.endTurn();
+    }
+
+    /**
+     * Requests to play the given card.
+     *
+     * @param cardId the card id to play
+     */
+    public void playCard(int cardId) {
+        protocolClient.playCard(cardId);
+    }
+
+    /**
      * Parses and executes a raw terminal-style command for the manual command field.
      *
      * @param rawInput the raw command
@@ -248,20 +276,24 @@ public class FxNetworkClient implements ClientMessageHandler {
                     state.getGameMessages().add("[ERROR] " + message.content()));
 
             case PLAYERS -> Platform.runLater(() -> {
-                state.getPlayers().setAll(
-                        message.content().isBlank()
-                                ? java.util.List.of()
-                                : Arrays.stream(message.content().split(","))
-                                  .map(String::trim)
-                                  .filter(s -> !s.isBlank())
-                                  .toList()
-                );
+                List<String> updatedPlayers = message.content().isBlank()
+                        ? List.of()
+                        : Arrays.stream(message.content().split(","))
+                          .map(String::trim)
+                          .filter(s -> !s.isBlank())
+                          .toList();
+
+                state.getPlayers().setAll(updatedPlayers);
+
+                if (updatedPlayers.isEmpty()) {
+                    clearLocalGameOnly();
+                }
             });
 
             case ALLPLAYERS -> Platform.runLater(() -> {
                 state.getAllPlayers().setAll(
                         message.content().isBlank()
-                                ? java.util.List.of()
+                                ? List.of()
                                 : Arrays.stream(message.content().split(","))
                                   .map(String::trim)
                                   .filter(s -> !s.isBlank())
@@ -272,7 +304,7 @@ public class FxNetworkClient implements ClientMessageHandler {
             case LOBBIES -> Platform.runLater(() -> {
                 state.getLobbies().setAll(
                         message.content().isBlank()
-                                ? java.util.List.of()
+                                ? List.of()
                                 : Arrays.stream(message.content().split(","))
                                   .map(String::trim)
                                   .filter(s -> !s.isBlank())
@@ -281,6 +313,7 @@ public class FxNetworkClient implements ClientMessageHandler {
             });
 
             case GAME_STATE -> Platform.runLater(() -> {
+                applyGameStatePayload(message.content());
                 state.getGameMessages().add("[GAME_STATE] " + message.content());
 
                 if (!gameViewShown) {
@@ -291,11 +324,20 @@ public class FxNetworkClient implements ClientMessageHandler {
                 }
             });
 
+            case HAND_UPDATE -> Platform.runLater(() -> {
+                state.getCurrentHandCards().setAll(
+                        message.content().isBlank()
+                                ? List.of()
+                                : Arrays.stream(message.content().split(","))
+                                  .map(String::trim)
+                                  .filter(s -> !s.isBlank())
+                                  .toList()
+                );
+                state.getGameMessages().add("[HAND] " + message.content());
+            });
+
             case GAME -> Platform.runLater(() ->
                     state.getGameMessages().add("[GAME] " + message.content()));
-
-            case HAND_UPDATE -> Platform.runLater(() ->
-                    state.getGameMessages().add("[HAND] " + message.content()));
 
             case EFFECT_REQUEST -> Platform.runLater(() ->
                     state.getGameMessages().add("[EFFECT_REQUEST] " + message.content()));
@@ -322,6 +364,55 @@ public class FxNetworkClient implements ClientMessageHandler {
     }
 
     /**
+     * Applies the public-state payload from a {@code GAME_STATE} message to the GUI state.
+     *
+     * <p>The server currently serializes public state as comma-separated
+     * {@code key:value} pairs with a trailing {@code players:...} section.</p>
+     *
+     * @param payload the raw game-state payload
+     */
+    private void applyGameStatePayload(String payload) {
+        String prefix = payload;
+        int playersIndex = payload.indexOf(",players:");
+        if (playersIndex >= 0) {
+            prefix = payload.substring(0, playersIndex);
+        }
+
+        for (String entry : prefix.split(",")) {
+            String[] parts = entry.split(":", 2);
+            if (parts.length != 2) {
+                continue;
+            }
+
+            String key = parts[0].trim();
+            String value = parts[1].trim();
+
+            switch (key) {
+                case "phase" -> state.setCurrentPhase(value);
+                case "currentPlayer" -> state.setCurrentPlayer(value);
+                case "discardTop" -> state.setTopCardText(
+                        "none".equalsIgnoreCase(value) ? "-" : "Card #" + value
+                );
+                default -> {
+                    // Ignore unknown fields for forward compatibility.
+                }
+            }
+        }
+    }
+
+    /**
+     * Clears only game-specific GUI state while keeping connection, lobby,
+     * and chat information intact.
+     */
+    private void clearLocalGameOnly() {
+        gameViewShown = false;
+        state.setCurrentPlayer("Unknown");
+        state.setCurrentPhase("WAITING");
+        state.setTopCardText("-");
+        state.getCurrentHandCards().clear();
+    }
+
+    /**
      * Clears the local GUI state after a disconnect.
      *
      * @param statusText the new status text
@@ -337,6 +428,11 @@ public class FxNetworkClient implements ClientMessageHandler {
             state.getPlayers().clear();
             state.getAllPlayers().clear();
             state.getLobbies().clear();
+            state.getCurrentHandCards().clear();
+
+            state.setCurrentPlayer("Unknown");
+            state.setCurrentPhase("WAITING");
+            state.setTopCardText("-");
 
             state.getGlobalChatMessages().clear();
             state.getLobbyChatMessages().clear();
