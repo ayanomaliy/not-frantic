@@ -57,6 +57,9 @@ public class ClientState {
     /** Currently selected chat mode in the GUI. */
     private final StringProperty chatMode = new SimpleStringProperty("Global");
 
+    /** Name of the lobby the client is currently in, or empty if not in a lobby. */
+    private final StringProperty currentLobby = new SimpleStringProperty("");
+
     /**
      * Creates a new shared client state object.
      */
@@ -325,5 +328,32 @@ public class ClientState {
      */
     public void setChatMode(String value) {
         chatMode.set(value);
+    }
+
+    /**
+     * Returns the observable current lobby property.
+     *
+     * @return the current lobby property
+     */
+    public StringProperty currentLobbyProperty() {
+        return currentLobby;
+    }
+
+    /**
+     * Returns the name of the current lobby, or an empty string if not in a lobby.
+     *
+     * @return the current lobby name
+     */
+    public String getCurrentLobby() {
+        return currentLobby.get();
+    }
+
+    /**
+     * Updates the current lobby name.
+     *
+     * @param value the new current lobby name
+     */
+    public void setCurrentLobby(String value) {
+        currentLobby.set(value == null ? "" : value);
     }
 }

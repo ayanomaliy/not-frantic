@@ -11,6 +11,9 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextInputDialog;
 import javafx.stage.Stage;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
+
 
 /**
  * Coordinates JavaFX view changes and user interaction for the graphical
@@ -84,6 +87,13 @@ public class MainController {
         view.getAllPlayersList().setItems(state.getAllPlayers());
         view.getLobbiesList().setItems(state.getLobbies());
         view.getInfoList().setItems(state.getGameMessages());
+        installSelfHighlight(view.getLobbyPlayersList());
+        installSelfHighlight(view.getAllPlayersList());
+        installCurrentLobbyHighlight(view.getLobbiesList());
+
+        state.currentLobbyProperty().addListener((obs, oldValue, newValue) ->
+                view.getLobbiesList().refresh()
+        );
 
         view.getLeaveLobbyButton().managedProperty().bind(
                 view.getLeaveLobbyButton().visibleProperty()
@@ -169,6 +179,7 @@ public class MainController {
         GameView view = new GameView();
 
         view.getPlayersList().setItems(state.getPlayers());
+        installSelfHighlight(view.getPlayersList());
         view.getGameInfoList().setItems(state.getGameMessages());
         view.getChatList().setItems(state.getGlobalChatMessages());
 
@@ -348,5 +359,64 @@ public class MainController {
         }
 
         return scene;
+    }
+
+    /**
+     * Installs a custom cell factory that highlights the current client's own name
+     * using the same background color as the hover state.
+     *
+     * @param listView the player list view to decorate
+     */
+    private void installSelfHighlight(ListView<String> listView) {
+        listView.setCellFactory(lv -> new ListCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+
+                getStyleClass().remove("self-player-cell");
+
+                if (empty || item == null) {
+                    setText(null);
+                    setGraphic(null);
+                    return;
+                }
+
+                setText(item);
+
+                if (item.equals(state.getUsername())) {
+                    getStyleClass().add("self-player-cell");
+                }
+            }
+        });
+    }
+
+    /**
+     * Installs a custom cell factory that highlights the lobby the client is
+     * currently in using the hover background color.
+     *
+     * @param listView the lobby list view to decorate
+     */
+    private void installCurrentLobbyHighlight(ListView<String> listView) {
+        listView.setCellFactory(lv -> new ListCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+
+                getStyleClass().remove("current-lobby-cell");
+
+                if (empty || item == null) {
+                    setText(null);
+                    setGraphic(null);
+                    return;
+                }
+
+                setText(item);
+
+                String currentLobby = state.getCurrentLobby();
+                if (!currentLobby.isBlank() && item.equals(currentLobby)) {
+                    getStyleClass().add("current-lobby-cell");
+                }
+            }
+        });
     }
 }

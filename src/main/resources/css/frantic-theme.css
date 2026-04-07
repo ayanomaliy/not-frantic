@@ -176,6 +176,26 @@
     -fx-background-color: transparent;
 }
 
+.list-view.frantic-list-view .list-cell.self-player-cell {
+    -fx-background-color: hover-bg;
+    -fx-font-weight: 700;
+}
+
+.list-view.frantic-list-view .list-cell.self-player-cell:filled:selected {
+    -fx-background-color: selection-bg;
+    -fx-text-fill: selection-text;
+}
+
+.list-view.frantic-list-view .list-cell.current-lobby-cell {
+    -fx-background-color: hover-bg;
+    -fx-font-weight: 700;
+}
+
+.list-view.frantic-list-view .list-cell.current-lobby-cell:filled:selected {
+    -fx-background-color: selection-bg;
+    -fx-text-fill: selection-text;
+}
+
 .connect-screen {
     -fx-padding: 36;
 }

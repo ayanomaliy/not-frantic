@@ -269,8 +269,20 @@ public class FxNetworkClient implements ClientMessageHandler {
                 }
             });
 
-            case INFO -> Platform.runLater(() ->
-                    state.getGameMessages().add("[INFO] " + message.content()));
+            case INFO -> Platform.runLater(() -> {
+                String info = message.content();
+                state.getGameMessages().add("[INFO] " + info);
+
+                if (info.startsWith("Lobby created and joined: ")) {
+                    state.setCurrentLobby(info.substring("Lobby created and joined: ".length()).trim());
+                } else if (info.startsWith("Joined lobby: ")) {
+                    state.setCurrentLobby(info.substring("Joined lobby: ".length()).trim());
+                } else if (info.startsWith("You are already in lobby: ")) {
+                    state.setCurrentLobby(info.substring("You are already in lobby: ".length()).trim());
+                } else if (info.startsWith("You left lobby: ")) {
+                    state.setCurrentLobby("");
+                }
+            });
 
             case ERROR -> Platform.runLater(() ->
                     state.getGameMessages().add("[ERROR] " + message.content()));
@@ -419,6 +431,7 @@ public class FxNetworkClient implements ClientMessageHandler {
      */
     private void clearLocalState(String statusText) {
         gameViewShown = false;
+        state.setCurrentLobby("");
 
         Platform.runLater(() -> {
             state.setConnected(false);
