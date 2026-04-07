@@ -29,9 +29,8 @@ public class ServerService {
     /** Maps each connected client session to the id of its current lobby. */
     private final Map<ClientSession, String> playerLobbyMap = new HashMap<>();
 
+    /** All currently connected client sessions. */
     private final List<ClientSession> connectedClients = new ArrayList<>();
-
-
 
     /**
      * Logs a message to the console with a server prefix.
@@ -108,33 +107,48 @@ public class ServerService {
     /**
      * Removes the client from its current lobby, if any.
      *
-     * <p>The remaining players in that lobby are informed about the departure,
-     * the player list is refreshed, and the lobby is deleted if it becomes empty.</p>
+     * <p>This helper centralizes all lobby-leaving behavior. It removes the
+     * session from the current lobby, clears the lobby mapping, broadcasts the
+     * updated player list to the remaining lobby members, deletes the lobby if
+     * it becomes empty, and refreshes the global lobby list for all clients.</p>
+     *
+     * <p>If {@code reasonText} is not blank, an informational message of the
+     * form {@code "<playerName> <reasonText>"} is broadcast to the remaining
+     * members of the old lobby. If {@code reasonText} is {@code null} or blank,
+     * the leave happens silently apart from list updates.</p>
      *
      * @param session the client session leaving its current lobby
+     * @param reasonText optional informational suffix such as
+     *                   {@code "left the lobby."} or {@code "disconnected."}
+     * @return the old lobby the client left, or {@code null} if the client was
+     *         not in any lobby
      */
-    private void leaveCurrentLobby(ClientSession session) {
+    private Lobby leaveCurrentLobby(ClientSession session, String reasonText) {
         Lobby currentLobby = getLobbyOf(session);
 
         if (currentLobby == null) {
-            return;
+            return null;
         }
 
         currentLobby.removeSession(session);
         playerLobbyMap.remove(session);
 
-        broadcastToLobby(currentLobby, new Message(
-                Message.Type.INFO,
-                session.getPlayerName() + " left the lobby."
-        ));
+        if (reasonText != null && !reasonText.isBlank()) {
+            broadcastToLobby(currentLobby, new Message(
+                    Message.Type.INFO,
+                    session.getPlayerName() + " " + reasonText
+            ));
+        }
 
         broadcastPlayerList(currentLobby);
 
         if (currentLobby.getPlayerCount() == 0) {
             lobbies.remove(currentLobby.getLobbyId());
             log("Removed empty lobby: " + currentLobby.getLobbyId());
-            broadcastLobbyListToAllClients();
         }
+
+        broadcastLobbyListToAllClients();
+        return currentLobby;
     }
 
     /**
@@ -163,8 +177,8 @@ public class ServerService {
     /**
      * Unregisters a disconnected client.
      *
-     * <p>If the client is currently inside a lobby, it is removed from that lobby.
-     * If the client is not in any lobby, only a log entry is written.</p>
+     * <p>If the client is currently inside a lobby, the centralized lobby-leave
+     * helper is used so that player lists and lobby lists stay consistent.</p>
      *
      * @param session the client session to unregister
      */
@@ -175,28 +189,14 @@ public class ServerService {
 
         if (lobby == null) {
             log("Client disconnected without lobby: " + session.getPlayerName());
+            broadcastAllPlayersListToAllClients();
             return;
         }
 
-        lobby.removeSession(session);
-        playerLobbyMap.remove(session);
-
         log("Client disconnected: " + session.getPlayerName()
-                + ". Remaining clients in lobby " + lobby.getLobbyId() + ": " + lobby.getPlayerCount());
+                + ". Leaving lobby " + lobby.getLobbyId());
 
-        broadcastToLobby(lobby, new Message(
-                Message.Type.INFO,
-                session.getPlayerName() + " disconnected."
-        ));
-
-        broadcastPlayerList(lobby);
-
-        if (lobby.getPlayerCount() == 0) {
-            lobbies.remove(lobby.getLobbyId());
-            log("Removed empty lobby: " + lobby.getLobbyId());
-        }
-
-        broadcastLobbyListToAllClients();
+        leaveCurrentLobby(session, "disconnected.");
         broadcastAllPlayersListToAllClients();
     }
 
@@ -241,6 +241,12 @@ public class ServerService {
         ));
     }
 
+    /**
+     * Handles a lobby chat message from a client.
+     *
+     * @param session the sending client session
+     * @param text the chat message content
+     */
     private void handleLobbyChat(ClientSession session, String text) {
         Lobby lobby = getLobbyOf(session);
 
@@ -360,7 +366,6 @@ public class ServerService {
         ).encode());
     }
 
-
     /**
      * Finds a connected client session by player name.
      *
@@ -375,7 +380,6 @@ public class ServerService {
         }
         return null;
     }
-
 
     /**
      * Processes an incoming message from a client.
@@ -405,6 +409,7 @@ public class ServerService {
             case WHISPERCHAT -> handleWhisperChat(session, message.content());
             case CREATE -> handleCreateLobby(session, message.content());
             case JOIN -> handleJoinLobby(session, message.content());
+
             case LOBBIES -> {
                 if (!message.content().isBlank()) {
                     session.send(new Message(
@@ -465,23 +470,33 @@ public class ServerService {
                 ).encode());
             }
 
-            case PLAY_CARD     -> handlePlayCard(session, message.content());
-            case DRAW_CARD     -> handleDrawCard(session);
-            case END_TURN      -> handleEndTurn(session);
+            case LEAVE -> {
+                if (!message.content().isBlank()) {
+                    session.send(new Message(
+                            Message.Type.ERROR,
+                            "LEAVE must not contain content."
+                    ).encode());
+                    return;
+                }
+                handleLeave(session);
+            }
+
+            case PLAY_CARD -> handlePlayCard(session, message.content());
+            case DRAW_CARD -> handleDrawCard(session);
+            case END_TURN -> handleEndTurn(session);
             case EFFECT_RESPONSE -> handleEffectResponse(session, message.content());
-            case GET_HAND      -> handleGetHand(session);
+            case GET_HAND -> handleGetHand(session);
 
             case PING, PONG -> {
-                // Heartbeat messages are handled in ClientSession / ClientReader.
                 log("Heartbeat message reached ServerService from "
                         + session.getPlayerName() + ": " + message.type());
             }
 
             case GAME_STATE, HAND_UPDATE, EFFECT_REQUEST, ROUND_END, GAME_END ->
-                session.send(new Message(
-                        Message.Type.ERROR,
-                        "Client may not send server-only message types."
-                ).encode());
+                    session.send(new Message(
+                            Message.Type.ERROR,
+                            "Client may not send server-only message types."
+                    ).encode());
 
             case INFO, ERROR, GAME -> session.send(new Message(
                     Message.Type.ERROR,
@@ -539,7 +554,7 @@ public class ServerService {
             return;
         }
 
-        leaveCurrentLobby(session);
+        leaveCurrentLobby(session, null);
 
         Lobby newLobby = getOrCreateLobby(cleanLobbyId);
         newLobby.addSession(session);
@@ -595,7 +610,7 @@ public class ServerService {
             return;
         }
 
-        leaveCurrentLobby(session);
+        leaveCurrentLobby(session, null);
 
         lobby.addSession(session);
         playerLobbyMap.put(session, cleanLobbyId);
@@ -613,6 +628,50 @@ public class ServerService {
         broadcastPlayerList(lobby);
     }
 
+    /**
+     * Handles a request to leave the current lobby without disconnecting from
+     * the server.
+     *
+     * <p>The leaving client receives a confirmation message, an explicit empty
+     * {@code PLAYERS} update so GUI lobby-player lists clear immediately, and
+     * refreshed global lists.</p>
+     *
+     * @param session the client session leaving its current lobby
+     */
+    private void handleLeave(ClientSession session) {
+        Lobby lobby = getLobbyOf(session);
+
+        if (lobby == null) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "You are not in a lobby."
+            ).encode());
+            return;
+        }
+
+        String oldLobbyId = lobby.getLobbyId();
+
+        leaveCurrentLobby(session, "left the lobby.");
+
+        session.send(new Message(
+                Message.Type.INFO,
+                "You left lobby: " + oldLobbyId
+        ).encode());
+
+        session.send(new Message(
+                Message.Type.PLAYERS,
+                ""
+        ).encode());
+
+        sendLobbyList(session);
+        sendAllPlayersList(session);
+    }
+
+    /**
+     * Sends the current list of lobby names to the given client.
+     *
+     * @param session the client receiving the lobby list
+     */
     private void sendLobbyList(ClientSession session) {
         List<String> lobbyNames = new ArrayList<>(lobbies.keySet());
         session.send(new Message(
@@ -621,6 +680,11 @@ public class ServerService {
         ).encode());
     }
 
+    /**
+     * Sends the current global player list to the given client.
+     *
+     * @param session the client receiving the global player list
+     */
     private void sendAllPlayersList(ClientSession session) {
         List<String> names = new ArrayList<>();
         for (ClientSession client : connectedClients) {
@@ -633,13 +697,18 @@ public class ServerService {
         ).encode());
     }
 
+    /**
+     * Broadcasts the global player list to all connected clients.
+     */
     private void broadcastAllPlayersListToAllClients() {
         for (ClientSession client : connectedClients) {
             sendAllPlayersList(client);
         }
     }
 
-
+    /**
+     * Broadcasts the lobby list to all connected clients.
+     */
     private void broadcastLobbyListToAllClients() {
         for (ClientSession client : connectedClients) {
             sendLobbyList(client);
@@ -803,7 +872,6 @@ public class ServerService {
         return false;
     }
 
-
     /**
      * Handles a request to list all connected players in the current lobby.
      *
@@ -857,7 +925,7 @@ public class ServerService {
      * Handles a game start request from a client.
      *
      * <p>The request is only valid inside a lobby. At least two players must
-     * be present in that lobby. The gameStarted state is now stored per lobby.</p>
+     * be present in that lobby. The gameStarted state is stored per lobby.</p>
      *
      * @param session the client session requesting to start the game
      */
@@ -874,7 +942,6 @@ public class ServerService {
 
         log(session.getPlayerName() + " requested game start in lobby " + lobby.getLobbyId() + ".");
 
-        // 🔥 FIX: use lobby-specific gameStarted
         if (lobby.isGameStarted()) {
             log("Start rejected: game already started in lobby " + lobby.getLobbyId() + ".");
             session.send(new Message(
@@ -897,7 +964,9 @@ public class ServerService {
         int round = lobby.nextRound();
 
         List<String> playerNames = new ArrayList<>();
-        for (Player p : lobby.getPlayers()) playerNames.add(p.name());
+        for (Player p : lobby.getPlayers()) {
+            playerNames.add(p.name());
+        }
 
         GameState gameState = GameInitializer.initialize(
                 playerNames, round, lobby.getCumulativeScores(), new Random());
@@ -909,14 +978,9 @@ public class ServerService {
         broadcastGameState(lobby);
         broadcastAllHands(lobby);
 
-        // Prompt the first player to start their turn
         TurnEngine.startTurn(gameState);
         broadcastGameState(lobby);
     }
-
-    // -------------------------------------------------------------------------
-    // Game-action handlers
-    // -------------------------------------------------------------------------
 
     /**
      * Handles a {@code GET_HAND} message: sends the requesting player their current hand.
@@ -938,7 +1002,7 @@ public class ServerService {
 
     /**
      * Handles a {@code PLAY_CARD} message: the acting player plays one card.
-     * Broadcasts updated game state (and hands if needed) to the whole lobby.
+     * Broadcasts updated game state and events to the whole lobby.
      */
     private void handlePlayCard(ClientSession session, String payload) {
         Lobby lobby = getLobbyOf(session);
@@ -956,10 +1020,11 @@ public class ServerService {
         GameState state = lobby.getGameState();
         String playerName = session.getPlayerName();
 
-        // Find the card in the player's hand
         Card card = state.getPlayer(playerName).getHand().stream()
                 .filter(c -> c.id() == cardId)
-                .findFirst().orElse(null);
+                .findFirst()
+                .orElse(null);
+
         if (card == null) {
             session.send(new Message(Message.Type.ERROR,
                     "Card " + cardId + " not in your hand.").encode());
@@ -973,11 +1038,14 @@ public class ServerService {
         if (state.getPhase() == GamePhase.ROUND_END) {
             handleRoundEnd(lobby);
         } else if (state.getPhase() == GamePhase.RESOLVING_EFFECT) {
-            // Prompt the acting player for effect arguments
             String effectName = state.getPendingEffects().isEmpty()
-                    ? "UNKNOWN" : state.getPendingEffects().peek().name();
-            broadcastToLobby(lobby, new Message(Message.Type.EFFECT_REQUEST,
-                    GameStateSerializer.serializeEffectRequest(effectName, playerName)));
+                    ? "UNKNOWN"
+                    : state.getPendingEffects().peek().name();
+
+            broadcastToLobby(lobby, new Message(
+                    Message.Type.EFFECT_REQUEST,
+                    GameStateSerializer.serializeEffectRequest(effectName, playerName)
+            ));
         } else if (state.getPhase() == GamePhase.TURN_START) {
             TurnEngine.startTurn(state);
             broadcastGameState(lobby);
@@ -1000,9 +1068,11 @@ public class ServerService {
         List<GameEvent> events = TurnEngine.drawCard(state, playerName);
         broadcastEvents(lobby, events);
 
-        // Send updated hand only to the drawing player
-        session.send(new Message(Message.Type.HAND_UPDATE,
-                GameStateSerializer.serializeHand(state.getPlayer(playerName))).encode());
+        session.send(new Message(
+                Message.Type.HAND_UPDATE,
+                GameStateSerializer.serializeHand(state.getPlayer(playerName))
+        ).encode());
+
         broadcastGameState(lobby);
 
         if (state.getPhase() == GamePhase.ROUND_END) {
@@ -1028,9 +1098,12 @@ public class ServerService {
             session.send(new Message(Message.Type.ERROR, "Not your turn.").encode());
             return;
         }
+
         if (state.getPhase() != GamePhase.AWAITING_PLAY) {
-            session.send(new Message(Message.Type.ERROR,
-                    "Cannot end turn in phase " + state.getPhase()).encode());
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Cannot end turn in phase " + state.getPhase()
+            ).encode());
             return;
         }
 
@@ -1062,7 +1135,7 @@ public class ServerService {
         }
 
         String effectName = (String) parsed[0];
-        EffectArgs args   = (EffectArgs) parsed[1];
+        EffectArgs args = (EffectArgs) parsed[1];
 
         SpecialEffect effect;
         try {
@@ -1081,26 +1154,27 @@ public class ServerService {
             handleRoundEnd(lobby);
         } else if (state.getPhase() == GamePhase.RESOLVING_EFFECT
                 && !state.getPendingEffects().isEmpty()) {
-            // More effects pending — prompt for next one
             String nextEffect = state.getPendingEffects().peek().name();
             String target = state.getPendingEffectTarget() != null
-                    ? state.getPendingEffectTarget() : playerName;
-            broadcastToLobby(lobby, new Message(Message.Type.EFFECT_REQUEST,
-                    GameStateSerializer.serializeEffectRequest(nextEffect, target)));
+                    ? state.getPendingEffectTarget()
+                    : playerName;
+
+            broadcastToLobby(lobby, new Message(
+                    Message.Type.EFFECT_REQUEST,
+                    GameStateSerializer.serializeEffectRequest(nextEffect, target)
+            ));
         } else if (state.getPhase() == GamePhase.TURN_START) {
             TurnEngine.startTurn(state);
             broadcastGameState(lobby);
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Round / game end
-    // -------------------------------------------------------------------------
-
     /**
      * Called when the game state transitions to {@link GamePhase#ROUND_END}.
      * Calculates scores, broadcasts results, and either starts a new round or
      * declares the game over.
+     *
+     * @param lobby the lobby whose round ended
      */
     private void handleRoundEnd(Lobby lobby) {
         GameState state = lobby.getGameState();
@@ -1108,13 +1182,13 @@ public class ServerService {
         Map<String, Integer> roundScores =
                 ScoreCalculator.calculateRoundScores(state.getPlayerOrder());
 
-        // Update cumulative scores in the lobby
         for (PlayerGameState p : state.getPlayerOrder()) {
             lobby.getCumulativeScores().put(p.getPlayerName(), p.getTotalScore());
         }
 
         String roundEndPayload = GameStateSerializer.serializeRoundEnd(
                 roundScores, state.getPlayerOrder());
+
         broadcastToLobby(lobby, new Message(Message.Type.ROUND_END, roundEndPayload));
 
         if (ScoreCalculator.isGameOver(lobby.getCumulativeScores(), state.getMaxScore())) {
@@ -1125,10 +1199,11 @@ public class ServerService {
             lobby.setGameStarted(false);
             log("Game over in lobby " + lobby.getLobbyId() + ". Winner: " + winner);
         } else {
-            // Start the next round
             int nextRound = lobby.nextRound();
             List<String> playerNames = new ArrayList<>();
-            for (Player p : lobby.getPlayers()) playerNames.add(p.name());
+            for (Player p : lobby.getPlayers()) {
+                playerNames.add(p.name());
+            }
 
             GameState nextState = GameInitializer.initialize(
                     playerNames, nextRound, lobby.getCumulativeScores(), new Random());
@@ -1142,31 +1217,41 @@ public class ServerService {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Broadcast helpers
-    // -------------------------------------------------------------------------
-
     /**
      * Broadcasts the public game state snapshot to every player in the lobby.
+     *
+     * @param lobby the target lobby
      */
     private void broadcastGameState(Lobby lobby) {
         GameState state = lobby.getGameState();
-        if (state == null) return;
-        broadcastToLobby(lobby, new Message(Message.Type.GAME_STATE,
-                GameStateSerializer.serializePublicState(state)));
+        if (state == null) {
+            return;
+        }
+
+        broadcastToLobby(lobby, new Message(
+                Message.Type.GAME_STATE,
+                GameStateSerializer.serializePublicState(state)
+        ));
     }
 
     /**
-     * Sends each player their private hand update.
+     * Sends each player in the lobby their private hand update.
+     *
+     * @param lobby the target lobby
      */
     private void broadcastAllHands(Lobby lobby) {
         GameState state = lobby.getGameState();
-        if (state == null) return;
+        if (state == null) {
+            return;
+        }
+
         for (ClientSession s : lobby.getSessions()) {
             try {
                 PlayerGameState p = state.getPlayer(s.getPlayerName());
-                s.send(new Message(Message.Type.HAND_UPDATE,
-                        GameStateSerializer.serializeHand(p)).encode());
+                s.send(new Message(
+                        Message.Type.HAND_UPDATE,
+                        GameStateSerializer.serializeHand(p)
+                ).encode());
             } catch (IllegalArgumentException ignored) {
                 // session has a name not yet in game state — skip
             }
@@ -1176,11 +1261,16 @@ public class ServerService {
     /**
      * Converts a list of {@link GameEvent}s into {@code GAME} messages and
      * broadcasts each one to the whole lobby.
+     *
+     * @param lobby the target lobby
+     * @param events the events to broadcast
      */
     private void broadcastEvents(Lobby lobby, List<GameEvent> events) {
         for (GameEvent event : events) {
-            broadcastToLobby(lobby, new Message(Message.Type.GAME,
-                    event.type().name() + ":" + event.detail()));
+            broadcastToLobby(lobby, new Message(
+                    Message.Type.GAME,
+                    event.type().name() + ":" + event.detail()
+            ));
         }
     }
 }

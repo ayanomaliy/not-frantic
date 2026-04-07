@@ -8,6 +8,7 @@ import ch.unibas.dmi.dbis.cs108.example.model.game.Card;
 import ch.unibas.dmi.dbis.cs108.example.model.game.GameInitializer;
 import ch.unibas.dmi.dbis.cs108.example.model.game.GameState;
 import ch.unibas.dmi.dbis.cs108.example.model.game.TurnEngine;
+import javafx.beans.binding.Bindings;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -91,6 +92,13 @@ public class MainController {
         view.getLobbiesList().setItems(state.getLobbies());
         view.getInfoList().setItems(state.getGameMessages());
 
+        view.getLeaveLobbyButton().managedProperty().bind(
+                view.getLeaveLobbyButton().visibleProperty()
+        );
+        view.getLeaveLobbyButton().visibleProperty().bind(
+                Bindings.isNotEmpty(state.getPlayers())
+        );
+
         updateDisplayedChat(view);
 
         view.getSendButton().setOnAction(e -> sendChat(view));
@@ -117,7 +125,7 @@ public class MainController {
         view.getJoinLobbyButton().setOnAction(e -> {
             String selectedLobby = view.getLobbiesList().getSelectionModel().getSelectedItem();
             if (selectedLobby != null && !selectedLobby.isBlank()) {
-                networkClient.sendCommand("/join " + selectedLobby);
+                networkClient.joinLobby(selectedLobby);
             }
         });
 
@@ -125,7 +133,7 @@ public class MainController {
             if (e.getClickCount() == 2) {
                 String selectedLobby = view.getLobbiesList().getSelectionModel().getSelectedItem();
                 if (selectedLobby != null && !selectedLobby.isBlank()) {
-                    networkClient.sendCommand("/join " + selectedLobby);
+                    networkClient.joinLobby(selectedLobby);
                 }
             }
         });
@@ -139,10 +147,12 @@ public class MainController {
             dialog.showAndWait().ifPresent(name -> {
                 String trimmed = name.trim();
                 if (!trimmed.isBlank()) {
-                    networkClient.sendCommand("/create " + trimmed);
+                    networkClient.createLobby(trimmed);
                 }
             });
         });
+
+        view.getLeaveLobbyButton().setOnAction(e -> leaveCurrentLobbyAndShowLobbyView());
 
         view.getStartButton().setOnAction(e -> networkClient.startGame());
 
@@ -178,7 +188,7 @@ public class MainController {
         state.setCurrentPlayer(localGameState.getCurrentPlayer().getPlayerName());
         state.setCurrentPhase(localGameState.getPhase().name());
 
-        var topCard = localGameState.peekDiscardPile();
+        Card topCard = localGameState.peekDiscardPile();
         state.setTopCardText(cardToText(topCard));
 
         refreshGameLabels(view);
@@ -217,7 +227,7 @@ public class MainController {
         });
 
         view.getBackToLobbyButton().setOnAction(e -> showLobbyView());
-        view.getLeaveButton().setOnAction(e -> showLobbyView());
+        view.getLeaveButton().setOnAction(e -> leaveCurrentLobbyAndShowLobbyView());
 
         view.getSendButton().setOnAction(e -> {
             String text = view.getChatInput().getText().trim();
@@ -231,7 +241,6 @@ public class MainController {
         stage.setScene(scene);
         new FadeIn(view).play();
 
-        // Initial fake hand
         for (int i = 1; i <= 7; i++) {
             final int cardNumber = i;
 
@@ -253,6 +262,18 @@ public class MainController {
     }
 
     /**
+     * Leaves the current lobby using the structured protocol, refreshes the
+     * server-backed lists, and then returns to the lobby screen.
+     */
+    private void leaveCurrentLobbyAndShowLobbyView() {
+        networkClient.leaveLobby();
+        networkClient.requestPlayers();
+        networkClient.requestAllPlayers();
+        networkClient.requestLobbies();
+        showLobbyView();
+    }
+
+    /**
      * Refreshes the game labels from the shared client state.
      *
      * @param view the game view to update
@@ -263,6 +284,12 @@ public class MainController {
         view.getDiscardTopLabel().setText("Top Card: " + state.getTopCardText());
     }
 
+    /**
+     * Converts a card into a short human-readable label for the GUI.
+     *
+     * @param card the card to format
+     * @return the formatted card text, or {@code "-"} if the card is null
+     */
     private String cardToText(Card card) {
         if (card == null) {
             return "-";

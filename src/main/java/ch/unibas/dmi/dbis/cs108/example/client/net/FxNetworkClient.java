@@ -4,19 +4,21 @@ import ch.unibas.dmi.dbis.cs108.example.client.ClientState;
 import ch.unibas.dmi.dbis.cs108.example.service.Message;
 import javafx.application.Platform;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 
-
 /**
  * JavaFX-aware network client for the Frantic^-1 GUI.
  *
  * <p>This class manages the TCP connection to the game server, sends
- * protocol messages, receives server responses, and updates the shared
- * {@link ClientState} on the JavaFX application thread.</p>
+ * structured protocol messages, receives server responses, and updates the
+ * shared {@link ClientState} on the JavaFX application thread.</p>
  *
  * <p>It also maintains a heartbeat mechanism to detect lost server
  * connections automatically.</p>
@@ -25,15 +27,22 @@ public class FxNetworkClient {
 
     /** Shared GUI state updated from incoming server messages. */
     private final ClientState state;
+
+    /** Callback triggered once the first real game state arrives. */
     private Runnable gameStartListener;
+
+    /** Prevents reopening the game view repeatedly for every GAME_STATE update. */
     private boolean gameViewShown = false;
 
     /** TCP socket connected to the game server. */
     private Socket socket;
+
     /** Reader for incoming server messages. */
     private BufferedReader serverIn;
+
     /** Writer for outgoing client messages. */
     private PrintWriter serverOut;
+
     /** Timestamp of the last received pong message from the server. */
     private final AtomicLong lastServerPongTime = new AtomicLong(System.currentTimeMillis());
 
@@ -46,11 +55,15 @@ public class FxNetworkClient {
         this.state = state;
     }
 
-
+    /**
+     * Registers a callback that is invoked when the server confirms that a game
+     * has actually started by sending a {@code GAME_STATE} message.
+     *
+     * @param gameStartListener the callback to invoke when the game starts
+     */
     public void setGameStartListener(Runnable gameStartListener) {
         this.gameStartListener = gameStartListener;
     }
-
 
     /**
      * Connects to the server and initializes background reader and heartbeat threads.
@@ -58,7 +71,7 @@ public class FxNetworkClient {
      * <p>After the connection is established, the client sends its initial
      * player name, starts a reader thread for incoming messages, starts a
      * heartbeat thread for connection monitoring, and requests the current
-     * player list from the server.</p>
+     * lobby/player lists from the server.</p>
      *
      * @param host the server host name or IP address
      * @param port the server port
@@ -67,7 +80,8 @@ public class FxNetworkClient {
      */
     public void connect(String host, int port, String username) throws IOException {
         socket = new Socket(host, port);
-        serverIn = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+        serverIn = new BufferedReader(
+                new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
         serverOut = new PrintWriter(socket.getOutputStream(), true, StandardCharsets.UTF_8);
 
         lastServerPongTime.set(System.currentTimeMillis());
@@ -79,7 +93,7 @@ public class FxNetworkClient {
             state.setStatusText("Connected to " + host + ":" + port);
         });
 
-        send(new Message(Message.Type.NAME, username));
+        setName(username);
 
         Thread readerThread = new Thread(this::readLoop, "client-reader");
         readerThread.setDaemon(true);
@@ -93,13 +107,7 @@ public class FxNetworkClient {
         requestAllPlayers();
         requestLobbies();
     }
-    /**
-     * Disconnects from the server and updates the client state.
-     *
-     * <p>If a connection is currently active, a quit message is sent first.
-     * The socket is then closed and the GUI state is reset to a disconnected
-     * status.</p>
-     */
+
     /**
      * Disconnects this client from the server and updates the local GUI state.
      *
@@ -157,10 +165,14 @@ public class FxNetworkClient {
     }
 
     /**
-     * Sends a chat message to the server.
+     * Sends a request to set or change the current player name.
      *
-     * @param text the chat message text
+     * @param username the desired player name
      */
+    public void setName(String username) {
+        send(new Message(Message.Type.NAME, username));
+    }
+
     /**
      * Sends a global chat message to the server.
      *
@@ -169,41 +181,80 @@ public class FxNetworkClient {
     public void sendGlobalChat(String text) {
         send(new Message(Message.Type.GLOBALCHAT, text));
     }
+
+    /**
+     * Sends a lobby chat message to the server.
+     *
+     * @param text the chat message text
+     */
     public void sendLobbyChat(String text) {
         send(new Message(Message.Type.LOBBYCHAT, text));
     }
 
+    /**
+     * Sends a whisper chat payload to the server.
+     *
+     * <p>The payload format is expected to match the protocol, for example
+     * {@code targetPlayer|message text}.</p>
+     *
+     * @param payload the whisper payload
+     */
     public void sendWhisperChat(String payload) {
         send(new Message(Message.Type.WHISPERCHAT, payload));
     }
 
-
     /**
-     * Requests the current player list from the server.
+     * Requests the current player list of the lobby this client is currently in.
      */
     public void requestPlayers() {
         send(new Message(Message.Type.PLAYERS, ""));
     }
 
+    /**
+     * Requests the global list of all connected players.
+     */
     public void requestAllPlayers() {
         send(new Message(Message.Type.ALLPLAYERS, ""));
     }
 
-
     /**
-     * Requests the current lobby list from the server.
+     * Requests the current list of available lobbies.
      */
     public void requestLobbies() {
         send(new Message(Message.Type.LOBBIES, ""));
     }
+
+    /**
+     * Sends a request to create a new lobby.
+     *
+     * @param lobbyId the desired lobby id
+     */
+    public void createLobby(String lobbyId) {
+        send(new Message(Message.Type.CREATE, lobbyId));
+    }
+
+    /**
+     * Sends a request to join an existing lobby.
+     *
+     * @param lobbyId the lobby id to join
+     */
+    public void joinLobby(String lobbyId) {
+        send(new Message(Message.Type.JOIN, lobbyId));
+    }
+
+    /**
+     * Sends a request to leave the current lobby.
+     */
+    public void leaveLobby() {
+        send(new Message(Message.Type.LEAVE, ""));
+    }
+
     /**
      * Sends a request to start the game.
      */
     public void startGame() {
         send(new Message(Message.Type.START, ""));
     }
-
-
 
     /**
      * Sends a protocol message to the server if an output stream is available.
@@ -220,11 +271,14 @@ public class FxNetworkClient {
      * Parses and executes a raw client command using the same rules as the
      * terminal client.
      *
-     * <p>Supported input includes both slash commands such as
-     * {@code /name Alice} and the structured protocol format parsed by
-     * {@link Message#parse(String)}. Invalid input and unknown commands are
-     * reported to the GUI. Manual heartbeat commands are rejected because
-     * heartbeat handling is automatic.</p>
+     * <p>This method exists for the manual command field in the GUI. It
+     * supports slash commands such as {@code /name Alice} as a convenience for
+     * typed input, but the rest of the GUI should prefer dedicated methods such
+     * as {@link #joinLobby(String)}, {@link #createLobby(String)},
+     * {@link #leaveLobby()}, and {@link #startGame()}.</p>
+     *
+     * <p>Invalid input and unknown commands are reported to the GUI. Manual
+     * heartbeat commands are rejected because heartbeat handling is automatic.</p>
      *
      * <p>If the command is {@code /quit}, the method closes the local
      * connection after sending the quit request and returns {@code true} so the
@@ -293,6 +347,7 @@ public class FxNetworkClient {
             });
         }
     }
+
     /**
      * Handles a single incoming protocol message from the server.
      *
@@ -311,14 +366,12 @@ public class FxNetworkClient {
                 String[] parts = message.splitChatPayload();
                 Platform.runLater(() ->
                         state.getGlobalChatMessages().add(parts[0] + ": " + parts[1]));
-
             }
 
             case LOBBYCHAT -> {
                 String[] parts = message.splitChatPayload();
                 Platform.runLater(() ->
                         state.getLobbyChatMessages().add(parts[0] + ": " + parts[1]));
-
             }
 
             case WHISPERCHAT -> Platform.runLater(() -> {
@@ -341,7 +394,6 @@ public class FxNetworkClient {
                 }
             });
 
-
             case INFO -> Platform.runLater(() ->
                     state.getGameMessages().add("[INFO] " + message.content()));
 
@@ -353,9 +405,9 @@ public class FxNetworkClient {
                         message.content().isBlank()
                                 ? java.util.List.of()
                                 : Arrays.stream(message.content().split(","))
-                                .map(String::trim)
-                                .filter(s -> !s.isBlank())
-                                .toList()
+                                  .map(String::trim)
+                                  .filter(s -> !s.isBlank())
+                                  .toList()
                 );
             });
 
@@ -364,9 +416,9 @@ public class FxNetworkClient {
                         message.content().isBlank()
                                 ? java.util.List.of()
                                 : Arrays.stream(message.content().split(","))
-                                .map(String::trim)
-                                .filter(s -> !s.isBlank())
-                                .toList()
+                                  .map(String::trim)
+                                  .filter(s -> !s.isBlank())
+                                  .toList()
                 );
             });
 
@@ -375,24 +427,22 @@ public class FxNetworkClient {
                         message.content().isBlank()
                                 ? java.util.List.of()
                                 : Arrays.stream(message.content().split(","))
-                                .map(String::trim)
-                                .filter(s -> !s.isBlank())
-                                .toList()
+                                  .map(String::trim)
+                                  .filter(s -> !s.isBlank())
+                                  .toList()
                 );
             });
 
-            case GAME_STATE -> {
-                Platform.runLater(() -> {
-                    state.getGameMessages().add("[GAME_STATE] " + message.content());
+            case GAME_STATE -> Platform.runLater(() -> {
+                state.getGameMessages().add("[GAME_STATE] " + message.content());
 
-                    if (!gameViewShown) {
-                        gameViewShown = true;
-                        if (gameStartListener != null) {
-                            gameStartListener.run();
-                        }
+                if (!gameViewShown) {
+                    gameViewShown = true;
+                    if (gameStartListener != null) {
+                        gameStartListener.run();
                     }
-                });
-            }
+                }
+            });
 
             case GAME -> Platform.runLater(() ->
                     state.getGameMessages().add("[GAME] " + message.content()));
@@ -401,6 +451,7 @@ public class FxNetworkClient {
                     state.getGameMessages().add("[CLIENT] Unexpected: " + message.encode()));
         }
     }
+
     /**
      * Periodically sends heartbeat ping messages and checks server responsiveness.
      *

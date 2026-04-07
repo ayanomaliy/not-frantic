@@ -15,8 +15,6 @@ public record Message(Type type, String content) {
         /** Message used to set or change a player's display name. */
         NAME,
 
-
-
         /** Message containing a global chat text. */
         GLOBALCHAT,
 
@@ -37,6 +35,9 @@ public record Message(Type type, String content) {
 
         /** Message used to leave the server. */
         QUIT,
+
+        /** Message used to leave the current lobby. */
+        LEAVE,
 
         /** Message used to create a new lobby. */
         CREATE,
@@ -164,6 +165,7 @@ public record Message(Type type, String content) {
                 case "/allplayers" -> new Message(Type.ALLPLAYERS, "");
                 case "/start" -> new Message(Type.START, "");
                 case "/quit" -> new Message(Type.QUIT, "");
+                case "/leave" -> new Message(Type.LEAVE, "");
                 case "/create" -> new Message(Type.CREATE, payload);
                 case "/join" -> new Message(Type.JOIN, payload);
                 case "/lobbies" -> new Message(Type.LOBBIES, "");
@@ -190,6 +192,7 @@ public record Message(Type type, String content) {
             case "ALLPLAYERS" -> Type.ALLPLAYERS;
             case "START" -> Type.START;
             case "QUIT" -> Type.QUIT;
+            case "LEAVE" -> Type.LEAVE;
             case "CREATE" -> Type.CREATE;
             case "JOIN" -> Type.JOIN;
             case "LOBBIES" -> Type.LOBBIES;
@@ -232,7 +235,7 @@ public record Message(Type type, String content) {
                  INFO, ERROR, GAME, CREATE, LOBBIES, JOIN,
                  PLAY_CARD, EFFECT_RESPONSE,
                  GAME_STATE, HAND_UPDATE, EFFECT_REQUEST, ROUND_END, GAME_END -> true;
-            case START, QUIT, DRAW_CARD, END_TURN, GET_HAND, PING, PONG, UNKNOWN -> false;
+            case START, QUIT,LEAVE, DRAW_CARD, END_TURN, GET_HAND, PING, PONG, UNKNOWN -> false;
         };
     }
 
@@ -251,7 +254,7 @@ public record Message(Type type, String content) {
         }
 
         return switch (type) {
-            case START, QUIT, DRAW_CARD, END_TURN, GET_HAND, PING, PONG -> safe(content).isBlank();
+            case START, QUIT, LEAVE, DRAW_CARD, END_TURN, GET_HAND, PING, PONG -> safe(content).isBlank();
             case NAME, GLOBALCHAT, LOBBYCHAT, WHISPERCHAT, PLAYERS, ALLPLAYERS,
                  INFO, ERROR, GAME, CREATE, LOBBIES, JOIN,
                  PLAY_CARD, EFFECT_RESPONSE,
