@@ -63,9 +63,9 @@ Today, we started implementing the basic skeleton of our project. The focus was 
 
 ---
 
-## Date: March 9, 2026 (Senanur)
+## Date: March 9, 2026 
 
-### Ping/Pong System and Nickname Features
+### Ping/Pong System and Nickname Features (Senanur)
 
 #### What did we do today?
 Today, I implemented several protocol features required for Milestone 2. The focus was on improving connection reliability and adding nickname management functionality.
@@ -163,7 +163,7 @@ Tomorrow I will go through our docs and see if we lack on milestones, if there a
 
 ## Date: March 11, 2026
 
-### Excercise session
+### Excercise session (Everyone)
 
 #### What did we do today?
 
@@ -234,6 +234,27 @@ Today, I focused on building the JavaFX GUI for the client and integrating it wi
   - visualizing game events and effects
 - Possibly refactor UI components further to keep them modular and extensible
 
+## Date: April 2, 2026 
+
+### Multi-Lobby Support Implementation (Senanur)
+
+#### What did we do today?
+Today, I implemented support for multiple lobbies in the server. The goal was to allow players to create, join, and interact within separate game spaces instead of being in a single global lobby.
+
+#### Work Summary
+- Implemented **multi-lobby architecture** on the server side.
+- Added a `Lobby` model to represent individual lobbies.
+- Updated `ServerService` to manage multiple lobbies simultaneously.
+- Enabled players to **create new lobbies and join existing ones**.
+- Ensured that each lobby maintains its own set of players.
+- Adjusted message handling so that actions are processed **within the correct lobby context** instead of globally.
+- Improved internal structure to better support future features like game start per lobby.
+
+#### Future Plans
+- Test multi-lobby behavior with multiple clients to ensure proper isolation between lobbies.
+- Add validation (e.g., prevent joining non-existing lobbies).
+- Extend lobby functionality with features such as player lists and game start conditions.
+
 ## Date: April 2, 2026
 
 ### GUI Lobby System, Player Lists, and Multi-Channel Chat (Aiysha)
@@ -271,3 +292,25 @@ In addition, I fixed several smaller synchronization issues between GUI and serv
 
 The past days, I was working on our QA Concept, started with the "about the project" continued with our Coding Standards and moved on with Code Review and Versions Control.
 The coming days, I will keep working on our QA Concept and add our measurements.
+
+## Date: April 6, 2026 
+
+### Game State Integration and UI Improvements (Senanur)
+
+#### What did we do today?
+Today, I focused on integrating the game state into the client and improving the game UI. The goal was to establish a basic structure for game flow and ensure that card data can be properly displayed in the interface.
+
+#### Work Summary
+- Added a **GameState** object to the `MainController` to manage the local game state.
+- Implemented initialization of the local game state when the game starts.
+- Added logic to **start and manage turns** within the game.
+- Created a **game screen skeleton** as the foundation for the in-game UI.
+- Updated and improved the **game view layout**.
+- Implemented a helper method `cardToText` to convert `Card` objects into a readable format for UI display.
+- Ensured that card data can be correctly visualized in the interface.
+
+#### Future Plans
+- Connect the game state more tightly with server updates (synchronization).
+- Improve turn logic and enforce rules such as turn-based actions.
+- Enhance UI with interactive elements (clickable cards, animations).
+- Continue refining the overall game flow and user experience.
