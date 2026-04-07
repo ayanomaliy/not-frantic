@@ -47,6 +47,12 @@ public class MainController {
         this.stage = stage;
         this.state = state;
         this.networkClient = networkClient;
+
+        this.networkClient.setGameStartListener(() -> {
+            if (!(stage.getScene().getRoot() instanceof GameView)) {
+                showGameView();
+            }
+        });
     }
 
     /**
@@ -138,10 +144,7 @@ public class MainController {
             });
         });
 
-        view.getStartButton().setOnAction(e -> {
-            networkClient.startGame();
-            showGameView();
-        });
+        view.getStartButton().setOnAction(e -> networkClient.startGame());
 
         view.getDisconnectButton().setOnAction(e -> {
             networkClient.disconnect();

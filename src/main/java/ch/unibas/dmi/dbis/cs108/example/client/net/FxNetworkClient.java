@@ -25,6 +25,9 @@ public class FxNetworkClient {
 
     /** Shared GUI state updated from incoming server messages. */
     private final ClientState state;
+    private Runnable gameStartListener;
+    private boolean gameViewShown = false;
+
     /** TCP socket connected to the game server. */
     private Socket socket;
     /** Reader for incoming server messages. */
@@ -42,6 +45,12 @@ public class FxNetworkClient {
     public FxNetworkClient(ClientState state) {
         this.state = state;
     }
+
+
+    public void setGameStartListener(Runnable gameStartListener) {
+        this.gameStartListener = gameStartListener;
+    }
+
 
     /**
      * Connects to the server and initializes background reader and heartbeat threads.
@@ -62,6 +71,7 @@ public class FxNetworkClient {
         serverOut = new PrintWriter(socket.getOutputStream(), true, StandardCharsets.UTF_8);
 
         lastServerPongTime.set(System.currentTimeMillis());
+        gameViewShown = false;
 
         Platform.runLater(() -> {
             state.setConnected(true);
@@ -127,6 +137,7 @@ public class FxNetworkClient {
         socket = null;
         serverIn = null;
         serverOut = null;
+        gameViewShown = false;
 
         Platform.runLater(() -> {
             state.setConnected(false);
@@ -369,6 +380,19 @@ public class FxNetworkClient {
                                 .toList()
                 );
             });
+
+            case GAME_STATE -> {
+                Platform.runLater(() -> {
+                    state.getGameMessages().add("[GAME_STATE] " + message.content());
+
+                    if (!gameViewShown) {
+                        gameViewShown = true;
+                        if (gameStartListener != null) {
+                            gameStartListener.run();
+                        }
+                    }
+                });
+            }
 
             case GAME -> Platform.runLater(() ->
                     state.getGameMessages().add("[GAME] " + message.content()));
