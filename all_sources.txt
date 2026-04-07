@@ -311,6 +311,9 @@ public class ClientState {
     /** Currently selected chat mode in the GUI. */
     private final StringProperty chatMode = new SimpleStringProperty("Global");
 
+    /** Name of the lobby the client is currently in, or empty if not in a lobby. */
+    private final StringProperty currentLobby = new SimpleStringProperty("");
+
     /**
      * Creates a new shared client state object.
      */
@@ -579,6 +582,33 @@ public class ClientState {
      */
     public void setChatMode(String value) {
         chatMode.set(value);
+    }
+
+    /**
+     * Returns the observable current lobby property.
+     *
+     * @return the current lobby property
+     */
+    public StringProperty currentLobbyProperty() {
+        return currentLobby;
+    }
+
+    /**
+     * Returns the name of the current lobby, or an empty string if not in a lobby.
+     *
+     * @return the current lobby name
+     */
+    public String getCurrentLobby() {
+        return currentLobby.get();
+    }
+
+    /**
+     * Updates the current lobby name.
+     *
+     * @param value the new current lobby name
+     */
+    public void setCurrentLobby(String value) {
+        currentLobby.set(value == null ? "" : value);
     }
 }
 
@@ -1111,8 +1141,34 @@ public class FxNetworkClient implements ClientMessageHandler {
                 }
             });
 
-            case INFO -> Platform.runLater(() ->
-                    state.getGameMessages().add("[INFO] " + message.content()));
+            case INFO -> Platform.runLater(() -> {
+                String info = message.content();
+                state.getGameMessages().add("[INFO] " + info);
+
+                if (info.startsWith("Lobby created and joined: ")) {
+                    state.setCurrentLobby(info.substring("Lobby created and joined: ".length()).trim());
+                } else if (info.startsWith("Joined lobby: ")) {
+                    state.setCurrentLobby(info.substring("Joined lobby: ".length()).trim());
+                } else if (info.startsWith("You are already in lobby: ")) {
+                    state.setCurrentLobby(info.substring("You are already in lobby: ".length()).trim());
+                } else if (info.startsWith("You left lobby: ")) {
+                    state.setCurrentLobby("");
+                }
+
+                if (info.startsWith("Your name has been set to ")) {
+                    state.setUsername(info.substring("Your name has been set to ".length()).trim());
+                } else if (info.startsWith("Your requested name was taken. Your name has been set to ")) {
+                    state.setUsername(info.substring(
+                            "Your requested name was taken. Your name has been set to ".length()
+                    ).trim());
+                } else if (info.startsWith("Your name is now ")) {
+                    state.setUsername(info.substring("Your name is now ".length()).trim());
+                } else if (info.startsWith("Your requested name was taken. Your name is now ")) {
+                    state.setUsername(info.substring(
+                            "Your requested name was taken. Your name is now ".length()
+                    ).trim());
+                }
+            });
 
             case ERROR -> Platform.runLater(() ->
                     state.getGameMessages().add("[ERROR] " + message.content()));
@@ -1261,6 +1317,7 @@ public class FxNetworkClient implements ClientMessageHandler {
      */
     private void clearLocalState(String statusText) {
         gameViewShown = false;
+        state.setCurrentLobby("");
 
         Platform.runLater(() -> {
             state.setConnected(false);
@@ -1670,19 +1727,18 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
 /**
- * Game screen layout with:
- * - game area on the left
- * - players / game info / chat on the right
+ * Game screen for the Frantic^-1 GUI client.
+ *
+ * <p>This view follows the same visual design language as the connect and
+ * lobby screens by relying on shared CSS classes such as {@code panel},
+ * {@code section-title}, {@code frantic-button}, and
+ * {@code frantic-list-view}.</p>
  */
-public class GameView extends StackPane {
+public class GameView extends BorderPane {
 
-    private final BorderPane mainLayout = new BorderPane();
-
-    // LEFT SIDE - GAME AREA
-    private final VBox gameArea = new VBox();
+    private final VBox gameArea = new VBox(16);
     private final StackPane centerTablePane = new StackPane();
-    private final VBox centerInfoBox = new VBox();
-    private final VBox handSection = new VBox();
+    private final VBox handSection = new VBox(10);
 
     private final Label currentPlayerLabel = new Label("Current Player: -");
     private final Label phaseLabel = new Label("Phase: -");
@@ -1694,11 +1750,10 @@ public class GameView extends StackPane {
 
     private final FlowPane playerHandPane = new FlowPane();
 
-    // RIGHT SIDE - SIDEBAR
-    private final VBox sideBar = new VBox();
+    private final VBox sideBar = new VBox(16);
 
     private final ListView<String> playersList = new ListView<>();
-    private final Button leaveButton = new Button("Leave");
+    private final Button leaveButton = new Button("Leave Lobby");
 
     private final ListView<String> gameInfoList = new ListView<>();
 
@@ -1706,198 +1761,304 @@ public class GameView extends StackPane {
     private final TextField chatInput = new TextField();
     private final Button sendButton = new Button("Send");
 
+    /**
+     * Creates the game view.
+     */
     public GameView() {
+        getStyleClass().addAll("screen", "game-screen");
+        setPadding(new Insets(16));
+
+        configureControls();
         buildLayout();
-        getChildren().add(mainLayout);
     }
 
+    /**
+     * Applies shared CSS classes and basic control configuration.
+     */
+    private void configureControls() {
+        drawButton.getStyleClass().addAll("frantic-button", "primary-button");
+        endTurnButton.getStyleClass().addAll("frantic-button", "secondary-button");
+        backToLobbyButton.getStyleClass().addAll("frantic-button", "secondary-button");
+        leaveButton.getStyleClass().addAll("frantic-button", "danger-button");
+        sendButton.getStyleClass().addAll("frantic-button", "primary-button");
+
+        chatInput.getStyleClass().add("frantic-text-field");
+        chatInput.setPromptText("Type a global message...");
+
+        playersList.getStyleClass().add("frantic-list-view");
+        gameInfoList.getStyleClass().add("frantic-list-view");
+        chatList.getStyleClass().add("frantic-list-view");
+
+        currentPlayerLabel.getStyleClass().add("field-label");
+        phaseLabel.getStyleClass().add("field-label");
+        discardTopLabel.getStyleClass().add("field-label");
+
+        playerHandPane.getStyleClass().add("hand-pane");
+    }
+
+    /**
+     * Builds the overall screen layout.
+     */
     private void buildLayout() {
-        setPadding(new Insets(20));
-        mainLayout.setPadding(new Insets(20));
+        setCenter(buildGamePanel());
+        setRight(buildSidebar());
 
-        buildGameArea();
-        buildRightSidebar();
-
-        mainLayout.setCenter(gameArea);
-        mainLayout.setRight(sideBar);
+        BorderPane.setMargin(gameArea, new Insets(0, 12, 0, 0));
     }
 
-    private void buildGameArea() {
-        gameArea.setSpacing(20);
-        gameArea.setPadding(new Insets(10));
+    /**
+     * Builds the main game panel on the left side.
+     *
+     * @return the configured main game panel
+     */
+    private VBox buildGamePanel() {
+        gameArea.getStyleClass().add("panel");
 
         buildCenterArea();
         buildBottomHandArea();
 
         VBox.setVgrow(centerTablePane, Priority.ALWAYS);
-        centerTablePane.setMaxWidth(Double.MAX_VALUE);
 
-        gameArea.getChildren().addAll(centerTablePane, handSection);
+        gameArea.getChildren().addAll(
+                createSectionTitle("Game Table"),
+                centerTablePane,
+                handSection
+        );
+
+        return gameArea;
     }
 
+    /**
+     * Builds the central table area with piles, labels, and main action buttons.
+     */
     private void buildCenterArea() {
         centerTablePane.setMinHeight(420);
         centerTablePane.setPrefHeight(500);
 
-        HBox pilesBox = new HBox(30);
+        HBox pilesBox = new HBox(28);
         pilesBox.setAlignment(Pos.CENTER);
 
         VBox drawPileBox = createPileBox("Draw Pile");
         VBox discardPileBox = createPileBox("Discard Pile");
-
         pilesBox.getChildren().addAll(drawPileBox, discardPileBox);
 
-        centerInfoBox.setAlignment(Pos.CENTER);
-        centerInfoBox.setSpacing(10);
+        HBox statusRow = new HBox(20, currentPlayerLabel, phaseLabel, discardTopLabel);
+        statusRow.setAlignment(Pos.CENTER);
 
         HBox buttonRow = new HBox(10, drawButton, endTurnButton, backToLobbyButton);
         buttonRow.setAlignment(Pos.CENTER);
 
-        VBox centerWrapper = new VBox(
-                20,
-                pilesBox,
-                currentPlayerLabel,
-                phaseLabel,
-                discardTopLabel,
-                buttonRow
-        );
+        VBox centerWrapper = new VBox(24, pilesBox, statusRow, buttonRow);
         centerWrapper.setAlignment(Pos.CENTER);
-        centerWrapper.setMaxWidth(600);
+        centerWrapper.setMaxWidth(Double.MAX_VALUE);
 
         centerTablePane.getChildren().add(centerWrapper);
     }
 
+    /**
+     * Builds the bottom hand section.
+     */
     private void buildBottomHandArea() {
-        handSection.setSpacing(10);
-        handSection.setPadding(new Insets(10));
+        handSection.getChildren().addAll(
+                createSectionTitle("Your Hand"),
+                playerHandPane
+        );
 
-        Label handTitle = new Label("Your Hand");
-        handTitle.getStyleClass().add("section-title");
-
-        playerHandPane.setHgap(10);
-        playerHandPane.setVgap(10);
+        playerHandPane.setHgap(12);
+        playerHandPane.setVgap(12);
         playerHandPane.setPrefWrapLength(900);
-
-        handSection.getChildren().addAll(handTitle, playerHandPane);
     }
 
-    private void buildRightSidebar() {
-        sideBar.setSpacing(20);
-        sideBar.setPadding(new Insets(10));
+    /**
+     * Builds the right sidebar containing players, game info, and chat.
+     *
+     * @return the configured sidebar
+     */
+    private VBox buildSidebar() {
         sideBar.setPrefWidth(320);
 
-        // Players section
-        playersList.setPrefHeight(140);
-        VBox playersContent = new VBox(10, playersList, leaveButton);
-        VBox playersBox = createSection("Players in Lobby", playersContent);
+        VBox playersBox = new VBox(
+                10,
+                createSectionTitle("Players in Lobby"),
+                playersList,
+                leaveButton
+        );
+        playersBox.getStyleClass().add("panel");
+        playersList.setPrefHeight(150);
 
-        // Game info section
-        gameInfoList.setPrefHeight(180);
-        VBox infoContent = new VBox(gameInfoList);
-        VBox infoBox = createSection("Game Info", infoContent);
-
-        // Chat section
-        chatList.setPrefHeight(220);
+        VBox infoBox = new VBox(
+                10,
+                createSectionTitle("Game Info"),
+                gameInfoList
+        );
+        infoBox.getStyleClass().add("panel");
+        gameInfoList.setPrefHeight(190);
+        VBox.setVgrow(gameInfoList, Priority.ALWAYS);
 
         HBox chatInputRow = new HBox(10, chatInput, sendButton);
         HBox.setHgrow(chatInput, Priority.ALWAYS);
 
-        VBox chatContent = new VBox(10, chatList, chatInputRow);
+        VBox chatBox = new VBox(
+                10,
+                createSectionTitle("Chat"),
+                chatList,
+                chatInputRow
+        );
+        chatBox.getStyleClass().add("panel");
         VBox.setVgrow(chatList, Priority.ALWAYS);
 
-        VBox chatBox = createSection("Chat", chatContent);
+        sideBar.getChildren().addAll(playersBox, infoBox, chatBox);
         VBox.setVgrow(chatBox, Priority.ALWAYS);
 
-        sideBar.getChildren().addAll(playersBox, infoBox, chatBox);
+        return sideBar;
     }
 
-    private VBox createSection(String titleText, VBox content) {
-        Label title = new Label(titleText);
-        title.getStyleClass().add("section-title");
-
-        VBox box = new VBox(10, title, content);
-        box.setPadding(new Insets(12));
-
-        box.setStyle(
-                "-fx-background-color: rgba(255,255,255,0.55);" +
-                        "-fx-background-radius: 16;" +
-                        "-fx-border-color: #aab0d6;" +
-                        "-fx-border-radius: 16;"
-        );
-
-        return box;
+    /**
+     * Creates a styled section title label.
+     *
+     * @param text the title text
+     * @return the configured label
+     */
+    private Label createSectionTitle(String text) {
+        Label label = new Label(text);
+        label.getStyleClass().add("section-title");
+        return label;
     }
 
+    /**
+     * Creates a visual placeholder for a card pile.
+     *
+     * @param titleText the pile title
+     * @return the configured pile box
+     */
     private VBox createPileBox(String titleText) {
         Label title = new Label(titleText);
+        title.getStyleClass().add("field-label");
 
         StackPane cardPlaceholder = new StackPane();
-        cardPlaceholder.setPrefSize(100, 140);
-        cardPlaceholder.setMinSize(100, 140);
-        cardPlaceholder.setMaxSize(100, 140);
-
-        cardPlaceholder.setStyle(
-                "-fx-background-color: rgba(255,255,255,0.65);" +
-                        "-fx-background-radius: 14;" +
-                        "-fx-border-color: #aab0d6;" +
-                        "-fx-border-radius: 14;"
-        );
+        cardPlaceholder.setPrefSize(110, 150);
+        cardPlaceholder.setMinSize(110, 150);
+        cardPlaceholder.setMaxSize(110, 150);
+        cardPlaceholder.getStyleClass().add("pile-placeholder");
 
         VBox box = new VBox(10, title, cardPlaceholder);
         box.setAlignment(Pos.CENTER);
         return box;
     }
 
-    // --- Getters ---
-
+    /**
+     * Returns the current player label.
+     *
+     * @return the current player label
+     */
     public Label getCurrentPlayerLabel() {
         return currentPlayerLabel;
     }
 
+    /**
+     * Returns the phase label.
+     *
+     * @return the phase label
+     */
     public Label getPhaseLabel() {
         return phaseLabel;
     }
 
+    /**
+     * Returns the discard-top label.
+     *
+     * @return the discard-top label
+     */
     public Label getDiscardTopLabel() {
         return discardTopLabel;
     }
 
+    /**
+     * Returns the draw button.
+     *
+     * @return the draw button
+     */
     public Button getDrawButton() {
         return drawButton;
     }
 
+    /**
+     * Returns the end-turn button.
+     *
+     * @return the end-turn button
+     */
     public Button getEndTurnButton() {
         return endTurnButton;
     }
 
+    /**
+     * Returns the back-to-lobby button.
+     *
+     * @return the back-to-lobby button
+     */
     public Button getBackToLobbyButton() {
         return backToLobbyButton;
     }
 
+    /**
+     * Returns the hand pane used for the current player's cards.
+     *
+     * @return the hand pane
+     */
     public FlowPane getPlayerHandPane() {
         return playerHandPane;
     }
 
+    /**
+     * Returns the player list.
+     *
+     * @return the player list
+     */
     public ListView<String> getPlayersList() {
         return playersList;
     }
 
+    /**
+     * Returns the leave-lobby button.
+     *
+     * @return the leave button
+     */
     public Button getLeaveButton() {
         return leaveButton;
     }
 
+    /**
+     * Returns the game info list.
+     *
+     * @return the game info list
+     */
     public ListView<String> getGameInfoList() {
         return gameInfoList;
     }
 
+    /**
+     * Returns the chat list.
+     *
+     * @return the chat list
+     */
     public ListView<String> getChatList() {
         return chatList;
     }
 
+    /**
+     * Returns the chat input field.
+     *
+     * @return the chat input field
+     */
     public TextField getChatInput() {
         return chatInput;
     }
 
+    /**
+     * Returns the send button.
+     *
+     * @return the send button
+     */
     public Button getSendButton() {
         return sendButton;
     }
@@ -2057,7 +2218,7 @@ public class LobbyView extends BorderPane {
         refreshLobbiesButton.getStyleClass().addAll("frantic-button", "secondary-button");
         joinLobbyButton.getStyleClass().addAll("frantic-button", "primary-button");
         createLobbyButton.getStyleClass().addAll("frantic-button", "primary-button");
-        leaveLobbyButton.getStyleClass().addAll("frantic-button", "primary-button");
+        leaveLobbyButton.getStyleClass().addAll("frantic-button", "danger-button");
 
         chatModeButton.getStyleClass().addAll("frantic-button", "secondary-button");
     }
@@ -2259,6 +2420,9 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextInputDialog;
 import javafx.stage.Stage;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
+
 
 /**
  * Coordinates JavaFX view changes and user interaction for the graphical
@@ -2332,6 +2496,13 @@ public class MainController {
         view.getAllPlayersList().setItems(state.getAllPlayers());
         view.getLobbiesList().setItems(state.getLobbies());
         view.getInfoList().setItems(state.getGameMessages());
+        installSelfHighlight(view.getLobbyPlayersList());
+        installSelfHighlight(view.getAllPlayersList());
+        installCurrentLobbyHighlight(view.getLobbiesList());
+
+        state.currentLobbyProperty().addListener((obs, oldValue, newValue) ->
+                view.getLobbiesList().refresh()
+        );
 
         view.getLeaveLobbyButton().managedProperty().bind(
                 view.getLeaveLobbyButton().visibleProperty()
@@ -2417,6 +2588,7 @@ public class MainController {
         GameView view = new GameView();
 
         view.getPlayersList().setItems(state.getPlayers());
+        installSelfHighlight(view.getPlayersList());
         view.getGameInfoList().setItems(state.getGameMessages());
         view.getChatList().setItems(state.getGlobalChatMessages());
 
@@ -2487,8 +2659,12 @@ public class MainController {
             }
 
             Button cardButton = new Button("Card #" + cardId);
-            cardButton.setPrefSize(80, 120);
+            cardButton.getStyleClass().add("game-card-button");
+            cardButton.setPrefSize(90, 130);
+            cardButton.setMinSize(90, 130);
+            cardButton.setMaxSize(90, 130);
             cardButton.setFocusTraversable(false);
+            cardButton.setWrapText(true);
             cardButton.setOnAction(e -> networkClient.playCard(cardId));
 
             view.getPlayerHandPane().getChildren().add(cardButton);
@@ -2596,6 +2772,65 @@ public class MainController {
         }
 
         return scene;
+    }
+
+    /**
+     * Installs a custom cell factory that highlights the current client's own name
+     * using the same background color as the hover state.
+     *
+     * @param listView the player list view to decorate
+     */
+    private void installSelfHighlight(ListView<String> listView) {
+        listView.setCellFactory(lv -> new ListCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+
+                getStyleClass().remove("self-player-cell");
+
+                if (empty || item == null) {
+                    setText(null);
+                    setGraphic(null);
+                    return;
+                }
+
+                setText(item);
+
+                if (item.equals(state.getUsername())) {
+                    getStyleClass().add("self-player-cell");
+                }
+            }
+        });
+    }
+
+    /**
+     * Installs a custom cell factory that highlights the lobby the client is
+     * currently in using the hover background color.
+     *
+     * @param listView the lobby list view to decorate
+     */
+    private void installCurrentLobbyHighlight(ListView<String> listView) {
+        listView.setCellFactory(lv -> new ListCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+
+                getStyleClass().remove("current-lobby-cell");
+
+                if (empty || item == null) {
+                    setText(null);
+                    setGraphic(null);
+                    return;
+                }
+
+                setText(item);
+
+                String currentLobby = state.getCurrentLobby();
+                if (!currentLobby.isBlank() && item.equals(currentLobby)) {
+                    getStyleClass().add("current-lobby-cell");
+                }
+            }
+        });
     }
 }
 
@@ -7526,12 +7761,69 @@ FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\resourc
     -fx-background-color: transparent;
 }
 
+.list-view.frantic-list-view .list-cell.self-player-cell {
+    -fx-background-color: hover-bg;
+    -fx-font-weight: 700;
+}
+
+.list-view.frantic-list-view .list-cell.self-player-cell:filled:selected {
+    -fx-background-color: selection-bg;
+    -fx-text-fill: selection-text;
+}
+
+.list-view.frantic-list-view .list-cell.current-lobby-cell {
+    -fx-background-color: hover-bg;
+    -fx-font-weight: 700;
+}
+
+.list-view.frantic-list-view .list-cell.current-lobby-cell:filled:selected {
+    -fx-background-color: selection-bg;
+    -fx-text-fill: selection-text;
+}
+
 .connect-screen {
     -fx-padding: 36;
 }
 
 .lobby-screen {
     -fx-padding: 16;
+}
+
+.game-screen {
+    -fx-padding: 16;
+}
+
+.pile-placeholder {
+    -fx-background-color: surface-main;
+    -fx-background-radius: 16;
+    -fx-border-radius: 16;
+    -fx-border-color: border-main;
+    -fx-border-width: 1;
+}
+
+.hand-pane {
+    -fx-padding: 4 0 0 0;
+}
+
+.game-card-button {
+    -fx-background-color: surface-main;
+    -fx-text-fill: text-main;
+    -fx-background-radius: 16;
+    -fx-border-radius: 16;
+    -fx-border-color: border-main;
+    -fx-border-width: 1;
+    -fx-padding: 10 10 10 10;
+    -fx-font-weight: 700;
+    -fx-cursor: hand;
+}
+
+.game-card-button:hover {
+    -fx-background-color: bg-soft;
+    -fx-border-color: border-accent;
+}
+
+.game-card-button:pressed {
+    -fx-background-color: surface-soft;
 }
 
 

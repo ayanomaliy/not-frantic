@@ -282,6 +282,20 @@ public class FxNetworkClient implements ClientMessageHandler {
                 } else if (info.startsWith("You left lobby: ")) {
                     state.setCurrentLobby("");
                 }
+
+                if (info.startsWith("Your name has been set to ")) {
+                    state.setUsername(info.substring("Your name has been set to ".length()).trim());
+                } else if (info.startsWith("Your requested name was taken. Your name has been set to ")) {
+                    state.setUsername(info.substring(
+                            "Your requested name was taken. Your name has been set to ".length()
+                    ).trim());
+                } else if (info.startsWith("Your name is now ")) {
+                    state.setUsername(info.substring("Your name is now ".length()).trim());
+                } else if (info.startsWith("Your requested name was taken. Your name is now ")) {
+                    state.setUsername(info.substring(
+                            "Your requested name was taken. Your name is now ".length()
+                    ).trim());
+                }
             });
 
             case ERROR -> Platform.runLater(() ->

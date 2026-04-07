@@ -181,7 +181,6 @@ public class MainController {
         view.getPlayersList().setItems(state.getPlayers());
         installSelfHighlight(view.getPlayersList());
         view.getGameInfoList().setItems(state.getGameMessages());
-        view.getChatList().setItems(state.getGlobalChatMessages());
 
         view.getCurrentPlayerLabel().textProperty().bind(
                 Bindings.concat("Current Player: ", state.currentPlayerProperty())
@@ -201,19 +200,30 @@ public class MainController {
         state.getCurrentHandCards().addListener(handCardsListener);
         renderHand(view);
 
+        updateDisplayedChat(view);
+
+        view.getChatModeButton().textProperty().bind(state.chatModeProperty());
+
+        view.getChatModeButton().setOnAction(e -> {
+            switch (state.getChatMode()) {
+                case "Global" -> state.setChatMode("Lobby");
+                case "Lobby" -> state.setChatMode("Whisper");
+                default -> state.setChatMode("Global");
+            }
+
+            updateDisplayedChat(view);
+        });
+
+        view.getSendButton().setOnAction(e -> sendChat(view));
+        view.getChatInput().setOnAction(e -> sendChat(view));
+
+        view.getCommandButton().setOnAction(e -> sendCommand(view));
+        view.getCommandInput().setOnAction(e -> sendCommand(view));
+
         view.getDrawButton().setOnAction(e -> networkClient.drawCard());
         view.getEndTurnButton().setOnAction(e -> networkClient.endTurn());
 
-        view.getBackToLobbyButton().setOnAction(e -> showLobbyView());
         view.getLeaveButton().setOnAction(e -> leaveCurrentLobbyAndShowLobbyView());
-
-        view.getSendButton().setOnAction(e -> {
-            String text = view.getChatInput().getText().trim();
-            if (!text.isBlank()) {
-                networkClient.sendGlobalChat(text);
-                view.getChatInput().clear();
-            }
-        });
 
         Scene scene = createStyledScene(view, 1280, 800);
         stage.setScene(scene);
@@ -250,8 +260,12 @@ public class MainController {
             }
 
             Button cardButton = new Button("Card #" + cardId);
-            cardButton.setPrefSize(80, 120);
+            cardButton.getStyleClass().add("game-card-button");
+            cardButton.setPrefSize(90, 130);
+            cardButton.setMinSize(90, 130);
+            cardButton.setMaxSize(90, 130);
             cardButton.setFocusTraversable(false);
+            cardButton.setWrapText(true);
             cardButton.setOnAction(e -> networkClient.playCard(cardId));
 
             view.getPlayerHandPane().getChildren().add(cardButton);
@@ -280,12 +294,59 @@ public class MainController {
         }
     }
 
+
+    /**
+     * Updates the game-view chat list to display the message list of the
+     * currently selected chat mode.
+     *
+     * @param view the game view containing the chat list
+     */
+    private void updateDisplayedChat(GameView view) {
+        switch (state.getChatMode()) {
+            case "Lobby" -> {
+                view.getChatList().setItems(state.getLobbyChatMessages());
+                view.getChatInput().setPromptText("Type a lobby message...");
+            }
+            case "Whisper" -> {
+                view.getChatList().setItems(state.getWhisperChatMessages());
+                view.getChatInput().setPromptText("player: message");
+            }
+            default -> {
+                view.getChatList().setItems(state.getGlobalChatMessages());
+                view.getChatInput().setPromptText("Type a global message...");
+            }
+        }
+    }
+
     /**
      * Sends the content of the chat input field using the currently selected chat mode.
      *
      * @param view the lobby view containing the chat input
      */
     private void sendChat(LobbyView view) {
+        String text = view.getChatInput().getText().trim();
+        if (text.isBlank()) {
+            return;
+        }
+
+        if ("Whisper".equals(state.getChatMode())) {
+            sendWhisperMessage(text);
+        } else if ("Lobby".equals(state.getChatMode())) {
+            networkClient.sendLobbyChat(text);
+        } else {
+            networkClient.sendGlobalChat(text);
+        }
+
+        view.getChatInput().clear();
+    }
+
+    /**
+     * Sends the content of the chat input field using the currently selected
+     * chat mode from the game view.
+     *
+     * @param view the game view containing the chat input
+     */
+    private void sendChat(GameView view) {
         String text = view.getChatInput().getText().trim();
         if (text.isBlank()) {
             return;
@@ -327,6 +388,26 @@ public class MainController {
      * @param view the lobby view containing the command input
      */
     private void sendCommand(LobbyView view) {
+        String command = view.getCommandInput().getText().trim();
+        if (command.isBlank()) {
+            return;
+        }
+
+        boolean disconnected = networkClient.sendCommand(command);
+        view.getCommandInput().clear();
+
+        if (disconnected) {
+            showConnectView();
+        }
+    }
+
+    /**
+     * Executes the content of the command field as a terminal-style client
+     * command from the game view.
+     *
+     * @param view the game view containing the command input
+     */
+    private void sendCommand(GameView view) {
         String command = view.getCommandInput().getText().trim();
         if (command.isBlank()) {
             return;
