@@ -1,49 +1,24 @@
 package ch.unibas.dmi.dbis.cs108.example.client;
 
+import ch.unibas.dmi.dbis.cs108.example.client.net.ClientMessageHandler;
+import ch.unibas.dmi.dbis.cs108.example.client.net.ClientProtocolClient;
 import ch.unibas.dmi.dbis.cs108.example.service.Message;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.Socket;
-import java.nio.charset.StandardCharsets;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Entry point of the client application.
+ * Entry point of the terminal client application.
  *
- * <p>This class establishes a TCP connection to the game server, starts a
- * background reader thread for incoming server messages, and forwards user
- * commands from standard input to the server. It also maintains a heartbeat
- * mechanism to detect lost server connections.
+ * <p>This version uses the same shared protocol client as the GUI and only
+ * differs in how it presents incoming messages and reads user input.</p>
  */
 public class ClientMain {
 
     /**
-     * Starts the client application and connects to the server.
+     * Starts the terminal client.
      *
-     * <p>The client reads commands from standard input, converts them into
-     * {@link Message} objects, and sends them to the server. A background
-     * reader thread handles incoming messages, while a heartbeat thread
-     * periodically sends ping messages to check whether the server is still
-     * reachable.
-     *
-     * <p>Supported commands:
-     * <ul>
-     *   <li>{@code /name <username>} - sets the player's display name</li>
-     *   <li>{@code /chat <message>} - sends a chat message</li>
-     *   <li>{@code /players} - requests the list of connected players</li>
-     *   <li>{@code /start} - requests to start the game</li>
-     *   <li>{@code /quit} - disconnects from the server</li>
-     * </ul>
-     *
-     * <p>Usage:
-     * <ul>
-     *   <li>{@code client <hostaddress>:<port> [<username>]}</li>
-     * </ul>
-     *
-     * @param args command-line arguments containing the server address in the
-     *             format {@code <hostaddress>:<port>} and an optional username
+     * @param args command-line arguments in the form {@code <host:port> [username]}
      */
     public static void main(String[] args) {
         String host = "localhost";
@@ -88,59 +63,72 @@ public class ClientMain {
         }
         suggestedName = suggestedName.trim();
 
-        final long heartbeatIntervalMillis = 5000;
-        final long heartbeatTimeoutMillis = 15000;
+        ClientMessageHandler handler = new ClientMessageHandler() {
+            @Override
+            public void onMessage(Message message) {
+                switch (message.type()) {
+                    case GLOBALCHAT -> {
+                        String[] parts = message.splitChatPayload();
+                        System.out.println("[Global] " + parts[0] + ": " + parts[1]);
+                    }
+                    case LOBBYCHAT -> {
+                        String[] parts = message.splitChatPayload();
+                        System.out.println("[Lobby] " + parts[0] + ": " + parts[1]);
+                    }
+                    case WHISPERCHAT -> System.out.println("[Whisper] " + message.content());
+                    case INFO -> System.out.println("[INFO] " + message.content());
+                    case ERROR -> System.out.println("[ERROR] " + message.content());
+                    case PLAYERS -> System.out.println(
+                            message.content().isBlank()
+                                    ? "[PLAYERS] none"
+                                    : "[PLAYERS] " + message.content()
+                    );
+                    case ALLPLAYERS -> System.out.println(
+                            message.content().isBlank()
+                                    ? "[ALLPLAYERS] none"
+                                    : "[ALLPLAYERS] " + message.content()
+                    );
+                    case LOBBIES -> System.out.println(
+                            message.content().isBlank()
+                                    ? "[LOBBIES] none"
+                                    : "[LOBBIES] " + message.content()
+                    );
+                    case GAME -> System.out.println("[GAME] " + message.content());
+                    case HAND_UPDATE -> System.out.println("[HAND] " + message.content());
+                    case GAME_STATE -> System.out.println("[GAME_STATE] " + message.content());
+                    case EFFECT_REQUEST -> System.out.println("[EFFECT_REQUEST] " + message.content());
+                    case ROUND_END -> System.out.println("[ROUND_END] " + message.content());
+                    case GAME_END -> System.out.println("[GAME_END] " + message.content());
+                    default -> System.out.println("[CLIENT] Unexpected server message: " + message.encode());
+                }
+            }
 
-        try (
-                Socket socket = new Socket(host, port);
-                BufferedReader serverIn = new BufferedReader(
-                        new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
-                PrintWriter serverOut = new PrintWriter(socket.getOutputStream(), true, StandardCharsets.UTF_8);
-                BufferedReader userIn = new BufferedReader(
-                        new InputStreamReader(System.in))
-        ) {
+            @Override
+            public void onLocalMessage(String text) {
+                System.out.println(text);
+            }
+
+            @Override
+            public void onDisconnected(String reason) {
+                System.err.println(reason);
+            }
+        };
+
+        ClientProtocolClient client = new ClientProtocolClient(handler);
+
+        try (BufferedReader userIn = new BufferedReader(new InputStreamReader(System.in))) {
+            client.connect(host, port);
+
             System.out.println("Connected to server at " + host + ":" + port);
             System.out.println("Using username: " + suggestedName);
 
-            serverOut.println(new Message(Message.Type.NAME, suggestedName).encode());
-
-            AtomicLong lastServerPongTime = new AtomicLong(System.currentTimeMillis());
-
-            Thread readerThread = new Thread(new ClientReader(serverIn, serverOut, lastServerPongTime));
-            readerThread.setDaemon(true);
-            readerThread.start();
-
-            Thread heartbeatThread = new Thread(() -> {
-                try {
-                    while (!socket.isClosed()) {
-                        serverOut.println(new Message(Message.Type.PING, "").encode());
-
-                        long now = System.currentTimeMillis();
-                        long lastPong = lastServerPongTime.get();
-
-                        if (now - lastPong > heartbeatTimeoutMillis) {
-                            System.err.println("Connection to server lost.");
-                            socket.close();
-                            break;
-                        }
-
-                        Thread.sleep(heartbeatIntervalMillis);
-                    }
-                } catch (Exception e) {
-                    if (!socket.isClosed()) {
-                        System.err.println("Heartbeat error: " + e.getMessage());
-                    }
-                }
-            });
-
-            heartbeatThread.setDaemon(true);
-            heartbeatThread.start();
+            client.setName(suggestedName);
 
             String line;
             while ((line = userIn.readLine()) != null) {
                 String trimmed = line.trim();
 
-                Message message = Message.parse(trimmed);
+                Message message = client.parseRawCommand(trimmed);
 
                 if (message == null) {
                     System.out.println("Invalid input.");
@@ -157,9 +145,10 @@ public class ClientMain {
                     continue;
                 }
 
-                serverOut.println(message.encode());
+                client.send(message);
 
                 if (message.type() == Message.Type.QUIT) {
+                    client.disconnect(false);
                     break;
                 }
             }
@@ -168,5 +157,4 @@ public class ClientMain {
             System.err.println("Client error: " + e.getMessage());
         }
     }
-
 }

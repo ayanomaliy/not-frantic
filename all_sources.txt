@@ -88,50 +88,25 @@ FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch
 
 package ch.unibas.dmi.dbis.cs108.example.client;
 
+import ch.unibas.dmi.dbis.cs108.example.client.net.ClientMessageHandler;
+import ch.unibas.dmi.dbis.cs108.example.client.net.ClientProtocolClient;
 import ch.unibas.dmi.dbis.cs108.example.service.Message;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.Socket;
-import java.nio.charset.StandardCharsets;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Entry point of the client application.
+ * Entry point of the terminal client application.
  *
- * <p>This class establishes a TCP connection to the game server, starts a
- * background reader thread for incoming server messages, and forwards user
- * commands from standard input to the server. It also maintains a heartbeat
- * mechanism to detect lost server connections.
+ * <p>This version uses the same shared protocol client as the GUI and only
+ * differs in how it presents incoming messages and reads user input.</p>
  */
 public class ClientMain {
 
     /**
-     * Starts the client application and connects to the server.
+     * Starts the terminal client.
      *
-     * <p>The client reads commands from standard input, converts them into
-     * {@link Message} objects, and sends them to the server. A background
-     * reader thread handles incoming messages, while a heartbeat thread
-     * periodically sends ping messages to check whether the server is still
-     * reachable.
-     *
-     * <p>Supported commands:
-     * <ul>
-     *   <li>{@code /name <username>} - sets the player's display name</li>
-     *   <li>{@code /chat <message>} - sends a chat message</li>
-     *   <li>{@code /players} - requests the list of connected players</li>
-     *   <li>{@code /start} - requests to start the game</li>
-     *   <li>{@code /quit} - disconnects from the server</li>
-     * </ul>
-     *
-     * <p>Usage:
-     * <ul>
-     *   <li>{@code client <hostaddress>:<port> [<username>]}</li>
-     * </ul>
-     *
-     * @param args command-line arguments containing the server address in the
-     *             format {@code <hostaddress>:<port>} and an optional username
+     * @param args command-line arguments in the form {@code <host:port> [username]}
      */
     public static void main(String[] args) {
         String host = "localhost";
@@ -176,59 +151,72 @@ public class ClientMain {
         }
         suggestedName = suggestedName.trim();
 
-        final long heartbeatIntervalMillis = 5000;
-        final long heartbeatTimeoutMillis = 15000;
+        ClientMessageHandler handler = new ClientMessageHandler() {
+            @Override
+            public void onMessage(Message message) {
+                switch (message.type()) {
+                    case GLOBALCHAT -> {
+                        String[] parts = message.splitChatPayload();
+                        System.out.println("[Global] " + parts[0] + ": " + parts[1]);
+                    }
+                    case LOBBYCHAT -> {
+                        String[] parts = message.splitChatPayload();
+                        System.out.println("[Lobby] " + parts[0] + ": " + parts[1]);
+                    }
+                    case WHISPERCHAT -> System.out.println("[Whisper] " + message.content());
+                    case INFO -> System.out.println("[INFO] " + message.content());
+                    case ERROR -> System.out.println("[ERROR] " + message.content());
+                    case PLAYERS -> System.out.println(
+                            message.content().isBlank()
+                                    ? "[PLAYERS] none"
+                                    : "[PLAYERS] " + message.content()
+                    );
+                    case ALLPLAYERS -> System.out.println(
+                            message.content().isBlank()
+                                    ? "[ALLPLAYERS] none"
+                                    : "[ALLPLAYERS] " + message.content()
+                    );
+                    case LOBBIES -> System.out.println(
+                            message.content().isBlank()
+                                    ? "[LOBBIES] none"
+                                    : "[LOBBIES] " + message.content()
+                    );
+                    case GAME -> System.out.println("[GAME] " + message.content());
+                    case HAND_UPDATE -> System.out.println("[HAND] " + message.content());
+                    case GAME_STATE -> System.out.println("[GAME_STATE] " + message.content());
+                    case EFFECT_REQUEST -> System.out.println("[EFFECT_REQUEST] " + message.content());
+                    case ROUND_END -> System.out.println("[ROUND_END] " + message.content());
+                    case GAME_END -> System.out.println("[GAME_END] " + message.content());
+                    default -> System.out.println("[CLIENT] Unexpected server message: " + message.encode());
+                }
+            }
 
-        try (
-                Socket socket = new Socket(host, port);
-                BufferedReader serverIn = new BufferedReader(
-                        new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
-                PrintWriter serverOut = new PrintWriter(socket.getOutputStream(), true, StandardCharsets.UTF_8);
-                BufferedReader userIn = new BufferedReader(
-                        new InputStreamReader(System.in))
-        ) {
+            @Override
+            public void onLocalMessage(String text) {
+                System.out.println(text);
+            }
+
+            @Override
+            public void onDisconnected(String reason) {
+                System.err.println(reason);
+            }
+        };
+
+        ClientProtocolClient client = new ClientProtocolClient(handler);
+
+        try (BufferedReader userIn = new BufferedReader(new InputStreamReader(System.in))) {
+            client.connect(host, port);
+
             System.out.println("Connected to server at " + host + ":" + port);
             System.out.println("Using username: " + suggestedName);
 
-            serverOut.println(new Message(Message.Type.NAME, suggestedName).encode());
-
-            AtomicLong lastServerPongTime = new AtomicLong(System.currentTimeMillis());
-
-            Thread readerThread = new Thread(new ClientReader(serverIn, serverOut, lastServerPongTime));
-            readerThread.setDaemon(true);
-            readerThread.start();
-
-            Thread heartbeatThread = new Thread(() -> {
-                try {
-                    while (!socket.isClosed()) {
-                        serverOut.println(new Message(Message.Type.PING, "").encode());
-
-                        long now = System.currentTimeMillis();
-                        long lastPong = lastServerPongTime.get();
-
-                        if (now - lastPong > heartbeatTimeoutMillis) {
-                            System.err.println("Connection to server lost.");
-                            socket.close();
-                            break;
-                        }
-
-                        Thread.sleep(heartbeatIntervalMillis);
-                    }
-                } catch (Exception e) {
-                    if (!socket.isClosed()) {
-                        System.err.println("Heartbeat error: " + e.getMessage());
-                    }
-                }
-            });
-
-            heartbeatThread.setDaemon(true);
-            heartbeatThread.start();
+            client.setName(suggestedName);
 
             String line;
             while ((line = userIn.readLine()) != null) {
                 String trimmed = line.trim();
 
-                Message message = Message.parse(trimmed);
+                Message message = client.parseRawCommand(trimmed);
 
                 if (message == null) {
                     System.out.println("Invalid input.");
@@ -245,139 +233,16 @@ public class ClientMain {
                     continue;
                 }
 
-                serverOut.println(message.encode());
+                client.send(message);
 
                 if (message.type() == Message.Type.QUIT) {
+                    client.disconnect(false);
                     break;
                 }
             }
 
         } catch (Exception e) {
             System.err.println("Client error: " + e.getMessage());
-        }
-    }
-
-}
-
-
-================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ClientReader.java
-================================================================================
-
-package ch.unibas.dmi.dbis.cs108.example.client;
-
-import ch.unibas.dmi.dbis.cs108.example.service.Message;
-
-import java.io.BufferedReader;
-import java.io.PrintWriter;
-import java.util.concurrent.atomic.AtomicLong;
-
-/**
- * Reads and processes messages sent by the server.
- *
- * <p>This class runs in a background thread on the client side. It continuously
- * reads incoming messages from the server, validates them, and handles them
- * according to their {@link Message.Type}. It also responds to heartbeat
- * requests and updates the timestamp of the last received pong message.
- */
-public class ClientReader implements Runnable {
-
-    private final BufferedReader serverIn;
-    private final PrintWriter serverOut;
-    private final AtomicLong lastServerPongTime;
-
-    /**
-     * Creates a new client reader.
-     *
-     * @param serverIn reader used to receive messages from the server
-     * @param serverOut writer used to send messages back to the server
-     * @param lastServerPongTime shared timestamp of the last received pong
-     *                           message from the server
-     */
-    public ClientReader(BufferedReader serverIn, PrintWriter serverOut, AtomicLong lastServerPongTime) {
-        this.serverIn = serverIn;
-        this.serverOut = serverOut;
-        this.lastServerPongTime = lastServerPongTime;
-    }
-
-    /**
-     * Continuously reads and handles incoming server messages.
-     *
-     * <p>The method validates each received message and processes it based on
-     * its type. Ping messages are answered with a pong response, pong messages
-     * update the heartbeat timestamp, and user-visible messages such as chat,
-     * info, error, player list, and game messages are printed to standard
-     * output.
-     */
-    @Override
-    public void run() {
-        try {
-            String line;
-            while ((line = serverIn.readLine()) != null) {
-                Message message = Message.parse(line);
-
-                if (message == null || !message.hasValidStructure()) {
-                    System.out.println("[CLIENT] Invalid server message: " + line);
-                    continue;
-                }
-
-                switch (message.type()) {
-                    case PING -> {
-                        serverOut.println(new Message(Message.Type.PONG, "").encode());
-                    }
-                    case PONG -> {
-                        lastServerPongTime.set(System.currentTimeMillis());
-                    }
-                    case GLOBALCHAT -> {
-                        String[] parts = message.splitChatPayload();
-                        String sender = parts[0];
-                        String text = parts[1];
-                        System.out.println("[Global] " + sender + ": " + text);
-                    }
-                    case LOBBYCHAT -> {
-                        String[] parts = message.splitChatPayload();
-                        String sender = parts[0];
-                        String text = parts[1];
-                        System.out.println("[Lobby] " + sender + ": " + text);
-                    }
-                    case WHISPERCHAT -> System.out.println("[Whisper] " + message.content());
-
-                    case INFO -> System.out.println("[INFO] " + message.content());
-                    case ERROR -> System.out.println("[ERROR] " + message.content());
-                    case PLAYERS -> {
-                        if (message.content().isBlank()) {
-                            System.out.println("[PLAYERS] none");
-                        } else {
-                            System.out.println("[PLAYERS] " + message.content());
-                        }
-                    }
-                    case ALLPLAYERS -> {
-                        if (message.content().isBlank()) {
-                            System.out.println("[ALLPLAYERS] none");
-                        } else {
-                            System.out.println("[ALLPLAYERS] " + message.content());
-                        }
-                    }
-                    case LOBBIES -> {
-                        if (message.content().isBlank()) {
-                            System.out.println("[LOBBIES] none");
-                        } else {
-                            System.out.println("[LOBBIES] " + message.content());
-                        }
-                    }
-                    case GAME -> System.out.println("[GAME] " + message.content());
-                    case HAND_UPDATE -> System.out.println("[HAND] " + message.content());
-                    case GAME_STATE -> System.out.println("[GAME_STATE] " + message.content());
-                    case EFFECT_REQUEST -> System.out.println("[EFFECT_REQUEST] " + message.content());
-                    case ROUND_END -> System.out.println("[ROUND_END] " + message.content());
-                    case GAME_END -> System.out.println("[GAME_END] " + message.content());
-                    case NAME, START, QUIT, CREATE, JOIN,
-                         PLAY_CARD, DRAW_CARD, END_TURN, EFFECT_RESPONSE, GET_HAND, UNKNOWN ->
-                            System.out.println("[CLIENT] Unexpected server message: " + line);
-                }
-            }
-        } catch (Exception e) {
-            System.err.println("Connection closed: " + e.getMessage());
         }
     }
 }
@@ -704,6 +569,259 @@ public class ClientState {
 
 
 ================================================================================
+FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\net\ClientMessageHandler.java
+================================================================================
+
+package ch.unibas.dmi.dbis.cs108.example.client.net;
+
+import ch.unibas.dmi.dbis.cs108.example.service.Message;
+
+/**
+ * Receives incoming protocol events from a shared client transport.
+ *
+ * <p>This interface allows different front ends, such as the terminal client
+ * and the JavaFX GUI client, to react to incoming server messages without
+ * duplicating socket, heartbeat, or read-loop logic.</p>
+ */
+public interface ClientMessageHandler {
+
+    /**
+     * Handles a validated incoming protocol message from the server.
+     *
+     * @param message the parsed incoming message
+     */
+    void onMessage(Message message);
+
+    /**
+     * Handles a local client-side status or error message.
+     *
+     * <p>This is used for messages generated locally by the client transport,
+     * for example invalid server messages or local command parsing errors.</p>
+     *
+     * @param text the user-visible local message
+     */
+    void onLocalMessage(String text);
+
+    /**
+     * Called when the connection is closed or lost.
+     *
+     * @param reason a human-readable reason
+     */
+    void onDisconnected(String reason);
+}
+
+
+================================================================================
+FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\net\ClientProtocolClient.java
+================================================================================
+
+package ch.unibas.dmi.dbis.cs108.example.client.net;
+
+import ch.unibas.dmi.dbis.cs108.example.service.Message;
+
+import java.io.IOException;
+
+/**
+ * High-level protocol client built on top of {@link NetworkClientCore}.
+ *
+ * <p>This class exposes uniform typed methods for sending protocol messages,
+ * so both CLI and GUI can use the same message-sending API without relying on
+ * legacy slash commands internally.</p>
+ */
+public class ClientProtocolClient {
+
+    private final NetworkClientCore core;
+
+    /**
+     * Creates a new protocol client.
+     *
+     * @param handler the message handler used by the active front end
+     */
+    public ClientProtocolClient(ClientMessageHandler handler) {
+        this.core = new NetworkClientCore(handler);
+    }
+
+    /**
+     * Connects to the server.
+     *
+     * @param host the server host
+     * @param port the server port
+     * @throws IOException if the connection fails
+     */
+    public void connect(String host, int port) throws IOException {
+        core.connect(host, port);
+    }
+
+    /**
+     * Disconnects from the server.
+     */
+    public void disconnect() {
+        core.disconnect();
+    }
+
+    /**
+     * Disconnects from the server and optionally skips sending {@code QUIT}.
+     *
+     * @param notifyServer whether {@code QUIT} should be sent first
+     */
+    public void disconnect(boolean notifyServer) {
+        core.disconnect(notifyServer);
+    }
+
+    /**
+     * Returns whether the connection is active.
+     *
+     * @return {@code true} if connected, otherwise {@code false}
+     */
+    public boolean isConnected() {
+        return core.isConnected();
+    }
+
+    /**
+     * Sends a typed protocol message directly.
+     *
+     * @param message the message to send
+     */
+    public void send(Message message) {
+        core.send(message);
+    }
+
+    /**
+     * Sends a request to set or change the player name.
+     *
+     * @param username the desired player name
+     */
+    public void setName(String username) {
+        send(new Message(Message.Type.NAME, username));
+    }
+
+    /**
+     * Sends a global chat message.
+     *
+     * @param text the chat text
+     */
+    public void sendGlobalChat(String text) {
+        send(new Message(Message.Type.GLOBALCHAT, text));
+    }
+
+    /**
+     * Sends a lobby chat message.
+     *
+     * @param text the chat text
+     */
+    public void sendLobbyChat(String text) {
+        send(new Message(Message.Type.LOBBYCHAT, text));
+    }
+
+    /**
+     * Sends a whisper message payload.
+     *
+     * @param targetPlayer the whisper target
+     * @param text the whisper text
+     */
+    public void sendWhisperChat(String targetPlayer, String text) {
+        send(new Message(Message.Type.WHISPERCHAT, targetPlayer + "|" + text));
+    }
+
+    /**
+     * Requests the lobby-local player list.
+     */
+    public void requestPlayers() {
+        send(new Message(Message.Type.PLAYERS, ""));
+    }
+
+    /**
+     * Requests the global player list.
+     */
+    public void requestAllPlayers() {
+        send(new Message(Message.Type.ALLPLAYERS, ""));
+    }
+
+    /**
+     * Requests the available lobby list.
+     */
+    public void requestLobbies() {
+        send(new Message(Message.Type.LOBBIES, ""));
+    }
+
+    /**
+     * Creates a new lobby.
+     *
+     * @param lobbyId the desired lobby id
+     */
+    public void createLobby(String lobbyId) {
+        send(new Message(Message.Type.CREATE, lobbyId));
+    }
+
+    /**
+     * Joins an existing lobby.
+     *
+     * @param lobbyId the lobby id to join
+     */
+    public void joinLobby(String lobbyId) {
+        send(new Message(Message.Type.JOIN, lobbyId));
+    }
+
+    /**
+     * Leaves the current lobby.
+     */
+    public void leaveLobby() {
+        send(new Message(Message.Type.LEAVE, ""));
+    }
+
+    /**
+     * Requests a game start.
+     */
+    public void startGame() {
+        send(new Message(Message.Type.START, ""));
+    }
+
+    /**
+     * Requests the current hand.
+     */
+    public void requestHand() {
+        send(new Message(Message.Type.GET_HAND, ""));
+    }
+
+    /**
+     * Requests to draw one card.
+     */
+    public void drawCard() {
+        send(new Message(Message.Type.DRAW_CARD, ""));
+    }
+
+    /**
+     * Requests to end the current turn.
+     */
+    public void endTurn() {
+        send(new Message(Message.Type.END_TURN, ""));
+    }
+
+    /**
+     * Requests to play a card.
+     *
+     * @param cardId the id of the card to play
+     */
+    public void playCard(int cardId) {
+        send(new Message(Message.Type.PLAY_CARD, String.valueOf(cardId)));
+    }
+
+    /**
+     * Sends a raw terminal-style command by parsing it into a structured message.
+     *
+     * <p>This exists for the manual command field and terminal input. Internal
+     * GUI logic should prefer the typed methods above.</p>
+     *
+     * @param rawInput the raw user-entered command
+     * @return the parsed message, or {@code null} if invalid
+     */
+    public Message parseRawCommand(String rawInput) {
+        return Message.parse(rawInput);
+    }
+}
+
+
+================================================================================
 FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\net\FxNetworkClient.java
 ================================================================================
 
@@ -713,87 +831,61 @@ import ch.unibas.dmi.dbis.cs108.example.client.ClientState;
 import ch.unibas.dmi.dbis.cs108.example.service.Message;
 import javafx.application.Platform;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.Socket;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * JavaFX-aware network client for the Frantic^-1 GUI.
+ * JavaFX adapter around the shared protocol client.
  *
- * <p>This class manages the TCP connection to the game server, sends
- * structured protocol messages, receives server responses, and updates the
- * shared {@link ClientState} on the JavaFX application thread.</p>
- *
- * <p>It also maintains a heartbeat mechanism to detect lost server
- * connections automatically.</p>
+ * <p>This class contains GUI-specific behavior only. All socket management,
+ * message transport, heartbeat handling, and uniform protocol sending are
+ * delegated to {@link ClientProtocolClient}.</p>
  */
-public class FxNetworkClient {
+public class FxNetworkClient implements ClientMessageHandler {
 
     /** Shared GUI state updated from incoming server messages. */
     private final ClientState state;
 
+    /** Shared typed protocol client used by the GUI. */
+    private final ClientProtocolClient protocolClient;
+
     /** Callback triggered once the first real game state arrives. */
     private Runnable gameStartListener;
 
-    /** Prevents reopening the game view repeatedly for every GAME_STATE update. */
+    /** Prevents reopening the game view for every GAME_STATE update. */
     private boolean gameViewShown = false;
 
-    /** TCP socket connected to the game server. */
-    private Socket socket;
-
-    /** Reader for incoming server messages. */
-    private BufferedReader serverIn;
-
-    /** Writer for outgoing client messages. */
-    private PrintWriter serverOut;
-
-    /** Timestamp of the last received pong message from the server. */
-    private final AtomicLong lastServerPongTime = new AtomicLong(System.currentTimeMillis());
-
     /**
-     * Creates a new GUI network client.
+     * Creates a new GUI network adapter.
      *
-     * @param state the shared client state to update from network events
+     * @param state the shared client state
      */
     public FxNetworkClient(ClientState state) {
         this.state = state;
+        this.protocolClient = new ClientProtocolClient(this);
     }
 
     /**
      * Registers a callback that is invoked when the server confirms that a game
-     * has actually started by sending a {@code GAME_STATE} message.
+     * has started by sending a {@code GAME_STATE} message.
      *
-     * @param gameStartListener the callback to invoke when the game starts
+     * @param gameStartListener the callback to invoke
      */
     public void setGameStartListener(Runnable gameStartListener) {
         this.gameStartListener = gameStartListener;
     }
 
     /**
-     * Connects to the server and initializes background reader and heartbeat threads.
+     * Connects to the server and initializes the GUI state.
      *
-     * <p>After the connection is established, the client sends its initial
-     * player name, starts a reader thread for incoming messages, starts a
-     * heartbeat thread for connection monitoring, and requests the current
-     * lobby/player lists from the server.</p>
-     *
-     * @param host the server host name or IP address
+     * @param host the server host
      * @param port the server port
-     * @param username the desired player name
-     * @throws IOException if the socket connection cannot be established
+     * @param username the desired username
+     * @throws IOException if the connection fails
      */
     public void connect(String host, int port, String username) throws IOException {
-        socket = new Socket(host, port);
-        serverIn = new BufferedReader(
-                new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
-        serverOut = new PrintWriter(socket.getOutputStream(), true, StandardCharsets.UTF_8);
+        protocolClient.connect(host, port);
 
-        lastServerPongTime.set(System.currentTimeMillis());
         gameViewShown = false;
 
         Platform.runLater(() -> {
@@ -804,273 +896,146 @@ public class FxNetworkClient {
 
         setName(username);
 
-        Thread readerThread = new Thread(this::readLoop, "client-reader");
-        readerThread.setDaemon(true);
-        readerThread.start();
-
-        Thread heartbeatThread = new Thread(this::heartbeatLoop, "client-heartbeat");
-        heartbeatThread.setDaemon(true);
-        heartbeatThread.start();
-
-        requestPlayers();
         requestAllPlayers();
         requestLobbies();
     }
 
     /**
-     * Disconnects this client from the server and updates the local GUI state.
-     *
-     * <p>This method sends a {@code QUIT} message before closing the socket.</p>
+     * Disconnects this client from the server.
      */
     public void disconnect() {
-        disconnect(true);
+        protocolClient.disconnect();
+        clearLocalState("Disconnected");
     }
 
     /**
-     * Disconnects this client from the server and updates the local GUI state.
-     *
-     * <p>If {@code notifyServer} is {@code true}, a {@code QUIT} message is
-     * sent before the socket is closed. This is useful for distinguishing
-     * between an explicit quit command and a local shutdown after the command
-     * was already sent.</p>
-     *
-     * @param notifyServer whether a {@code QUIT} message should be sent first
-     */
-    private void disconnect(boolean notifyServer) {
-        try {
-            if (notifyServer && serverOut != null) {
-                send(new Message(Message.Type.QUIT, ""));
-            }
-        } catch (Exception ignored) {
-        }
-
-        try {
-            if (socket != null && !socket.isClosed()) {
-                socket.close();
-            }
-        } catch (IOException ignored) {
-        }
-
-        socket = null;
-        serverIn = null;
-        serverOut = null;
-        gameViewShown = false;
-
-        Platform.runLater(() -> {
-            state.setConnected(false);
-            state.setStatusText("Disconnected");
-            state.setChatMode("Global");
-
-            state.getPlayers().clear();
-            state.getAllPlayers().clear();
-            state.getLobbies().clear();
-
-            state.getGlobalChatMessages().clear();
-            state.getLobbyChatMessages().clear();
-            state.getWhisperChatMessages().clear();
-
-            state.getGameMessages().clear();
-        });
-    }
-
-    /**
-     * Sends a request to set or change the current player name.
+     * Sends a request to set or change the player name.
      *
      * @param username the desired player name
      */
     public void setName(String username) {
-        send(new Message(Message.Type.NAME, username));
+        protocolClient.setName(username);
     }
 
     /**
-     * Sends a global chat message to the server.
+     * Sends a global chat message.
      *
-     * @param text the chat message text
+     * @param text the chat text
      */
     public void sendGlobalChat(String text) {
-        send(new Message(Message.Type.GLOBALCHAT, text));
+        protocolClient.sendGlobalChat(text);
     }
 
     /**
-     * Sends a lobby chat message to the server.
+     * Sends a lobby chat message.
      *
-     * @param text the chat message text
+     * @param text the chat text
      */
     public void sendLobbyChat(String text) {
-        send(new Message(Message.Type.LOBBYCHAT, text));
+        protocolClient.sendLobbyChat(text);
     }
 
     /**
-     * Sends a whisper chat payload to the server.
+     * Sends a whisper message.
      *
-     * <p>The payload format is expected to match the protocol, for example
-     * {@code targetPlayer|message text}.</p>
-     *
-     * @param payload the whisper payload
+     * @param targetPlayer the whisper target
+     * @param text the whisper text
      */
-    public void sendWhisperChat(String payload) {
-        send(new Message(Message.Type.WHISPERCHAT, payload));
+    public void sendWhisperChat(String targetPlayer, String text) {
+        protocolClient.sendWhisperChat(targetPlayer, text);
     }
 
     /**
-     * Requests the current player list of the lobby this client is currently in.
+     * Requests the current lobby player list.
      */
     public void requestPlayers() {
-        send(new Message(Message.Type.PLAYERS, ""));
+        protocolClient.requestPlayers();
     }
 
     /**
-     * Requests the global list of all connected players.
+     * Requests the global player list.
      */
     public void requestAllPlayers() {
-        send(new Message(Message.Type.ALLPLAYERS, ""));
+        protocolClient.requestAllPlayers();
     }
 
     /**
-     * Requests the current list of available lobbies.
+     * Requests the lobby list.
      */
     public void requestLobbies() {
-        send(new Message(Message.Type.LOBBIES, ""));
+        protocolClient.requestLobbies();
     }
 
     /**
-     * Sends a request to create a new lobby.
+     * Creates a new lobby.
      *
      * @param lobbyId the desired lobby id
      */
     public void createLobby(String lobbyId) {
-        send(new Message(Message.Type.CREATE, lobbyId));
+        protocolClient.createLobby(lobbyId);
     }
 
     /**
-     * Sends a request to join an existing lobby.
+     * Joins an existing lobby.
      *
-     * @param lobbyId the lobby id to join
+     * @param lobbyId the lobby id
      */
     public void joinLobby(String lobbyId) {
-        send(new Message(Message.Type.JOIN, lobbyId));
+        protocolClient.joinLobby(lobbyId);
     }
 
     /**
-     * Sends a request to leave the current lobby.
+     * Leaves the current lobby.
      */
     public void leaveLobby() {
-        send(new Message(Message.Type.LEAVE, ""));
+        protocolClient.leaveLobby();
     }
 
     /**
-     * Sends a request to start the game.
+     * Requests a game start.
      */
     public void startGame() {
-        send(new Message(Message.Type.START, ""));
+        protocolClient.startGame();
     }
 
     /**
-     * Sends a protocol message to the server if an output stream is available.
+     * Parses and executes a raw terminal-style command for the manual command field.
      *
-     * @param message the message to send
-     */
-    private void send(Message message) {
-        if (serverOut != null) {
-            serverOut.println(message.encode());
-        }
-    }
-
-    /**
-     * Parses and executes a raw client command using the same rules as the
-     * terminal client.
-     *
-     * <p>This method exists for the manual command field in the GUI. It
-     * supports slash commands such as {@code /name Alice} as a convenience for
-     * typed input, but the rest of the GUI should prefer dedicated methods such
-     * as {@link #joinLobby(String)}, {@link #createLobby(String)},
-     * {@link #leaveLobby()}, and {@link #startGame()}.</p>
-     *
-     * <p>Invalid input and unknown commands are reported to the GUI. Manual
-     * heartbeat commands are rejected because heartbeat handling is automatic.</p>
-     *
-     * <p>If the command is {@code /quit}, the method closes the local
-     * connection after sending the quit request and returns {@code true} so the
-     * caller can switch back to the connect view.</p>
-     *
-     * @param rawInput the raw command entered by the user
-     * @return {@code true} if the command caused a disconnect, otherwise {@code false}
+     * @param rawInput the raw command
+     * @return {@code true} if the command caused a disconnect
      */
     public boolean sendCommand(String rawInput) {
-        Message message = Message.parse(rawInput);
+        Message message = protocolClient.parseRawCommand(rawInput);
 
         if (message == null) {
-            Platform.runLater(() ->
-                    state.getGameMessages().add("[CLIENT] Invalid input."));
+            onLocalMessage("[CLIENT] Invalid input.");
             return false;
         }
 
         if (message.type() == Message.Type.UNKNOWN) {
-            Platform.runLater(() ->
-                    state.getGameMessages().add("[CLIENT] Unknown command."));
+            onLocalMessage("[CLIENT] Unknown command.");
             return false;
         }
 
         if (message.type() == Message.Type.PING || message.type() == Message.Type.PONG) {
-            Platform.runLater(() ->
-                    state.getGameMessages().add("[CLIENT] Heartbeat messages are handled automatically."));
+            onLocalMessage("[CLIENT] Heartbeat messages are handled automatically.");
             return false;
         }
 
-        send(message);
+        protocolClient.send(message);
 
         if (message.type() == Message.Type.QUIT) {
-            disconnect(false);
+            protocolClient.disconnect(false);
+            clearLocalState("Disconnected");
             return true;
         }
 
         return false;
     }
 
-    /**
-     * Continuously reads incoming server messages and processes them.
-     *
-     * <p>Malformed messages are reported in the GUI state. Valid messages
-     * are forwarded to {@link #handleIncoming(Message)}. If the connection
-     * is lost, the client state is updated accordingly.</p>
-     */
-    private void readLoop() {
-        try {
-            String line;
-            while ((line = serverIn.readLine()) != null) {
-                Message message = Message.parse(line);
-
-                if (message == null || !message.hasValidStructure()) {
-                    final String invalidLine = line;
-                    Platform.runLater(() ->
-                            state.getGameMessages().add("[CLIENT] Invalid server message: " + invalidLine));
-                    continue;
-                }
-
-                handleIncoming(message);
-            }
-        } catch (Exception e) {
-            Platform.runLater(() -> {
-                state.setConnected(false);
-                state.setStatusText("Connection closed: " + e.getMessage());
-            });
-        }
-    }
-
-    /**
-     * Handles a single incoming protocol message from the server.
-     *
-     * <p>Depending on the message type, this method may respond to
-     * heartbeat messages, update the chat view, refresh the player list,
-     * or append informational/game messages to the GUI state.</p>
-     *
-     * @param message the parsed incoming message
-     */
-    private void handleIncoming(Message message) {
+    @Override
+    public void onMessage(Message message) {
         switch (message.type()) {
-            case PING -> send(new Message(Message.Type.PONG, ""));
-            case PONG -> lastServerPongTime.set(System.currentTimeMillis());
-
             case GLOBALCHAT -> {
                 String[] parts = message.splitChatPayload();
                 Platform.runLater(() ->
@@ -1156,30 +1121,246 @@ public class FxNetworkClient {
             case GAME -> Platform.runLater(() ->
                     state.getGameMessages().add("[GAME] " + message.content()));
 
+            case HAND_UPDATE -> Platform.runLater(() ->
+                    state.getGameMessages().add("[HAND] " + message.content()));
+
+            case EFFECT_REQUEST -> Platform.runLater(() ->
+                    state.getGameMessages().add("[EFFECT_REQUEST] " + message.content()));
+
+            case ROUND_END -> Platform.runLater(() ->
+                    state.getGameMessages().add("[ROUND_END] " + message.content()));
+
+            case GAME_END -> Platform.runLater(() ->
+                    state.getGameMessages().add("[GAME_END] " + message.content()));
+
             default -> Platform.runLater(() ->
                     state.getGameMessages().add("[CLIENT] Unexpected: " + message.encode()));
         }
     }
 
+    @Override
+    public void onLocalMessage(String text) {
+        Platform.runLater(() -> state.getGameMessages().add(text));
+    }
+
+    @Override
+    public void onDisconnected(String reason) {
+        clearLocalState(reason);
+    }
+
     /**
-     * Periodically sends heartbeat ping messages and checks server responsiveness.
+     * Clears the local GUI state after a disconnect.
      *
-     * <p>If no pong message is received within the configured timeout,
-     * the client disconnects automatically.</p>
+     * @param statusText the new status text
+     */
+    private void clearLocalState(String statusText) {
+        gameViewShown = false;
+
+        Platform.runLater(() -> {
+            state.setConnected(false);
+            state.setStatusText(statusText);
+            state.setChatMode("Global");
+
+            state.getPlayers().clear();
+            state.getAllPlayers().clear();
+            state.getLobbies().clear();
+
+            state.getGlobalChatMessages().clear();
+            state.getLobbyChatMessages().clear();
+            state.getWhisperChatMessages().clear();
+
+            state.getGameMessages().clear();
+        });
+    }
+}
+
+
+================================================================================
+FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\net\NetworkClientCore.java
+================================================================================
+
+package ch.unibas.dmi.dbis.cs108.example.client.net;
+
+import ch.unibas.dmi.dbis.cs108.example.service.Message;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.atomic.AtomicLong;
+
+/**
+ * Shared TCP transport and protocol client used by both the terminal client
+ * and the JavaFX GUI client.
+ *
+ * <p>This class owns the socket connection, outgoing writer, incoming reader,
+ * heartbeat loop, and server read loop. It sends and receives structured
+ * {@link Message} objects uniformly regardless of the front end.</p>
+ *
+ * <p>UI-specific behavior is intentionally excluded. Incoming events are
+ * forwarded to a {@link ClientMessageHandler} so different client front ends
+ * can react in their own way.</p>
+ */
+public class NetworkClientCore {
+
+    private final ClientMessageHandler handler;
+
+    private Socket socket;
+    private BufferedReader serverIn;
+    private PrintWriter serverOut;
+
+    private final AtomicLong lastServerPongTime =
+            new AtomicLong(System.currentTimeMillis());
+
+    private volatile boolean disconnected = false;
+
+    /**
+     * Creates a new shared client transport.
+     *
+     * @param handler the callback handler for incoming messages and disconnects
+     */
+    public NetworkClientCore(ClientMessageHandler handler) {
+        this.handler = handler;
+    }
+
+    /**
+     * Opens the TCP connection and starts background reader and heartbeat threads.
+     *
+     * @param host the server host
+     * @param port the server port
+     * @throws IOException if the connection cannot be established
+     */
+    public void connect(String host, int port) throws IOException {
+        socket = new Socket(host, port);
+        serverIn = new BufferedReader(
+                new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+        serverOut = new PrintWriter(socket.getOutputStream(), true, StandardCharsets.UTF_8);
+
+        disconnected = false;
+        lastServerPongTime.set(System.currentTimeMillis());
+
+        Thread readerThread = new Thread(this::readLoop, "client-reader");
+        readerThread.setDaemon(true);
+        readerThread.start();
+
+        Thread heartbeatThread = new Thread(this::heartbeatLoop, "client-heartbeat");
+        heartbeatThread.setDaemon(true);
+        heartbeatThread.start();
+    }
+
+    /**
+     * Returns whether the client is currently connected.
+     *
+     * @return {@code true} if connected, otherwise {@code false}
+     */
+    public boolean isConnected() {
+        return socket != null && !socket.isClosed() && !disconnected;
+    }
+
+    /**
+     * Sends a structured protocol message to the server.
+     *
+     * @param message the message to send
+     */
+    public void send(Message message) {
+        if (serverOut != null) {
+            serverOut.println(message.encode());
+        }
+    }
+
+    /**
+     * Disconnects from the server and optionally sends a {@code QUIT} message first.
+     *
+     * @param notifyServer whether a quit message should be sent before closing
+     */
+    public synchronized void disconnect(boolean notifyServer) {
+        if (disconnected) {
+            return;
+        }
+        disconnected = true;
+
+        try {
+            if (notifyServer && serverOut != null) {
+                send(new Message(Message.Type.QUIT, ""));
+            }
+        } catch (Exception ignored) {
+        }
+
+        try {
+            if (socket != null && !socket.isClosed()) {
+                socket.close();
+            }
+        } catch (IOException ignored) {
+        }
+
+        socket = null;
+        serverIn = null;
+        serverOut = null;
+    }
+
+    /**
+     * Disconnects from the server and sends a {@code QUIT} message first.
+     */
+    public void disconnect() {
+        disconnect(true);
+    }
+
+    /**
+     * Continuously reads incoming server messages and dispatches them to the handler.
+     */
+    private void readLoop() {
+        try {
+            String line;
+            while ((line = serverIn.readLine()) != null) {
+                Message message = Message.parse(line);
+
+                if (message == null || !message.hasValidStructure()) {
+                    handler.onLocalMessage("[CLIENT] Invalid server message: " + line);
+                    continue;
+                }
+
+                if (message.type() == Message.Type.PING) {
+                    send(new Message(Message.Type.PONG, ""));
+                    continue;
+                }
+
+                if (message.type() == Message.Type.PONG) {
+                    lastServerPongTime.set(System.currentTimeMillis());
+                    continue;
+                }
+
+                handler.onMessage(message);
+            }
+
+            handler.onDisconnected("Connection closed.");
+        } catch (Exception e) {
+            if (!disconnected) {
+                handler.onDisconnected("Connection closed: " + e.getMessage());
+            }
+        } finally {
+            disconnect(false);
+        }
+    }
+
+    /**
+     * Periodically sends heartbeat pings and disconnects if the server becomes unresponsive.
      */
     private void heartbeatLoop() {
         final long heartbeatIntervalMillis = 5000;
         final long heartbeatTimeoutMillis = 15000;
 
         try {
-            while (socket != null && !socket.isClosed()) {
+            while (socket != null && !socket.isClosed() && !disconnected) {
                 send(new Message(Message.Type.PING, ""));
 
                 long now = System.currentTimeMillis();
                 long lastPong = lastServerPongTime.get();
 
                 if (now - lastPong > heartbeatTimeoutMillis) {
-                    disconnect();
+                    handler.onDisconnected("Connection to server lost.");
+                    disconnect(false);
                     break;
                 }
 
