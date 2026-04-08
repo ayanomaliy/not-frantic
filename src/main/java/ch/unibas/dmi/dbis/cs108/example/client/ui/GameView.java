@@ -1,5 +1,12 @@
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
 
+import animatefx.animation.FadeInUp;
+import animatefx.animation.FadeOutDown;
+import javafx.animation.Interpolator;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.PauseTransition;
+import javafx.animation.Timeline;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -12,6 +19,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.util.Duration;
+import javafx.scene.layout.Region;
 
 /**
  * Game screen for the Frantic^-1 GUI client.
@@ -22,6 +31,22 @@ import javafx.scene.layout.VBox;
  * {@code frantic-list-view}.</p>
  */
 public class GameView extends BorderPane {
+
+    private static final double SIDEBAR_PREF_WIDTH = 340;
+    private static final double SIDEBAR_MIN_WIDTH = 320;
+
+    private static final double PLAYERS_HEIGHT_COLLAPSED = 230;
+    private static final double INFO_HEIGHT_COLLAPSED = 230;
+    private static final double CHAT_HEIGHT_COLLAPSED = 78;
+
+    private static final double PLAYERS_HEIGHT_EXPANDED = 150;
+    private static final double INFO_HEIGHT_EXPANDED = 170;
+    private static final double CHAT_HEIGHT_EXPANDED = 320;
+
+    private static final Duration PANEL_ANIMATION_DURATION = Duration.millis(260);
+    private static final Duration CHAT_HIDE_DELAY = Duration.millis(180);
+
+    private final Region topSpacer = new Region();
 
     private final VBox gameArea = new VBox(16);
     private final StackPane centerTablePane = new StackPane();
@@ -36,7 +61,7 @@ public class GameView extends BorderPane {
 
     private final FlowPane playerHandPane = new FlowPane();
 
-    private final VBox sideBar = new VBox(16);
+    private final VBox sideBar = new VBox(12);
 
     private final ListView<String> playersList = new ListView<>();
     private final Button leaveButton = new Button("Leave Lobby");
@@ -52,6 +77,16 @@ public class GameView extends BorderPane {
 
     private final Button chatModeButton = new Button("Global");
 
+    private boolean chatExpanded = false;
+    private final Button toggleChatButton = new Button("Expand Chat");
+
+    private VBox playersBox;
+    private VBox infoBox;
+    private VBox chatBox;
+
+    private VBox chatContentBox;
+    private HBox chatInputRow;
+
     /**
      * Creates the game view.
      */
@@ -61,6 +96,7 @@ public class GameView extends BorderPane {
 
         configureControls();
         buildLayout();
+        applyInitialChatState();
     }
 
     /**
@@ -74,6 +110,7 @@ public class GameView extends BorderPane {
         sendButton.getStyleClass().addAll("frantic-button", "primary-button");
         commandButton.getStyleClass().addAll("frantic-button", "secondary-button");
         chatModeButton.getStyleClass().addAll("frantic-button", "secondary-button");
+        toggleChatButton.getStyleClass().addAll("frantic-button", "secondary-button");
 
         chatInput.getStyleClass().add("frantic-text-field");
         commandInput.getStyleClass().add("frantic-text-field");
@@ -90,6 +127,8 @@ public class GameView extends BorderPane {
         discardTopLabel.getStyleClass().add("field-label");
 
         playerHandPane.getStyleClass().add("hand-pane");
+
+        toggleChatButton.setOnAction(e -> toggleChat());
     }
 
     /**
@@ -171,48 +210,154 @@ public class GameView extends BorderPane {
      * @return the configured sidebar
      */
     private VBox buildSidebar() {
-        sideBar.setPrefWidth(320);
+        sideBar.setPrefWidth(SIDEBAR_PREF_WIDTH);
+        sideBar.setMinWidth(SIDEBAR_MIN_WIDTH);
+        sideBar.setFillWidth(true);
 
-        VBox playersBox = new VBox(
-                10,
+        playersBox = new VBox(
+                8,
                 createSectionTitle("Players in Lobby"),
                 playersList,
                 leaveButton
         );
         playersBox.getStyleClass().add("panel");
-        playersList.setPrefHeight(150);
+        playersBox.setMinHeight(130);
+        playersBox.setPrefHeight(PLAYERS_HEIGHT_COLLAPSED);
+        playersBox.setMaxHeight(Double.MAX_VALUE);
+
+        playersList.setMinHeight(80);
+        VBox.setVgrow(playersList, Priority.ALWAYS);
 
         HBox commandBox = new HBox(10, commandInput, commandButton);
         commandBox.setAlignment(Pos.CENTER_LEFT);
         HBox.setHgrow(commandInput, Priority.ALWAYS);
 
-        VBox infoBox = new VBox(
-                10,
+        infoBox = new VBox(
+                8,
                 createSectionTitle("Game Info"),
                 gameInfoList,
                 createSectionTitle("Command"),
                 commandBox
         );
         infoBox.getStyleClass().add("panel");
-        gameInfoList.setPrefHeight(190);
+        infoBox.setMinHeight(150);
+        infoBox.setPrefHeight(INFO_HEIGHT_COLLAPSED);
+        infoBox.setMaxHeight(Double.MAX_VALUE);
+
+        gameInfoList.setMinHeight(120);
         VBox.setVgrow(gameInfoList, Priority.ALWAYS);
 
-        HBox chatInputRow = new HBox(10, chatInput, sendButton);
+        chatInputRow = new HBox(10, chatInput, sendButton);
         HBox.setHgrow(chatInput, Priority.ALWAYS);
 
-        VBox chatBox = new VBox(
-                10,
-                createChatHeader(),
-                chatList,
-                chatInputRow
-        );
-        chatBox.getStyleClass().add("panel");
+        chatContentBox = new VBox(10, chatList, chatInputRow);
         VBox.setVgrow(chatList, Priority.ALWAYS);
 
+        chatBox = new VBox(
+                8,
+                createChatHeader(),
+                chatContentBox
+        );
+        chatBox.getStyleClass().add("panel");
+        chatBox.setPrefHeight(CHAT_HEIGHT_COLLAPSED);
+        chatBox.setMinHeight(CHAT_HEIGHT_COLLAPSED);
+
+        chatList.setMinHeight(120);
+
+        VBox.setVgrow(playersBox, Priority.ALWAYS);
+        VBox.setVgrow(infoBox, Priority.ALWAYS);
+
         sideBar.getChildren().addAll(playersBox, infoBox, chatBox);
-        VBox.setVgrow(chatBox, Priority.ALWAYS);
 
         return sideBar;
+    }
+
+    /**
+     * Applies the initial collapsed chat state without animation.
+     */
+    private void applyInitialChatState() {
+        chatExpanded = false;
+        toggleChatButton.setText("Expand Chat");
+
+        playersBox.setPrefHeight(PLAYERS_HEIGHT_COLLAPSED);
+        infoBox.setPrefHeight(INFO_HEIGHT_COLLAPSED);
+        chatBox.setPrefHeight(CHAT_HEIGHT_COLLAPSED);
+
+        chatModeButton.setManaged(false);
+        chatModeButton.setVisible(false);
+
+        chatContentBox.setManaged(false);
+        chatContentBox.setVisible(false);
+        chatContentBox.setOpacity(0.0);
+    }
+
+    /**
+     * Toggles the chat between collapsed and expanded mode.
+     */
+    private void toggleChat() {
+        chatExpanded = !chatExpanded;
+
+        if (chatExpanded) {
+            expandChat();
+        } else {
+            collapseChat();
+        }
+    }
+
+    /**
+     * Expands the chat panel and animates the other panels smaller.
+     */
+    private void expandChat() {
+        toggleChatButton.setText("Collapse Chat");
+
+        chatModeButton.setManaged(true);
+        chatModeButton.setVisible(true);
+
+        chatContentBox.setManaged(true);
+        chatContentBox.setVisible(true);
+
+        Timeline timeline = new Timeline(
+                new KeyFrame(
+                        PANEL_ANIMATION_DURATION,
+                        new KeyValue(playersBox.prefHeightProperty(), PLAYERS_HEIGHT_EXPANDED, Interpolator.EASE_BOTH),
+                        new KeyValue(infoBox.prefHeightProperty(), INFO_HEIGHT_EXPANDED, Interpolator.EASE_BOTH),
+                        new KeyValue(chatBox.prefHeightProperty(), CHAT_HEIGHT_EXPANDED, Interpolator.EASE_BOTH)
+                )
+        );
+        timeline.play();
+
+        chatContentBox.setOpacity(1.0);
+        new FadeInUp(chatContentBox).play();
+    }
+
+    /**
+     * Collapses the chat panel and animates the other panels back to their default sizes.
+     */
+    private void collapseChat() {
+        toggleChatButton.setText("Expand Chat");
+
+        new FadeOutDown(chatContentBox).play();
+
+        PauseTransition hideDelay = new PauseTransition(CHAT_HIDE_DELAY);
+        hideDelay.setOnFinished(e -> {
+            chatContentBox.setManaged(false);
+            chatContentBox.setVisible(false);
+            chatContentBox.setOpacity(0.0);
+
+            chatModeButton.setManaged(false);
+            chatModeButton.setVisible(false);
+        });
+        hideDelay.play();
+
+        Timeline timeline = new Timeline(
+                new KeyFrame(
+                        PANEL_ANIMATION_DURATION,
+                        new KeyValue(playersBox.prefHeightProperty(), PLAYERS_HEIGHT_COLLAPSED, Interpolator.EASE_BOTH),
+                        new KeyValue(infoBox.prefHeightProperty(), INFO_HEIGHT_COLLAPSED, Interpolator.EASE_BOTH),
+                        new KeyValue(chatBox.prefHeightProperty(), CHAT_HEIGHT_COLLAPSED, Interpolator.EASE_BOTH)
+                )
+        );
+        timeline.play();
     }
 
     /**
@@ -234,8 +379,13 @@ public class GameView extends BorderPane {
      */
     private HBox createChatHeader() {
         Label title = createSectionTitle("Chat");
-        HBox header = new HBox(10, title, chatModeButton);
+
+        HBox spacer = new HBox();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        HBox header = new HBox(10, title, spacer, chatModeButton, toggleChatButton);
         header.setAlignment(Pos.CENTER_LEFT);
+
         return header;
     }
 
@@ -393,5 +543,14 @@ public class GameView extends BorderPane {
      */
     public Button getChatModeButton() {
         return chatModeButton;
+    }
+
+    /**
+     * Returns the button used to expand or collapse the chat panel.
+     *
+     * @return the chat toggle button
+     */
+    public Button getToggleChatButton() {
+        return toggleChatButton;
     }
 }
