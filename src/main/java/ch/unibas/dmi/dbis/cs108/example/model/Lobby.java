@@ -20,6 +20,7 @@ public class Lobby {
     private final String lobbyId;
     private final List<ClientSession> sessions = new ArrayList<>();
     private boolean gameStarted = false;
+    private static final int MAX_PLAYERS = 5;
 
     /** Live game state for the current round, or {@code null} before the game starts. */
     private GameState gameState;
@@ -75,8 +76,12 @@ public class Lobby {
      *
      * @param session the client session to add
      */
-    public void addSession(ClientSession session) {
+    public boolean addSession(ClientSession session) {
+        if (isFull()) {
+            return false;
+        }
         sessions.add(session);
+        return true;
     }
 
     /**
@@ -104,6 +109,14 @@ public class Lobby {
      */
     public int getPlayerCount() {
         return sessions.size();
+    }
+
+    public int getMaxPlayers() {
+        return MAX_PLAYERS;
+    }
+
+    public boolean isFull() {
+        return sessions.size() >= MAX_PLAYERS;
     }
 
     // ---- Game state accessors ----
