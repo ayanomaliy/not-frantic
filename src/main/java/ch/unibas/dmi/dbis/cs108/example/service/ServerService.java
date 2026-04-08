@@ -646,6 +646,7 @@ public class ServerService {
         ));
 
         broadcastPlayerList(lobby);
+        broadcastLobbyListToAllClients();
     }
 
     /**
@@ -991,6 +992,7 @@ public class ServerService {
         }
 
         lobby.setGameStarted(true);
+        broadcastLobbyListToAllClients();
         int round = lobby.nextRound();
 
         List<String> playerNames = new ArrayList<>();
