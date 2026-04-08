@@ -561,7 +561,15 @@ public class ServerService {
         leaveCurrentLobby(session, null);
 
         Lobby newLobby = getOrCreateLobby(cleanLobbyId);
-        newLobby.addSession(session);
+
+        if (!newLobby.addSession(session)) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Lobby is full."
+            ).encode());
+            return;
+        }
+
         playerLobbyMap.put(session, cleanLobbyId);
 
         session.send(new Message(
@@ -616,7 +624,14 @@ public class ServerService {
 
         leaveCurrentLobby(session, null);
 
-        lobby.addSession(session);
+        if (!lobby.addSession(session)) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Lobby is full (max 5 players)."
+            ).encode());
+            return;
+        }
+
         playerLobbyMap.put(session, cleanLobbyId);
 
         session.send(new Message(
