@@ -7,6 +7,7 @@ import ch.unibas.dmi.dbis.cs108.example.model.game.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -1019,6 +1020,8 @@ public class ServerService {
     /**
      * Handles a {@code GET_ROUND_END} message: sends current round scores computed from the
      * active game state, falling back to cumulative scores if no game is running.
+     *
+     * <p>Scores are computed read-only (hand value sum) without mutating player state.</p>
      */
     private void handleGetRoundEnd(ClientSession session) {
         Lobby lobby = getLobbyOf(session);
@@ -1028,8 +1031,13 @@ public class ServerService {
         }
         GameState state = lobby.getGameState();
         if (state != null) {
-            // Game is active: compute live scores from current state
-            Map<String, Integer> roundScores = ScoreCalculator.calculateRoundScores(state.getPlayerOrder());
+            // Game is active: compute live hand-value sums read-only (do NOT call
+            // ScoreCalculator.calculateRoundScores — it mutates player.addToTotalScore)
+            Map<String, Integer> roundScores = new LinkedHashMap<>();
+            for (PlayerGameState p : state.getPlayerOrder()) {
+                int handValue = p.getHand().stream().mapToInt(Card::scoringValue).sum();
+                roundScores.put(p.getPlayerName(), handValue);
+            }
             String payload = GameStateSerializer.serializeRoundEnd(roundScores, state.getPlayerOrder());
             session.send(new Message(Message.Type.ROUND_END, payload).encode());
         } else if (!lobby.getCumulativeScores().isEmpty()) {
