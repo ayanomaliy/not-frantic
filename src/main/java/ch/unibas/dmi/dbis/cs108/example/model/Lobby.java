@@ -111,6 +111,10 @@ public class Lobby {
         return sessions.size();
     }
 
+    public String getStatus() {
+        return gameStarted ? "PLAYING" : "WAITING";
+    }
+
     public int getMaxPlayers() {
         return MAX_PLAYERS;
     }

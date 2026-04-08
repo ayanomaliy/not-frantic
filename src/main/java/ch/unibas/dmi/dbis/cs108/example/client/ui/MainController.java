@@ -9,11 +9,10 @@ import javafx.collections.ListChangeListener;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.control.TextInputDialog;
-import javafx.stage.Stage;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
-
+import javafx.scene.control.TextInputDialog;
+import javafx.stage.Stage;
 
 /**
  * Coordinates JavaFX view changes and user interaction for the graphical
@@ -87,6 +86,7 @@ public class MainController {
         view.getAllPlayersList().setItems(state.getAllPlayers());
         view.getLobbiesList().setItems(state.getLobbies());
         view.getInfoList().setItems(state.getGameMessages());
+
         installSelfHighlight(view.getLobbyPlayersList());
         installSelfHighlight(view.getAllPlayersList());
         installCurrentLobbyHighlight(view.getLobbiesList());
@@ -125,18 +125,35 @@ public class MainController {
             updateDisplayedChat(view);
         });
 
+        /**
+         * Handles the Join Lobby button action.
+         *
+         * <p>The selected lobby entry in the GUI contains not only the lobby name,
+         * but also status and player-count information in a display format like
+         * {@code LobbyName (WAITING) 2/5}. Before sending the join request to the
+         * server, only the pure lobby name is extracted.</p>
+         */
         view.getJoinLobbyButton().setOnAction(e -> {
             String selectedLobby = view.getLobbiesList().getSelectionModel().getSelectedItem();
+
             if (selectedLobby != null && !selectedLobby.isBlank()) {
-                networkClient.joinLobby(selectedLobby);
+                networkClient.joinLobby(extractLobbyName(selectedLobby));
             }
         });
 
+        /**
+         * Handles double-clicking a lobby entry in the lobby list.
+         *
+         * <p>If the user double-clicks a displayed lobby entry, the controller
+         * extracts the pure lobby name from the formatted display string and
+         * sends a join request to the server.</p>
+         */
         view.getLobbiesList().setOnMouseClicked(e -> {
             if (e.getClickCount() == 2) {
                 String selectedLobby = view.getLobbiesList().getSelectionModel().getSelectedItem();
+
                 if (selectedLobby != null && !selectedLobby.isBlank()) {
-                    networkClient.joinLobby(selectedLobby);
+                    networkClient.joinLobby(extractLobbyName(selectedLobby));
                 }
             }
         });
@@ -293,7 +310,6 @@ public class MainController {
             }
         }
     }
-
 
     /**
      * Updates the game-view chat list to display the message list of the
@@ -475,6 +491,11 @@ public class MainController {
      * Installs a custom cell factory that highlights the lobby the client is
      * currently in using the hover background color.
      *
+     * <p>The displayed lobby entries contain additional metadata such as status
+     * and player count, for example {@code FunRoom (WAITING) 2/5}. Therefore,
+     * the pure lobby name must be extracted before comparing it with the
+     * currently joined lobby stored in the shared client state.</p>
+     *
      * @param listView the lobby list view to decorate
      */
     private void installCurrentLobbyHighlight(ListView<String> listView) {
@@ -494,10 +515,31 @@ public class MainController {
                 setText(item);
 
                 String currentLobby = state.getCurrentLobby();
-                if (!currentLobby.isBlank() && item.equals(currentLobby)) {
+                if (!currentLobby.isBlank() && extractLobbyName(item).equals(currentLobby)) {
                     getStyleClass().add("current-lobby-cell");
                 }
             }
         });
+    }
+
+    /**
+     * Extracts the pure lobby name from a formatted lobby list entry.
+     *
+     * <p>The lobby list in the GUI shows entries in a human-readable format such as
+     * {@code LobbyName (WAITING) 2/5}. This method removes the appended status and
+     * player-count section and returns only the original lobby name.</p>
+     *
+     * <p>If the expected {@code " ("} separator is not found, the full trimmed
+     * string is returned unchanged.</p>
+     *
+     * @param displayedLobby the formatted lobby entry shown in the GUI
+     * @return the extracted pure lobby name
+     */
+    private String extractLobbyName(String displayedLobby) {
+        int statusStart = displayedLobby.indexOf(" (");
+        if (statusStart >= 0) {
+            return displayedLobby.substring(0, statusStart).trim();
+        }
+        return displayedLobby.trim();
     }
 }

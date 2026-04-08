@@ -692,10 +692,20 @@ public class ServerService {
      * @param session the client receiving the lobby list
      */
     private void sendLobbyList(ClientSession session) {
-        List<String> lobbyNames = new ArrayList<>(lobbies.keySet());
+        List<String> lobbyEntries = new ArrayList<>();
+
+        for (Lobby lobby : lobbies.values()) {
+            String entry = lobby.getLobbyId()
+                    + ":" + lobby.getStatus()
+                    + ":" + lobby.getPlayerCount()
+                    + ":" + lobby.getMaxPlayers();
+
+            lobbyEntries.add(entry);
+        }
+
         session.send(new Message(
                 Message.Type.LOBBIES,
-                String.join(",", lobbyNames)
+                String.join(",", lobbyEntries)
         ).encode());
     }
 

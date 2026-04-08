@@ -305,9 +305,9 @@ public class FxNetworkClient implements ClientMessageHandler {
                 List<String> updatedPlayers = message.content().isBlank()
                         ? List.of()
                         : Arrays.stream(message.content().split(","))
-                          .map(String::trim)
-                          .filter(s -> !s.isBlank())
-                          .toList();
+                        .map(String::trim)
+                        .filter(s -> !s.isBlank())
+                        .toList();
 
                 state.getPlayers().setAll(updatedPlayers);
 
@@ -321,21 +321,22 @@ public class FxNetworkClient implements ClientMessageHandler {
                         message.content().isBlank()
                                 ? List.of()
                                 : Arrays.stream(message.content().split(","))
-                                  .map(String::trim)
-                                  .filter(s -> !s.isBlank())
-                                  .toList()
+                                .map(String::trim)
+                                .filter(s -> !s.isBlank())
+                                .toList()
                 );
             });
 
             case LOBBIES -> Platform.runLater(() -> {
-                state.getLobbies().setAll(
-                        message.content().isBlank()
-                                ? List.of()
-                                : Arrays.stream(message.content().split(","))
-                                  .map(String::trim)
-                                  .filter(s -> !s.isBlank())
-                                  .toList()
-                );
+                List<String> formattedLobbies = message.content().isBlank()
+                        ? List.of()
+                        : Arrays.stream(message.content().split(","))
+                        .map(String::trim)
+                        .filter(s -> !s.isBlank())
+                        .map(this::formatLobbyEntry)
+                        .toList();
+
+                state.getLobbies().setAll(formattedLobbies);
             });
 
             case GAME_STATE -> Platform.runLater(() -> {
@@ -355,9 +356,9 @@ public class FxNetworkClient implements ClientMessageHandler {
                         message.content().isBlank()
                                 ? List.of()
                                 : Arrays.stream(message.content().split(","))
-                                  .map(String::trim)
-                                  .filter(s -> !s.isBlank())
-                                  .toList()
+                                .map(String::trim)
+                                .filter(s -> !s.isBlank())
+                                .toList()
                 );
                 state.getGameMessages().add("[HAND] " + message.content());
             });
@@ -387,6 +388,34 @@ public class FxNetworkClient implements ClientMessageHandler {
     @Override
     public void onDisconnected(String reason) {
         clearLocalState(reason);
+    }
+
+    /**
+     * Formats one raw lobby entry received from the server into a GUI-friendly string.
+     *
+     * <p>The server sends lobby entries in the format
+     * {@code lobbyId:status:currentPlayers:maxPlayers}. This method converts
+     * them into a readable display form such as
+     * {@code FunRoom (WAITING) 2/5}.</p>
+     *
+     * <p>If the entry does not match the expected format, the original entry
+     * is returned unchanged for forward compatibility.</p>
+     *
+     * @param entry the raw lobby entry received from the server
+     * @return the formatted lobby entry for display in the GUI
+     */
+    private String formatLobbyEntry(String entry) {
+        String[] parts = entry.split(":", 4);
+        if (parts.length != 4) {
+            return entry;
+        }
+
+        String lobbyName = parts[0].trim();
+        String status = parts[1].trim();
+        String currentPlayers = parts[2].trim();
+        String maxPlayers = parts[3].trim();
+
+        return lobbyName + " (" + status + ") " + currentPlayers + "/" + maxPlayers;
     }
 
     /**
