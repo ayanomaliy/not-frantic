@@ -374,6 +374,11 @@ public class FxNetworkClient implements ClientMessageHandler {
 
             case GAME_END -> Platform.runLater(() ->
                     state.getGameMessages().add("[GAME_END] " + message.content()));
+            case BROADCAST -> {
+                String[] parts = message.splitChatPayload();
+                Platform.runLater(() ->
+                        state.getGameMessages().add("[INFO] [Broadcast] " + parts[0] + ": " + parts[1]));
+            }
 
             default -> Platform.runLater(() ->
                     state.getGameMessages().add("[CLIENT] Unexpected: " + message.encode()));

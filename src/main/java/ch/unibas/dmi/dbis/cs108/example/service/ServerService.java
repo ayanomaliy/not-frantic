@@ -410,6 +410,7 @@ public class ServerService {
             case WHISPERCHAT -> handleWhisperChat(session, message.content());
             case CREATE -> handleCreateLobby(session, message.content());
             case JOIN -> handleJoinLobby(session, message.content());
+            case BROADCAST -> handleBroadcast(session, message.content());
 
             case LOBBIES -> {
                 if (!message.content().isBlank()) {
@@ -1314,6 +1315,45 @@ public class ServerService {
             TurnEngine.startTurn(nextState);
             broadcastGameState(lobby);
         }
+    }
+
+    /**
+     * Sends a broadcast message from one client session to all connected clients.
+     *
+     * <p>This method validates the given broadcast text, rejects empty or
+     * multiline messages, determines the sender name, and then distributes
+     * the broadcast to every connected client regardless of lobby or game.</p>
+     *
+     * <p>The outgoing broadcast payload is encoded in the form
+     * {@code senderName|messageText} so clients can display both the sender
+     * and the broadcast content consistently.</p>
+     *
+     * @param session the client session that initiated the broadcast
+     * @param text the raw broadcast text provided by the client
+     */
+    private synchronized void handleBroadcast(ClientSession session, String text) {
+        String cleaned = text == null ? "" : text.trim();
+
+        if (cleaned.isEmpty()) {
+            session.send(new Message(Message.Type.ERROR, "Broadcast message must not be empty.").encode());
+            return;
+        }
+
+        if (cleaned.contains("\n") || cleaned.contains("\r")) {
+            session.send(new Message(Message.Type.ERROR, "Broadcast message must be a single line.").encode());
+            return;
+        }
+
+        String senderName = session.getPlayerName();
+        if (senderName == null || senderName.isBlank()) {
+            senderName = "Unknown";
+        }
+
+        log("Broadcast from " + senderName + ": " + cleaned);
+
+        broadcastToAllClients(
+                new Message(Message.Type.BROADCAST, senderName + "|" + cleaned)
+        );
     }
 
     /**

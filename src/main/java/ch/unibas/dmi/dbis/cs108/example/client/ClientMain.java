@@ -99,6 +99,10 @@ public class ClientMain {
                     case EFFECT_REQUEST -> System.out.println("[EFFECT_REQUEST] " + message.content());
                     case ROUND_END -> System.out.println("[ROUND_END] " + message.content());
                     case GAME_END -> System.out.println("[GAME_END] " + message.content());
+                    case BROADCAST -> {
+                        String[] parts = message.splitChatPayload();
+                        System.out.println("[INFO] [Broadcast] " + parts[0] + ": " + parts[1]);
+                    }
                     default -> System.out.println("[CLIENT] Unexpected server message: " + message.encode());
                 }
             }

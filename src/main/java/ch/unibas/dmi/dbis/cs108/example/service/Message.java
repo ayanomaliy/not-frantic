@@ -63,6 +63,9 @@ public record Message(Type type, String content) {
         /** Game-related message sent by the server. */
         GAME,
 
+        /** Message to broadcast a text to all clients*/
+        BROADCAST,
+
         // ---- Game-action messages (client → server) ----
 
         /** Client requests to play a card. Payload: card id. */
@@ -169,6 +172,8 @@ public record Message(Type type, String content) {
                     yield new Message(Type.WHISPERCHAT, whisperParts[0].trim() + "|" + whisperParts[1].trim());
                 }
 
+                case "/broadcast" -> new Message(Type.BROADCAST, payload);
+
                 case "/hand" -> new Message(Type.GET_HAND, "");
                 case "/gamestate" -> new Message(Type.GET_GAME_STATE, "");
                 case "/roundend" -> new Message(Type.GET_ROUND_END, "");
@@ -229,6 +234,7 @@ public record Message(Type type, String content) {
             case "EFFECT_REQUEST" -> Type.EFFECT_REQUEST;
             case "ROUND_END" -> Type.ROUND_END;
             case "GAME_END" -> Type.GAME_END;
+            case "BROADCAST" -> Type.BROADCAST;
             default -> Type.UNKNOWN;
         };
     }
@@ -252,7 +258,7 @@ public record Message(Type type, String content) {
             case NAME, GLOBALCHAT, LOBBYCHAT, WHISPERCHAT, PLAYERS, ALLPLAYERS,
                  INFO, ERROR, GAME, CREATE, LOBBIES, JOIN,
                  PLAY_CARD, EFFECT_RESPONSE,
-                 GAME_STATE, HAND_UPDATE, EFFECT_REQUEST, ROUND_END, GAME_END -> true;
+                 GAME_STATE, HAND_UPDATE, EFFECT_REQUEST, ROUND_END, GAME_END, BROADCAST -> true;
             case START, QUIT, LEAVE, DRAW_CARD, END_TURN, GET_HAND,
                  GET_GAME_STATE, GET_ROUND_END, GET_GAME_END, PING, PONG, UNKNOWN -> false;
         };
@@ -278,10 +284,11 @@ public record Message(Type type, String content) {
             case NAME, GLOBALCHAT, LOBBYCHAT, WHISPERCHAT, PLAYERS, ALLPLAYERS,
                  INFO, ERROR, GAME, CREATE, LOBBIES, JOIN,
                  PLAY_CARD, EFFECT_RESPONSE,
-                 GAME_STATE, HAND_UPDATE, EFFECT_REQUEST, ROUND_END, GAME_END -> true;
+                 GAME_STATE, HAND_UPDATE, EFFECT_REQUEST, ROUND_END, GAME_END,BROADCAST -> true;
             case UNKNOWN -> false;
         };
     }
+
 
     /**
      * Splits a chat payload into sender name and message text.
