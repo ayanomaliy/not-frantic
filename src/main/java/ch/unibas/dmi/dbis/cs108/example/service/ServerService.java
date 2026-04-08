@@ -486,6 +486,9 @@ public class ServerService {
             case END_TURN -> handleEndTurn(session);
             case EFFECT_RESPONSE -> handleEffectResponse(session, message.content());
             case GET_HAND -> handleGetHand(session);
+            case GET_GAME_STATE -> handleGetGameState(session);
+            case GET_ROUND_END -> handleGetRoundEnd(session);
+            case GET_GAME_END -> handleGetGameEnd(session);
 
             case PING, PONG -> {
                 log("Heartbeat message reached ServerService from "
@@ -998,6 +1001,69 @@ public class ServerService {
         } catch (IllegalArgumentException e) {
             session.send(new Message(Message.Type.ERROR, "You are not in this game.").encode());
         }
+    }
+
+    /**
+     * Handles a {@code GET_GAME_STATE} message: sends the current public game state to the requesting client.
+     */
+    private void handleGetGameState(ClientSession session) {
+        Lobby lobby = getLobbyOf(session);
+        if (lobby == null || lobby.getGameState() == null) {
+            session.send(new Message(Message.Type.ERROR, "No active game.").encode());
+            return;
+        }
+        session.send(new Message(Message.Type.GAME_STATE,
+                GameStateSerializer.serializePublicState(lobby.getGameState())).encode());
+    }
+
+    /**
+     * Handles a {@code GET_ROUND_END} message: sends current round scores computed from the
+     * active game state, falling back to cumulative scores if no game is running.
+     */
+    private void handleGetRoundEnd(ClientSession session) {
+        Lobby lobby = getLobbyOf(session);
+        if (lobby == null) {
+            session.send(new Message(Message.Type.ERROR, "Not in a lobby.").encode());
+            return;
+        }
+        GameState state = lobby.getGameState();
+        if (state != null) {
+            // Game is active: compute live scores from current state
+            Map<String, Integer> roundScores = ScoreCalculator.calculateRoundScores(state.getPlayerOrder());
+            String payload = GameStateSerializer.serializeRoundEnd(roundScores, state.getPlayerOrder());
+            session.send(new Message(Message.Type.ROUND_END, payload).encode());
+        } else if (!lobby.getCumulativeScores().isEmpty()) {
+            // Game just ended: use last recorded cumulative scores
+            String payload = GameStateSerializer.serializeRoundEnd(lobby.getCumulativeScores(), List.of());
+            session.send(new Message(Message.Type.ROUND_END, payload).encode());
+        } else {
+            session.send(new Message(Message.Type.ERROR, "No round scores available.").encode());
+        }
+    }
+
+    /**
+     * Handles a {@code GET_GAME_END} message: sends the winner if the game is over,
+     * or an error if it is still in progress.
+     */
+    private void handleGetGameEnd(ClientSession session) {
+        Lobby lobby = getLobbyOf(session);
+        if (lobby == null) {
+            session.send(new Message(Message.Type.ERROR, "Not in a lobby.").encode());
+            return;
+        }
+        GameState state = lobby.getGameState();
+        Map<String, Integer> scores = lobby.getCumulativeScores();
+        if (scores.isEmpty()) {
+            session.send(new Message(Message.Type.ERROR, "No game result available.").encode());
+            return;
+        }
+        int maxScore = state != null ? state.getMaxScore() : 0;
+        if (state != null && !ScoreCalculator.isGameOver(scores, maxScore)) {
+            session.send(new Message(Message.Type.ERROR, "Game is not over yet.").encode());
+            return;
+        }
+        session.send(new Message(Message.Type.GAME_END,
+                ScoreCalculator.getWinner(scores)).encode());
     }
 
     /**

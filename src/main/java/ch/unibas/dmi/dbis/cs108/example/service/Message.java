@@ -80,6 +80,15 @@ public record Message(Type type, String content) {
         /** Client requests their current hand. Server responds with HAND_UPDATE. No payload. */
         GET_HAND,
 
+        /** Client requests the current public game state. Server responds with GAME_STATE. No payload. */
+        GET_GAME_STATE,
+
+        /** Client requests the most recent round scores. Server responds with ROUND_END. No payload. */
+        GET_ROUND_END,
+
+        /** Client requests the final game result. Server responds with GAME_END. No payload. */
+        GET_GAME_END,
+
         // ---- Game-state messages (server → client) ----
 
         /** Server broadcasts the public game state. Payload: serialized key:value pairs. */
@@ -161,6 +170,9 @@ public record Message(Type type, String content) {
                 }
 
                 case "/hand" -> new Message(Type.GET_HAND, "");
+                case "/gamestate" -> new Message(Type.GET_GAME_STATE, "");
+                case "/roundend" -> new Message(Type.GET_ROUND_END, "");
+                case "/gameend" -> new Message(Type.GET_GAME_END, "");
                 case "/players" -> new Message(Type.PLAYERS, "");
                 case "/allplayers" -> new Message(Type.ALLPLAYERS, "");
                 case "/start" -> new Message(Type.START, "");
@@ -206,6 +218,9 @@ public record Message(Type type, String content) {
             case "END_TURN" -> Type.END_TURN;
             case "EFFECT_RESPONSE" -> Type.EFFECT_RESPONSE;
             case "GET_HAND" -> Type.GET_HAND;
+            case "GET_GAME_STATE" -> Type.GET_GAME_STATE;
+            case "GET_ROUND_END" -> Type.GET_ROUND_END;
+            case "GET_GAME_END" -> Type.GET_GAME_END;
             case "GAME_STATE" -> Type.GAME_STATE;
             case "HAND_UPDATE" -> Type.HAND_UPDATE;
             case "EFFECT_REQUEST" -> Type.EFFECT_REQUEST;
@@ -235,7 +250,8 @@ public record Message(Type type, String content) {
                  INFO, ERROR, GAME, CREATE, LOBBIES, JOIN,
                  PLAY_CARD, EFFECT_RESPONSE,
                  GAME_STATE, HAND_UPDATE, EFFECT_REQUEST, ROUND_END, GAME_END -> true;
-            case START, QUIT,LEAVE, DRAW_CARD, END_TURN, GET_HAND, PING, PONG, UNKNOWN -> false;
+            case START, QUIT, LEAVE, DRAW_CARD, END_TURN, GET_HAND,
+                 GET_GAME_STATE, GET_ROUND_END, GET_GAME_END, PING, PONG, UNKNOWN -> false;
         };
     }
 
@@ -254,7 +270,8 @@ public record Message(Type type, String content) {
         }
 
         return switch (type) {
-            case START, QUIT, LEAVE, DRAW_CARD, END_TURN, GET_HAND, PING, PONG -> safe(content).isBlank();
+            case START, QUIT, LEAVE, DRAW_CARD, END_TURN, GET_HAND,
+                 GET_GAME_STATE, GET_ROUND_END, GET_GAME_END, PING, PONG -> safe(content).isBlank();
             case NAME, GLOBALCHAT, LOBBYCHAT, WHISPERCHAT, PLAYERS, ALLPLAYERS,
                  INFO, ERROR, GAME, CREATE, LOBBIES, JOIN,
                  PLAY_CARD, EFFECT_RESPONSE,
