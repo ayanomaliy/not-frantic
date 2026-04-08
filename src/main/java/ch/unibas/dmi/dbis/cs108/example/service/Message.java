@@ -181,6 +181,9 @@ public record Message(Type type, String content) {
                 case "/create" -> new Message(Type.CREATE, payload);
                 case "/join" -> new Message(Type.JOIN, payload);
                 case "/lobbies" -> new Message(Type.LOBBIES, "");
+                case "/play", "/card" -> new Message(Type.PLAY_CARD, payload);
+                case "/draw", "/pickup" -> new Message(Type.DRAW_CARD, "");
+                case "/end", "/endturn" -> new Message(Type.END_TURN, "");
                 default -> new Message(Type.UNKNOWN, trimmed);
             };
         }
