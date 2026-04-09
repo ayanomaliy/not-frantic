@@ -4,6 +4,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
@@ -54,6 +55,7 @@ public class LobbyView extends BorderPane {
         setPadding(new Insets(16));
 
         configureControls();
+        configureLobbyListBehavior();
 
         VBox leftPanel = new VBox(12);
         leftPanel.getStyleClass().add("panel");
@@ -150,6 +152,121 @@ public class LobbyView extends BorderPane {
         leaveLobbyButton.getStyleClass().addAll("frantic-button", "danger-button");
 
         chatModeButton.getStyleClass().addAll("frantic-button", "secondary-button");
+
+        joinLobbyButton.setDisable(true);
+    }
+
+    /**
+     * Configures the lobby list appearance and join-button behavior.
+     *
+     * <p>Expected lobby entry format:
+     * {@code LobbyName | current/max | STATUS}</p>
+     *
+     * <p>Examples:
+     * {@code Lobby-1 | 3/5 | WAITING}
+     * {@code Lobby-2 | 5/5 | WAITING}
+     * {@code Lobby-3 | 4/5 | PLAYING}</p>
+     */
+    private void configureLobbyListBehavior() {
+        lobbiesList.setCellFactory(listView -> new ListCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+
+                if (empty || item == null) {
+                    setText(null);
+                    setStyle("");
+                    return;
+                }
+
+                setText(item);
+
+                boolean full = isLobbyFull(item);
+                String status = extractLobbyStatus(item);
+
+                if ("PLAYING".equalsIgnoreCase(status)) {
+                    setStyle("-fx-text-fill: #d9534f; -fx-font-weight: bold;");
+                } else if ("FINISHED".equalsIgnoreCase(status)) {
+                    setStyle("-fx-text-fill: #888888; -fx-font-style: italic;");
+                } else if (full) {
+                    setStyle("-fx-text-fill: #f0ad4e; -fx-font-weight: bold;");
+                } else {
+                    setStyle("-fx-text-fill: #2e8b57; -fx-font-weight: bold;");
+                }
+            }
+        });
+
+        lobbiesList.getSelectionModel().selectedItemProperty().addListener((obs, oldValue, newValue) ->
+                joinLobbyButton.setDisable(!isJoinableLobbyEntry(newValue))
+        );
+    }
+
+    /**
+     * Returns whether the given lobby entry can be joined.
+     *
+     * <p>A lobby is joinable only if it is not full and not in PLAYING state.</p>
+     *
+     * @param lobbyEntry the visible lobby entry text
+     * @return {@code true} if the lobby can be joined, otherwise {@code false}
+     */
+    public boolean isJoinableLobbyEntry(String lobbyEntry) {
+        if (lobbyEntry == null || lobbyEntry.isBlank()) {
+            return false;
+        }
+
+        String status = extractLobbyStatus(lobbyEntry);
+        return !"PLAYING".equalsIgnoreCase(status) && !isLobbyFull(lobbyEntry);
+    }
+
+    /**
+     * Returns whether the currently selected lobby can be joined.
+     *
+     * @return {@code true} if the selected lobby is joinable, otherwise {@code false}
+     */
+    public boolean isSelectedLobbyJoinable() {
+        return isJoinableLobbyEntry(lobbiesList.getSelectionModel().getSelectedItem());
+    }
+
+    /**
+     * Extracts the status token from a lobby list entry.
+     *
+     * @param lobbyEntry the lobby entry text
+     * @return the extracted status, or an empty string if no status is found
+     */
+    private String extractLobbyStatus(String lobbyEntry) {
+        String[] parts = lobbyEntry.split("\\|");
+        if (parts.length < 3) {
+            return "";
+        }
+        return parts[2].trim();
+    }
+
+    /**
+     * Returns whether the lobby entry represents a full lobby.
+     *
+     * @param lobbyEntry the lobby entry text
+     * @return {@code true} if the lobby is full, otherwise {@code false}
+     */
+    private boolean isLobbyFull(String lobbyEntry) {
+        String[] parts = lobbyEntry.split("\\|");
+        if (parts.length < 2) {
+            return false;
+        }
+
+        String playerPart = parts[1].trim();
+        String[] counts = playerPart.split("/");
+
+        if (counts.length != 2) {
+            return false;
+        }
+
+        try {
+            int currentPlayers = Integer.parseInt(counts[0].trim());
+            int maxPlayers = Integer.parseInt(counts[1].trim());
+            return currentPlayers >= maxPlayers;
+        } catch (NumberFormatException exception) {
+            return false;
+        }
     }
 
     /**
@@ -193,7 +310,6 @@ public class LobbyView extends BorderPane {
     public ListView<String> getAllPlayersList() {
         return allPlayersList;
     }
-
 
     /**
      * Returns the chat list view.

@@ -2,6 +2,7 @@ package ch.unibas.dmi.dbis.cs108.example.service;
 
 import ch.unibas.dmi.dbis.cs108.example.controller.ClientSession;
 import ch.unibas.dmi.dbis.cs108.example.model.Lobby;
+import ch.unibas.dmi.dbis.cs108.example.model.LobbyStatus;
 import ch.unibas.dmi.dbis.cs108.example.model.Player;
 import ch.unibas.dmi.dbis.cs108.example.model.game.*;
 
@@ -590,6 +591,14 @@ public class ServerService {
     /**
      * Handles a request to join an existing lobby.
      *
+     * <p>A client may only join a lobby if:
+     * <ul>
+     *     <li>The lobby exists</li>
+     *     <li>The lobby is not full</li>
+     *     <li>The game is not currently running</li>
+     *     <li>The lobby is not finished</li>
+     * </ul>
+     *
      * @param session the client session joining the lobby
      * @param lobbyId the lobby id to join
      */
@@ -623,12 +632,40 @@ public class ServerService {
             return;
         }
 
-        leaveCurrentLobby(session, null);
+        // 🚨 CRITICAL CHECKS (THIS FIXES YOUR PROBLEM)
 
-        if (!lobby.addSession(session)) {
+        if (lobby.getLobbyStatus() == LobbyStatus.PLAYING) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Cannot join: game is already running in this lobby."
+            ).encode());
+            return;
+        }
+
+        if (lobby.getLobbyStatus() == LobbyStatus.FINISHED) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Cannot join: this lobby has already finished."
+            ).encode());
+            return;
+        }
+
+        if (lobby.isFull()) {
             session.send(new Message(
                     Message.Type.ERROR,
                     "Lobby is full (max 5 players)."
+            ).encode());
+            return;
+        }
+
+        // leave current lobby if needed
+        leaveCurrentLobby(session, null);
+
+        boolean added = lobby.addSession(session);
+        if (!added) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Could not join the lobby."
             ).encode());
             return;
         }
@@ -1299,6 +1336,7 @@ public class ServerService {
             state.setPhase(GamePhase.GAME_OVER);
             lobby.setGameState(null);
             lobby.setGameStarted(false);
+            lobby.setLobbyStatus(LobbyStatus.FINISHED);
             log("Game over in lobby " + lobby.getLobbyId() + ". Winner: " + winner);
         } else {
             int nextRound = lobby.nextRound();
