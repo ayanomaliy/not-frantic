@@ -339,3 +339,12 @@ Today, I focused on restructuring the client architecture and improving the game
 * Implement proper **effect resolution in the GUI**, since it currently still has to be done through the CLI.
 * Investigate and fix the **effect resolution bug** where the player sometimes gets kicked while resolving an effect.
 * Continue refining the overall in-game UI so it becomes clearer and more comfortable to use.
+
+## Date: April 8, 2026
+
+### QA (Sevval)
+
+#### What did we do today?
+
+Today I did the measurements with MetricsReloaded then started to work with Jacoco but the test gave me 0% so i tried to figure out where the problem is. I figured our Java 25 is not compatible with our Grandle, so I would need to change our Java version to 21-22 since Grandle doesn't work with Java 25, but I also don't know if we are allowed to change our Java version, so I messaged our tutor and now im waiting for a response.
+Our QA concept is finished besides the Jacoco part. 
