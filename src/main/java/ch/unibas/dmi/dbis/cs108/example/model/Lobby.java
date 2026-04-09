@@ -9,18 +9,28 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Represents one game lobby containing the connected players of that game.
- * <p>
- * Maintains a list of active client sessions and provides methods to add/remove
- * clients and query the current set of players.
- * </p>
+ * Represents one game lobby containing the connected players of a single game.
+ *
+ * <p>A lobby stores its connected client sessions, tracks the lifecycle state
+ * of the game (waiting, playing, finished), and maintains cumulative scores
+ * across rounds.</p>
  */
 public class Lobby {
 
-    private final String lobbyId;
-    private final List<ClientSession> sessions = new ArrayList<>();
-    private boolean gameStarted = false;
+    /** Maximum number of players allowed in one lobby. */
     private static final int MAX_PLAYERS = 5;
+
+    /** Unique identifier of this lobby. */
+    private final String lobbyId;
+
+    /** Active client sessions currently inside this lobby. */
+    private final List<ClientSession> sessions = new ArrayList<>();
+
+    /** Whether a game is currently running in this lobby. */
+    private boolean gameStarted = false;
+
+    /** Current lifecycle status of the lobby. */
+    private LobbyStatus status = LobbyStatus.WAITING;
 
     /** Live game state for the current round, or {@code null} before the game starts. */
     private GameState gameState;
@@ -31,7 +41,6 @@ public class Lobby {
     /**
      * Cumulative scores carried across rounds.
      * Key = player name, value = total score so far.
-     * Populated after each round ends.
      */
     private final Map<String, Integer> cumulativeScores = new HashMap<>();
 
@@ -42,6 +51,7 @@ public class Lobby {
      */
     public Lobby(String lobbyId) {
         this.lobbyId = lobbyId;
+        this.status = LobbyStatus.WAITING;
     }
 
     /**
@@ -54,27 +64,64 @@ public class Lobby {
     }
 
     /**
-     * Returns whether the game of this lobby has already started.
+     * Returns whether the game in this lobby has already started.
      *
-     * @return true if the game has started, otherwise false
+     * @return {@code true} if a game is running, otherwise {@code false}
      */
     public boolean isGameStarted() {
         return gameStarted;
     }
 
     /**
-     * Sets whether the game of this lobby has started.
+     * Sets whether the game in this lobby has started.
+     *
+     * <p>If set to {@code true}, the lobby status is automatically updated to
+     * {@link LobbyStatus#PLAYING}.</p>
      *
      * @param gameStarted the new started state
      */
     public void setGameStarted(boolean gameStarted) {
         this.gameStarted = gameStarted;
+
+        if (gameStarted) {
+            this.status = LobbyStatus.PLAYING;
+        }
     }
 
     /**
-     * Adds a client session to the lobby.
+     * Returns the current lifecycle status of this lobby.
+     *
+     * @return the lobby status
+     */
+    public LobbyStatus getLobbyStatus() {
+        return status;
+    }
+
+    /**
+     * Sets the current lifecycle status of this lobby.
+     *
+     * @param status the new lobby status
+     */
+    public void setLobbyStatus(LobbyStatus status) {
+        this.status = status;
+    }
+
+    /**
+     * Returns the display status of this lobby.
+     *
+     * <p>This is used in lobby-list responses sent to clients.</p>
+     *
+     * @return the status name as string (e.g., "WAITING", "PLAYING")
+     */
+    public String getStatus() {
+        return status.name();
+    }
+
+    /**
+     * Adds a client session to the lobby if the lobby is not full.
      *
      * @param session the client session to add
+     * @return {@code true} if the session was added, otherwise {@code false}
      */
     public boolean addSession(ClientSession session) {
         if (isFull()) {
@@ -94,54 +141,90 @@ public class Lobby {
     }
 
     /**
-     * Gets all active client sessions in the lobby.
+     * Returns all active client sessions in the lobby.
      *
-     * @return a copy of the sessions list
+     * @return a copy of the current session list
      */
     public List<ClientSession> getSessions() {
         return new ArrayList<>(sessions);
     }
 
     /**
-     * Gets the number of players currently in the lobby.
+     * Returns the number of players currently in the lobby.
      *
-     * @return the player count
+     * @return the current player count
      */
     public int getPlayerCount() {
         return sessions.size();
     }
 
-    public String getStatus() {
-        return gameStarted ? "PLAYING" : "WAITING";
-    }
-
+    /**
+     * Returns the maximum number of players allowed in this lobby.
+     *
+     * @return the maximum player capacity
+     */
     public int getMaxPlayers() {
         return MAX_PLAYERS;
     }
 
+    /**
+     * Returns whether this lobby has reached its maximum player capacity.
+     *
+     * @return {@code true} if the lobby is full, otherwise {@code false}
+     */
     public boolean isFull() {
         return sessions.size() >= MAX_PLAYERS;
     }
 
-    // ---- Game state accessors ----
-
-    /** Returns the live {@link GameState} for the current round, or {@code null} if not started. */
-    public GameState getGameState() { return gameState; }
-
-    /** Sets the live {@link GameState} (called by ServerService at round start). */
-    public void setGameState(GameState gameState) { this.gameState = gameState; }
-
-    /** Returns the current round number (1-based; 0 = game not yet started). */
-    public int getCurrentRound() { return currentRound; }
-
-    /** Increments the round counter and returns the new value. */
-    public int nextRound() { return ++currentRound; }
-
-    /** Returns a live view of the cumulative score map (player name → total score). */
-    public Map<String, Integer> getCumulativeScores() { return cumulativeScores; }
+    /**
+     * Returns the live {@link GameState} for the current round.
+     *
+     * @return the current game state, or {@code null} if no game is active
+     */
+    public GameState getGameState() {
+        return gameState;
+    }
 
     /**
-     * Gets all players currently in the lobby as {@link Player} records.
+     * Sets the live {@link GameState} for the current round.
+     *
+     * @param gameState the new game state
+     */
+    public void setGameState(GameState gameState) {
+        this.gameState = gameState;
+    }
+
+    /**
+     * Returns the current round number.
+     *
+     * <p>The counter is 1-based. A value of {@code 0} means no round has started yet.</p>
+     *
+     * @return the current round number
+     */
+    public int getCurrentRound() {
+        return currentRound;
+    }
+
+    /**
+     * Increments the round counter and returns the new value.
+     *
+     * @return the incremented round number
+     */
+    public int nextRound() {
+        return ++currentRound;
+    }
+
+    /**
+     * Returns the cumulative score map of this lobby.
+     *
+     * @return the cumulative score map
+     */
+    public Map<String, Integer> getCumulativeScores() {
+        return cumulativeScores;
+    }
+
+    /**
+     * Returns all players currently in the lobby as {@link Player} records.
      *
      * @return a list of players in the lobby
      */
