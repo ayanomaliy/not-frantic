@@ -75,9 +75,33 @@ public class GameMessageParser {
         }
 
         EffectArgs args = switch (effect) {
-            case SKIP, COUNTERATTACK, NICE_TRY -> {
-                if (parts.length < 2) yield null;
+            case SKIP, NICE_TRY -> {
+                if (parts.length < 2) {
+                    yield null;
+                }
                 yield EffectArgs.withTarget(parts[1].trim());
+            }
+
+            case COUNTERATTACK -> {
+                String target = null;
+                CardColor color = null;
+
+                if (parts.length >= 2 && !parts[1].isBlank()) {
+                    target = parts[1].trim();
+                }
+
+                if (parts.length >= 3 && !parts[2].isBlank()) {
+                    color = parseColor(parts[2]);
+                    if (color == null) {
+                        yield null;
+                    }
+                }
+
+                if (color == null) {
+                    yield null;
+                }
+
+                yield EffectArgs.of(target, color, null, null);
             }
             case GIFT -> {
                 if (parts.length < 3) yield null;

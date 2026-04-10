@@ -240,16 +240,49 @@ public class EffectResolver {
     // Phase stays RESOLVING_EFFECT.
     // -------------------------------------------------------------------------
 
+    /**
+     * Resolves {@code COUNTERATTACK}.
+     *
+     * <p>Counterattack always requests a color for the next play. If another
+     * effect is still pending underneath this Counterattack and a target player
+     * was supplied, that pending effect is additionally redirected to the chosen
+     * target.</p>
+     *
+     * <p>If no effect remains pending, Counterattack behaves like a color-request
+     * card and ends the turn normally.</p>
+     *
+     * @param state the current game state
+     * @param actingPlayer the player who played Counterattack
+     * @param args the effect arguments containing the chosen color and optionally a target
+     * @return the generated game events
+     */
     private static List<GameEvent> resolveCounterattack(GameState state,
-                                                         String actingPlayer,
-                                                         EffectArgs args) {
+                                                        String actingPlayer,
+                                                        EffectArgs args) {
         List<GameEvent> events = new ArrayList<>();
-        state.setPendingEffectTarget(args.getTargetPlayer());
+
+        CardColor color = args.getChosenColor();
+        if (color == null) {
+            events.add(GameEvent.error("COUNTERATTACK requires a color."));
+            return events;
+        }
+
+        state.setRequestedColor(color);
+        state.setRequestedNumber(null);
+
+        String target = args.getTargetPlayer();
+
+        if (!state.getPendingEffects().isEmpty() && target != null && !target.isBlank()) {
+            state.setPendingEffectTarget(target);
+            events.add(new GameEvent(GameEvent.EventType.EFFECT_TRIGGERED,
+                    SpecialEffect.COUNTERATTACK.name() + ":" + actingPlayer + ">" + target + ":" + color));
+            return events;
+        }
+
+        state.setPendingEffectTarget(null);
         events.add(new GameEvent(GameEvent.EventType.EFFECT_TRIGGERED,
-                SpecialEffect.COUNTERATTACK.name() + ":" + actingPlayer
-                        + ">" + args.getTargetPlayer()));
-        // Intentionally no endTurn — the redirected effect in pendingEffects must
-        // still be resolved before the turn can advance.
+                SpecialEffect.COUNTERATTACK.name() + ":" + actingPlayer + ":" + color));
+        events.addAll(TurnEngine.endTurn(state));
         return events;
     }
 

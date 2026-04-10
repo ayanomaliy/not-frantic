@@ -191,8 +191,7 @@ public record Message(Type type, String content) {
                 case "/end", "/endturn" -> new Message(Type.END_TURN, "");
 
                 case "/skip" -> parseSingleTargetEffectCommand("SKIP", payload);
-                case "/counter" -> parseSingleTargetEffectCommand("COUNTERATTACK", payload);
-                case "/nicetry" -> parseSingleTargetEffectCommand("NICE_TRY", payload);
+                case "/counter" -> parseCounterattackCommand(payload);                case "/nicetry" -> parseSingleTargetEffectCommand("NICE_TRY", payload);
                 case "/gift" -> parseGiftCommand(payload);
                 case "/exchange" -> parseExchangeCommand(payload);
                 case "/fantastic" -> parseColorOrNumberEffectCommand("FANTASTIC", payload);
@@ -491,6 +490,48 @@ public record Message(Type type, String content) {
         return new Message(Type.EFFECT_RESPONSE, "SECOND_CHANCE|" + trimmed);
     }
 
+    /**
+     * Parses a human-friendly {@code /counter} command.
+     *
+     * <p>Supported formats:</p>
+     * <ul>
+     *   <li>{@code /counter <color>}</li>
+     *   <li>{@code /counter <color> <player>}</li>
+     * </ul>
+     *
+     * <p>The command always carries a requested color. If a target player is also
+     * given, the wire format includes both target and color. If no target is
+     * given, the target field is left empty.</p>
+     *
+     * @param payload the raw payload after {@code /counter}
+     * @return an {@code EFFECT_RESPONSE} message or {@code UNKNOWN} if invalid
+     */
+    private static Message parseCounterattackCommand(String payload) {
+        if (payload == null || payload.isBlank()) {
+            return new Message(Type.UNKNOWN, "/counter");
+        }
+
+        String[] parts = payload.trim().split("\\s+");
+        if (parts.length < 1 || parts.length > 2) {
+            return new Message(Type.UNKNOWN, "/counter " + payload);
+        }
+
+        String color = parts[0].trim().toUpperCase();
+        if (!isPlayableColor(color)) {
+            return new Message(Type.UNKNOWN, "/counter " + payload);
+        }
+
+        if (parts.length == 1) {
+            return new Message(Type.EFFECT_RESPONSE, "COUNTERATTACK||" + color);
+        }
+
+        String target = parts[1].trim();
+        if (target.isBlank()) {
+            return new Message(Type.UNKNOWN, "/counter " + payload);
+        }
+
+        return new Message(Type.EFFECT_RESPONSE, "COUNTERATTACK|" + target + "|" + color);
+    }
     /**
      * Returns whether the given text is a valid integer.
      *
