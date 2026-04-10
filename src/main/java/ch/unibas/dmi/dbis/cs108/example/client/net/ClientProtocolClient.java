@@ -238,12 +238,25 @@ public class ClientProtocolClient {
     }
 
     /**
-     * Sends a {@code COUNTERATTACK} effect response.
+     * Sends a {@code COUNTERATTACK} effect response that only requests a color.
      *
-     * @param targetPlayer the new redirected target player
+     * @param color the requested color
      */
-    public void resolveCounterattack(String targetPlayer) {
-        sendEffectTargetResponse("COUNTERATTACK", targetPlayer);
+    public void resolveCounterattack(CardColor color) {
+        Objects.requireNonNull(color, "color must not be null");
+        sendEffectResponse("COUNTERATTACK", "", color.name());
+    }
+
+    /**
+     * Sends a {@code COUNTERATTACK} effect response that redirects a pending
+     * effect to a target and also requests a color.
+     *
+     * @param targetPlayer the redirected target player
+     * @param color the requested color
+     */
+    public void resolveCounterattack(String targetPlayer, CardColor color) {
+        Objects.requireNonNull(color, "color must not be null");
+        sendEffectResponse("COUNTERATTACK", targetPlayer, color.name());
     }
 
     /**
