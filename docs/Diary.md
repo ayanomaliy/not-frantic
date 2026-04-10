@@ -348,3 +348,54 @@ Today, I focused on restructuring the client architecture and improving the game
 
 Today I did the measurements with MetricsReloaded then started to work with Jacoco but the test gave me 0% so i tried to figure out where the problem is. I figured our Java 25 is not compatible with our Grandle, so I would need to change our Java version to 21-22 since Grandle doesn't work with Java 25, but I also don't know if we are allowed to change our Java version, so I messaged our tutor and now im waiting for a response.
 Our QA concept is finished besides the Jacoco part. 
+
+## Date: April 8, 2026 (Senanur)
+
+### Lobby Constraints and Improved Lobby Display
+
+#### What did we do today?
+Today, I focused on improving lobby management by enforcing player limits and enhancing how lobby information is displayed on the client.
+
+#### Work Summary
+- Enforced a **maximum of 5 players per lobby** to prevent overfilling.
+- Added a validation to require **at least 2 players to start a game**.
+- Updated the server logic to reject invalid start attempts with appropriate feedback messages.
+- Improved lobby handling to ensure that only valid game conditions are allowed.
+
+- Implemented **formatted lobby list parsing** on the client side.
+- Extracted and displayed important lobby information such as:
+  - Lobby status (e.g., WAITING / PLAYING)
+  - Current player count
+- Improved the readability of the lobby list for better user experience.
+
+#### Future Plans
+- Prevent joining lobbies that are already full or currently playing.
+- Add visual indicators (e.g., disabled buttons) in the UI for invalid actions.
+- Extend lobby status handling (e.g., FINISHED state).
+
+## Date: April 10, 2026 (Senanur)
+
+### Lobby Join Restrictions and Status Handling
+
+#### What did we do today?
+Today, I worked on improving the lobby system by enforcing stricter join rules and refining how lobby states are handled and displayed in the UI.
+
+#### Work Summary
+- Prevented players from joining lobbies that are already in **PLAYING** state.
+- Added restrictions to block joining lobbies that are **full (5/5 players)**.
+- Ensured that invalid join attempts are properly handled and do not proceed silently.
+
+- Improved lobby state handling by distinguishing between different states such as:
+  - WAITING
+  - PLAYING
+  - FINISHED
+
+- Began refining how lobby information is displayed in the UI:
+  - Ensured correct parsing and display of lobby status and player count.
+  - Prepared the structure for further UI improvements related to lobby visibility.
+
+#### Future Plans
+- Fully implement and display the **FINISHED state** for completed games.
+- Prevent joining finished lobbies entirely.
+- Improve UI feedback (e.g., disable join buttons instead of only blocking on server side).
+- Continue refining synchronization between server state and UI.
