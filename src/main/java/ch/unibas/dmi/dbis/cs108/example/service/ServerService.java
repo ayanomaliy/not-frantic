@@ -1332,11 +1332,16 @@ public class ServerService {
 
         if (ScoreCalculator.isGameOver(lobby.getCumulativeScores(), state.getMaxScore())) {
             String winner = ScoreCalculator.getWinner(lobby.getCumulativeScores());
+
             broadcastToLobby(lobby, new Message(Message.Type.GAME_END, winner));
+
             state.setPhase(GamePhase.GAME_OVER);
             lobby.setGameState(null);
             lobby.setGameStarted(false);
             lobby.setLobbyStatus(LobbyStatus.FINISHED);
+
+            broadcastLobbyListToAllClients();
+
             log("Game over in lobby " + lobby.getLobbyId() + ". Winner: " + winner);
         } else {
             int nextRound = lobby.nextRound();
