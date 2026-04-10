@@ -189,6 +189,16 @@ public record Message(Type type, String content) {
                 case "/play", "/card" -> new Message(Type.PLAY_CARD, payload);
                 case "/draw", "/pickup" -> new Message(Type.DRAW_CARD, "");
                 case "/end", "/endturn" -> new Message(Type.END_TURN, "");
+
+                case "/skip" -> parseSingleTargetEffectCommand("SKIP", payload);
+                case "/counter" -> parseSingleTargetEffectCommand("COUNTERATTACK", payload);
+                case "/nicetry" -> parseSingleTargetEffectCommand("NICE_TRY", payload);
+                case "/gift" -> parseGiftCommand(payload);
+                case "/exchange" -> parseExchangeCommand(payload);
+                case "/fantastic" -> parseColorOrNumberEffectCommand("FANTASTIC", payload);
+                case "/fantasticfour" -> parseColorOrNumberEffectCommand("FANTASTIC_FOUR", payload);
+                case "/equality" -> parseEqualityCommand(payload);
+                case "/secondchance" -> parseSecondChanceCommand(payload);
                 default -> new Message(Type.UNKNOWN, trimmed);
             };
         }
@@ -315,5 +325,198 @@ public record Message(Type type, String content) {
      */
     private static String safe(String text) {
         return text == null ? "" : text;
+    }
+
+    /**
+     * Parses a slash command for an effect that only needs one target player.
+     *
+     * @param effectName the protocol effect name
+     * @param payload the raw payload after the slash command
+     * @return an {@code EFFECT_RESPONSE} message or {@code UNKNOWN} if invalid
+     */
+    private static Message parseSingleTargetEffectCommand(String effectName, String payload) {
+        if (payload == null || payload.isBlank()) {
+            return new Message(Type.UNKNOWN, "/" + effectName.toLowerCase());
+        }
+
+        String target = payload.trim();
+        return new Message(Type.EFFECT_RESPONSE, effectName + "|" + target);
+    }
+
+    /**
+     * Parses a human-friendly {@code /gift} command.
+     *
+     * <p>Format: {@code /gift <player> <cardId1> [cardId2]}</p>
+     *
+     * @param payload the raw payload after {@code /gift}
+     * @return an {@code EFFECT_RESPONSE} message or {@code UNKNOWN} if invalid
+     */
+    private static Message parseGiftCommand(String payload) {
+        String[] parts = payload.split("\\s+");
+        if (parts.length < 2 || parts.length > 3) {
+            return new Message(Type.UNKNOWN, "/gift " + payload);
+        }
+
+        String target = parts[0].trim();
+        StringBuilder cardIds = new StringBuilder();
+
+        for (int i = 1; i < parts.length; i++) {
+            if (!isInteger(parts[i])) {
+                return new Message(Type.UNKNOWN, "/gift " + payload);
+            }
+
+            if (cardIds.length() > 0) {
+                cardIds.append(",");
+            }
+            cardIds.append(parts[i].trim());
+        }
+
+        return new Message(Type.EFFECT_RESPONSE, "GIFT|" + target + "|" + cardIds);
+    }
+
+    /**
+     * Parses a human-friendly {@code /exchange} command.
+     *
+     * <p>Format: {@code /exchange <player> <cardId1> <cardId2>}</p>
+     *
+     * @param payload the raw payload after {@code /exchange}
+     * @return an {@code EFFECT_RESPONSE} message or {@code UNKNOWN} if invalid
+     */
+    private static Message parseExchangeCommand(String payload) {
+        String[] parts = payload.split("\\s+");
+        if (parts.length != 3) {
+            return new Message(Type.UNKNOWN, "/exchange " + payload);
+        }
+
+        if (!isInteger(parts[1]) || !isInteger(parts[2])) {
+            return new Message(Type.UNKNOWN, "/exchange " + payload);
+        }
+
+        String target = parts[0].trim();
+        return new Message(Type.EFFECT_RESPONSE,
+                "EXCHANGE|" + target + "|" + parts[1].trim() + "," + parts[2].trim());
+    }
+
+    /**
+     * Parses a human-friendly Fantastic-style command that may request either
+     * one playable color or one number, but never both.
+     *
+     * <p>Valid examples:</p>
+     * <ul>
+     *   <li>{@code /fantastic red}</li>
+     *   <li>{@code /fantastic 4}</li>
+     *   <li>{@code /fantasticfour blue}</li>
+     *   <li>{@code /fantasticfour 7}</li>
+     * </ul>
+     *
+     * @param effectName the protocol effect name
+     * @param payload the raw payload after the slash command
+     * @return an {@code EFFECT_RESPONSE} message or {@code UNKNOWN} if invalid
+     */
+    private static Message parseColorOrNumberEffectCommand(String effectName, String payload) {
+        if (payload == null || payload.isBlank()) {
+            return new Message(Type.UNKNOWN, "/" + effectName.toLowerCase());
+        }
+
+        String[] parts = payload.trim().split("\\s+");
+        if (parts.length != 1) {
+            return new Message(Type.UNKNOWN, "/" + effectName.toLowerCase() + " " + payload);
+        }
+
+        String token = parts[0].trim();
+        String upper = token.toUpperCase();
+
+        if (isPlayableColor(upper)) {
+            return new Message(Type.EFFECT_RESPONSE, effectName + "|" + upper);
+        }
+
+        if (isInteger(token)) {
+            return new Message(Type.EFFECT_RESPONSE, effectName + "||" + token);
+        }
+
+        return new Message(Type.UNKNOWN, "/" + effectName.toLowerCase() + " " + payload);
+    }
+
+    /**
+     * Parses a human-friendly {@code /equality} command.
+     *
+     * <p>Format: {@code /equality <player> <color>}</p>
+     *
+     * @param payload the raw payload after {@code /equality}
+     * @return an {@code EFFECT_RESPONSE} message or {@code UNKNOWN} if invalid
+     */
+    private static Message parseEqualityCommand(String payload) {
+        String[] parts = payload.split("\\s+");
+        if (parts.length != 2) {
+            return new Message(Type.UNKNOWN, "/equality " + payload);
+        }
+
+        String target = parts[0].trim();
+        String color = parts[1].trim().toUpperCase();
+
+        if (!isPlayableColor(color)) {
+            return new Message(Type.UNKNOWN, "/equality " + payload);
+        }
+
+        return new Message(Type.EFFECT_RESPONSE, "EQUALITY|" + target + "|" + color);
+    }
+
+    /**
+     * Parses a human-friendly {@code /secondchance} command.
+     *
+     * <p>Formats:</p>
+     * <ul>
+     *   <li>{@code /secondchance <cardId>}</li>
+     *   <li>{@code /secondchance draw}</li>
+     * </ul>
+     *
+     * @param payload the raw payload after {@code /secondchance}
+     * @return an {@code EFFECT_RESPONSE} message or {@code UNKNOWN} if invalid
+     */
+    private static Message parseSecondChanceCommand(String payload) {
+        if (payload == null || payload.isBlank()) {
+            return new Message(Type.UNKNOWN, "/secondchance");
+        }
+
+        String trimmed = payload.trim();
+
+        if ("draw".equalsIgnoreCase(trimmed)) {
+            return new Message(Type.EFFECT_RESPONSE, "SECOND_CHANCE|");
+        }
+
+        if (!isInteger(trimmed)) {
+            return new Message(Type.UNKNOWN, "/secondchance " + payload);
+        }
+
+        return new Message(Type.EFFECT_RESPONSE, "SECOND_CHANCE|" + trimmed);
+    }
+
+    /**
+     * Returns whether the given text is a valid integer.
+     *
+     * @param text the raw text to test
+     * @return {@code true} if the text can be parsed as an integer
+     */
+    private static boolean isInteger(String text) {
+        try {
+            Integer.parseInt(text.trim());
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Returns whether the given text is one of the playable requested colors.
+     *
+     * @param text the color text to test
+     * @return {@code true} if the text is {@code RED}, {@code GREEN},
+     *         {@code BLUE}, or {@code YELLOW}
+     */
+    private static boolean isPlayableColor(String text) {
+        return "RED".equals(text)
+                || "GREEN".equals(text)
+                || "BLUE".equals(text)
+                || "YELLOW".equals(text);
     }
 }

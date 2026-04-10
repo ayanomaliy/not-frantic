@@ -92,9 +92,31 @@ public class GameMessageParser {
                 yield EffectArgs.withTargetAndCards(target, cards);
             }
             case FANTASTIC, FANTASTIC_FOUR -> {
-                if (parts.length < 2) yield EffectArgs.empty();
-                CardColor color = parseColor(parts[1]);
-                Integer number = (parts.length >= 3) ? parseNumber(parts[2]) : null;
+                if (parts.length < 2) {
+                    yield null;
+                }
+
+                CardColor color = null;
+                Integer number = null;
+
+                if (!parts[1].isBlank()) {
+                    color = parseColor(parts[1]);
+                    if (color == null) {
+                        yield null;
+                    }
+                }
+
+                if (parts.length >= 3 && !parts[2].isBlank()) {
+                    number = parseNumber(parts[2]);
+                    if (number == null) {
+                        yield null;
+                    }
+                }
+
+                if ((color == null && number == null) || (color != null && number != null)) {
+                    yield null;
+                }
+
                 yield EffectArgs.withColorAndNumber(color, number);
             }
             case EQUALITY -> {
