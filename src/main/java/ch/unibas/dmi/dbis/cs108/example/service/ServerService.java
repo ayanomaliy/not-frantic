@@ -112,7 +112,8 @@ public class ServerService {
      * <p>This helper centralizes all lobby-leaving behavior. It removes the
      * session from the current lobby, clears the lobby mapping, broadcasts the
      * updated player list to the remaining lobby members, deletes the lobby if
-     * it becomes empty, and refreshes the global lobby list for all clients.</p>
+     * it becomes empty and is not finished, and refreshes the global lobby list
+     * for all clients.</p>
      *
      * <p>If {@code reasonText} is not blank, an informational message of the
      * form {@code "<playerName> <reasonText>"} is broadcast to the remaining
@@ -144,7 +145,8 @@ public class ServerService {
 
         broadcastPlayerList(currentLobby);
 
-        if (currentLobby.getPlayerCount() == 0) {
+        if (currentLobby.getPlayerCount() == 0
+                && currentLobby.getLobbyStatus() != LobbyStatus.FINISHED) {
             lobbies.remove(currentLobby.getLobbyId());
             log("Removed empty lobby: " + currentLobby.getLobbyId());
         }
@@ -1009,6 +1011,14 @@ public class ServerService {
         }
 
         log(session.getPlayerName() + " requested game start in lobby " + lobby.getLobbyId() + ".");
+
+        if (lobby.getLobbyStatus() == LobbyStatus.FINISHED) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "This lobby has already finished and cannot be started again."
+            ).encode());
+            return;
+        }
 
         if (lobby.isGameStarted()) {
             log("Start rejected: game already started in lobby " + lobby.getLobbyId() + ".");
