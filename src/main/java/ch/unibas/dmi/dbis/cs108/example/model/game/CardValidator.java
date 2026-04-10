@@ -92,13 +92,19 @@ public class CardValidator {
     /**
      * SPECIAL_SINGLE card rules:
      * If a color request is active, the card's color must match it.
+     * If a number request is active, any single-color special card is playable.
      * Otherwise: same color as top OR same symbol (same effect) as top.
      */
     private static boolean canPlaySpecialSingle(Card card, Card top, GameState state) {
         CardColor reqColor = state.getRequestedColor();
+        Integer reqNumber = state.getRequestedNumber();
 
         if (reqColor != null) {
             return card.color() == reqColor;
+        }
+
+        if (reqNumber != null) {
+            return true;
         }
 
         boolean sameColor = card.color() == top.color();
