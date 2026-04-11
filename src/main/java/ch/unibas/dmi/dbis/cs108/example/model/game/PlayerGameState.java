@@ -15,6 +15,7 @@ public class PlayerGameState {
     private int totalScore;
     private boolean skipped;
     private boolean hasPlayedThisTurn;
+    private boolean hasDrawnThisTurn;
 
     public PlayerGameState(String playerName) {
         this.playerName = playerName;
@@ -64,6 +65,13 @@ public class PlayerGameState {
 
     public void setHasPlayedThisTurn(boolean hasPlayedThisTurn) {
         this.hasPlayedThisTurn = hasPlayedThisTurn;
+    }
+    public boolean hasDrawnThisTurn() {
+        return hasDrawnThisTurn;
+    }
+
+    public void setHasDrawnThisTurn(boolean hasDrawnThisTurn) {
+        this.hasDrawnThisTurn = hasDrawnThisTurn;
     }
 
     /** Adds a card to the player's hand. */

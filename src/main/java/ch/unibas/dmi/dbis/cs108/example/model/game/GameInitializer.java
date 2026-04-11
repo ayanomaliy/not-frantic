@@ -74,9 +74,9 @@ public class GameInitializer {
             }
         }
 
-        // 6. Flip top card from draw pile to discard pile
+        // 6. Flip a valid starter card from draw pile to discard pile
         Deque<Card> discardPile = new ArrayDeque<>();
-        discardPile.push(drawPile.pop());
+        discardPile.push(drawValidStarterCard(drawPile));
 
         // 7. Build and return GameState (phase defaults to TURN_START)
         return new GameState(players, drawPile, discardPile, eventPile, maxScore);
@@ -101,5 +101,48 @@ public class GameInitializer {
                     .thenComparing(Comparator.naturalOrder()));
         }
         return ordered;
+    }
+
+    /**
+     * Draws the first valid starter card from the draw pile.
+     *
+     * <p>The initial discard card should not be a special card that creates an
+     * ambiguous or unplayable opening state. Therefore, only normal color cards
+     * are allowed as starter cards.</p>
+     *
+     * <p>Cards that are skipped while searching are placed back at the bottom of
+     * the draw pile in the same order in which they were encountered.</p>
+     *
+     * @param drawPile the shuffled draw pile
+     * @return the chosen starter card
+     * @throws IllegalStateException if no valid starter card can be found
+     */
+    private static Card drawValidStarterCard(Deque<Card> drawPile) {
+        List<Card> skippedCards = new ArrayList<>();
+
+        while (!drawPile.isEmpty()) {
+            Card candidate = drawPile.pop();
+
+            if (isValidStarterCard(candidate)) {
+                for (int i = 0; i < skippedCards.size(); i++) {
+                    drawPile.addLast(skippedCards.get(i));
+                }
+                return candidate;
+            }
+
+            skippedCards.add(candidate);
+        }
+
+        throw new IllegalStateException("Could not find a valid starter card.");
+    }
+
+    /**
+     * Returns whether the given card is allowed as the initial discard card.
+     *
+     * @param card the candidate starter card
+     * @return {@code true} if the card is a valid starter card
+     */
+    private static boolean isValidStarterCard(Card card) {
+        return card.type() == CardType.COLOR;
     }
 }

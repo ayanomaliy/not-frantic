@@ -132,6 +132,10 @@ public class ClientMain {
             while ((line = userIn.readLine()) != null) {
                 String trimmed = line.trim();
 
+                if (trimmed.isBlank()) {
+                    continue;
+                }
+
                 Message message = client.parseRawCommand(trimmed);
 
                 if (message == null) {

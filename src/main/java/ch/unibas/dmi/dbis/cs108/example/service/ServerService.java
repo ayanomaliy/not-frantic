@@ -1180,9 +1180,10 @@ public class ServerService {
 
         List<GameEvent> events = TurnEngine.playCard(state, playerName, card);
         broadcastEvents(lobby, events);
-        broadcastGameState(lobby);
+        broadcastAllHands(lobby);
 
         if (state.getPhase() == GamePhase.ROUND_END) {
+            broadcastGameState(lobby);
             handleRoundEnd(lobby);
         } else if (state.getPhase() == GamePhase.RESOLVING_EFFECT) {
             Card eventCard = state.getActiveEventCard();
@@ -1215,7 +1216,10 @@ public class ServerService {
                 ));
             }
         } else if (state.getPhase() == GamePhase.TURN_START) {
+            broadcastGameState(lobby);
             TurnEngine.startTurn(state);
+            broadcastGameState(lobby);
+        } else {
             broadcastGameState(lobby);
         }
     }
@@ -1235,12 +1239,7 @@ public class ServerService {
 
         List<GameEvent> events = TurnEngine.drawCard(state, playerName);
         broadcastEvents(lobby, events);
-
-        session.send(new Message(
-                Message.Type.HAND_UPDATE,
-                GameStateSerializer.serializeHand(state.getPlayer(playerName))
-        ).encode());
-
+        broadcastAllHands(lobby);
         broadcastGameState(lobby);
 
         if (state.getPhase() == GamePhase.ROUND_END) {
@@ -1316,6 +1315,7 @@ public class ServerService {
 
         List<GameEvent> events = EffectResolver.resolve(effect, state, playerName, args);
         broadcastEvents(lobby, events);
+        broadcastAllHands(lobby);
         broadcastGameState(lobby);
 
         if (state.getPhase() == GamePhase.ROUND_END) {

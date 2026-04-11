@@ -13,9 +13,8 @@ import java.util.List;
  *   <li>{@link #startTurn} — must be called when phase is {@code TURN_START}.
  *       Transitions to {@code AWAITING_PLAY}.</li>
  *   <li>{@link #playCard} / {@link #drawCard} — require phase {@code AWAITING_PLAY}.</li>
- *   <li>{@link #endTurn} — advances to the next non-skipped player and sets
- *       phase to {@code TURN_START}. Called automatically after a plain card
- *       play; must be called explicitly after effect resolution (Phase 6).</li>
+ *   <li>{@link #endTurn} — may only succeed if the current player has already
+ *       played a card or drawn a card during this turn.</li>
  * </ul>
  *
  * <h2>Request clearing</h2>
@@ -35,9 +34,12 @@ public class TurnEngine {
      * {@code AWAITING_PLAY}. Call this once at the beginning of each turn
      * before accepting play or draw actions.
      *
-     * @return A single {@link GameEvent.EventType#TURN_ADVANCED} event.
+     * @param state the current game state
+     * @return a single {@link GameEvent.EventType#TURN_ADVANCED} event
      */
     public static List<GameEvent> startTurn(GameState state) {
+        state.getCurrentPlayer().setHasPlayedThisTurn(false);
+        state.getCurrentPlayer().setHasDrawnThisTurn(false);
         state.setPhase(GamePhase.AWAITING_PLAY);
         return List.of(GameEvent.turnAdvanced(state.getCurrentPlayer().getPlayerName()));
     }
@@ -50,24 +52,25 @@ public class TurnEngine {
      * Attempts to play {@code card} on behalf of {@code playerName}.
      *
      * <p>On success, the card is removed from the player's hand and placed on
-     * the discard pile. Depending on the card type:
+     * the discard pile. Depending on the card type:</p>
      * <ul>
-     *   <li>Plain COLOR or FUCK_YOU — {@link #endTurn} is called automatically.</li>
-     *   <li>BLACK — the top event card is flipped; phase becomes
+     *   <li>Plain {@code COLOR} or {@code FUCK_YOU} — {@link #endTurn} is called automatically.</li>
+     *   <li>{@code BLACK} — the top event card is flipped; phase becomes
      *       {@code RESOLVING_EFFECT}.</li>
-     *   <li>SPECIAL_SINGLE / SPECIAL_FOUR — the effect is pushed onto the
+     *   <li>{@code SPECIAL_SINGLE} / {@code SPECIAL_FOUR} — the effect is pushed onto the
      *       pending-effects stack; phase becomes {@code RESOLVING_EFFECT}.</li>
      * </ul>
-     * If the player's hand reaches zero after playing, the round ends
-     * immediately regardless of card type.
+     *
+     * <p>If the player's hand reaches zero after playing, the round ends
+     * immediately regardless of card type.</p>
      *
      * <p>On failure (wrong turn, wrong phase, invalid card), a single
-     * {@link GameEvent.EventType#ERROR} event is returned and state is unchanged.
+     * {@link GameEvent.EventType#ERROR} event is returned and state is unchanged.</p>
      *
-     * @param state      Current game state.
-     * @param playerName Name of the player attempting to play.
-     * @param card       The card to play (must be in the player's hand).
-     * @return List of events describing what happened.
+     * @param state the current game state
+     * @param playerName the name of the player attempting to play
+     * @param card the card to play
+     * @return a list of generated game events
      */
     public static List<GameEvent> playCard(GameState state, String playerName, Card card) {
         List<GameEvent> events = new ArrayList<>();
@@ -144,9 +147,11 @@ public class TurnEngine {
      *
      * <p>If the draw pile is empty, the round ends immediately. Otherwise the
      * phase remains {@code AWAITING_PLAY}: the player may still play a card
-     * (including the one just drawn) before ending their turn.
+     * after drawing, but may not draw a second time in the same turn.</p>
      *
-     * @return List of events describing what happened.
+     * @param state the current game state
+     * @param playerName the name of the player drawing
+     * @return a list of generated game events
      */
     public static List<GameEvent> drawCard(GameState state, String playerName) {
         List<GameEvent> events = new ArrayList<>();
@@ -163,6 +168,14 @@ public class TurnEngine {
             return events;
         }
 
+        PlayerGameState player = state.getPlayer(playerName);
+
+        // --- Guard: only one normal draw per turn ---
+        if (player.hasDrawnThisTurn()) {
+            events.add(GameEvent.error("You already drew a card this turn."));
+            return events;
+        }
+
         // --- Draw ---
         Card drawn = state.drawFromDrawPile();
         if (drawn == null) {
@@ -171,10 +184,11 @@ public class TurnEngine {
             return events;
         }
 
-        state.getPlayer(playerName).addCard(drawn);
+        player.addCard(drawn);
+        player.setHasDrawnThisTurn(true);
         events.add(GameEvent.cardDrawn(playerName, drawn.id()));
-        // Phase stays AWAITING_PLAY — player may still play
 
+        // Phase stays AWAITING_PLAY — player may still play one valid card
         return events;
     }
 
@@ -185,15 +199,28 @@ public class TurnEngine {
     /**
      * Ends the current player's turn and advances to the next non-skipped player.
      *
+     * <p>The current player may only end their turn if they have already
+     * played a card or drawn a card during this turn. This prevents empty
+     * passes with no action.</p>
+     *
      * <p>If the next player in line has a skip flag set, their flag is consumed
      * and the turn passes to the player after them. A safety guard prevents an
-     * infinite loop when all players are somehow skipped.
+     * infinite loop when all players are somehow skipped.</p>
      *
-     * @return A single {@link GameEvent.EventType#TURN_ADVANCED} event naming the
-     *         player whose turn it now is.
+     * @param state the current game state
+     * @return a list containing either an error event or a turn-advanced event
      */
     public static List<GameEvent> endTurn(GameState state) {
-        state.getCurrentPlayer().setHasPlayedThisTurn(false);
+        PlayerGameState current = state.getCurrentPlayer();
+
+        if (!current.hasPlayedThisTurn() && !current.hasDrawnThisTurn()) {
+            return List.of(GameEvent.error(
+                    "You must play a card or draw a card before ending your turn."
+            ));
+        }
+
+        current.setHasPlayedThisTurn(false);
+        current.setHasDrawnThisTurn(false);
 
         int playerCount = state.getPlayerOrder().size();
         int advanceCount = 0;
