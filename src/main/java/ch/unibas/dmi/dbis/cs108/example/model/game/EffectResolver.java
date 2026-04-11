@@ -80,9 +80,7 @@ public class EffectResolver {
             state.pushToDiscardPile(toPlay);
             events.add(GameEvent.cardPlayed(actingPlayer, toPlay.id()));
 
-            if (actor.getHandSize() == 0) {
-                state.setPhase(GamePhase.ROUND_END);
-                events.add(GameEvent.roundEnded("player_empty_hand"));
+            if (TurnEngine.endRoundIfAnyPlayerHasNoCards(state, events)) {
                 return events;
             }
         } else {
@@ -93,7 +91,9 @@ public class EffectResolver {
                 events.add(GameEvent.cardDrawn(actingPlayer, drawn.id()));
             }
         }
-
+        if (TurnEngine.endRoundIfAnyPlayerHasNoCards(state, events)) {
+            return events;
+        }
         events.addAll(TurnEngine.endTurn(state));
         return events;
     }
@@ -119,8 +119,8 @@ public class EffectResolver {
     // -------------------------------------------------------------------------
 
     private static List<GameEvent> resolveGift(GameState state,
-                                                String actingPlayer,
-                                                EffectArgs args) {
+                                               String actingPlayer,
+                                               EffectArgs args) {
         List<GameEvent> events = new ArrayList<>();
         PlayerGameState actor  = state.getPlayer(actingPlayer);
         PlayerGameState target = state.getPlayer(args.getTargetPlayer());
@@ -131,6 +131,10 @@ public class EffectResolver {
             events.add(new GameEvent(GameEvent.EventType.EFFECT_TRIGGERED,
                     SpecialEffect.GIFT.name() + ":" + actingPlayer
                             + ">" + args.getTargetPlayer() + ":" + card.id()));
+        }
+
+        if (TurnEngine.endRoundIfAnyPlayerHasNoCards(state, events)) {
+            return events;
         }
 
         events.addAll(TurnEngine.endTurn(state));
@@ -161,6 +165,10 @@ public class EffectResolver {
         events.add(new GameEvent(GameEvent.EventType.EFFECT_TRIGGERED,
                 SpecialEffect.EXCHANGE.name() + ":" + actingPlayer
                         + "<>" + args.getTargetPlayer()));
+        if (TurnEngine.endRoundIfAnyPlayerHasNoCards(state, events)) {
+            return events;
+        }
+
         events.addAll(TurnEngine.endTurn(state));
         return events;
     }
@@ -221,6 +229,9 @@ public class EffectResolver {
         state.setRequestedColor(args.getChosenColor());
         state.setRequestedNumber(args.getChosenNumber());
         events.add(GameEvent.effectTriggered(SpecialEffect.FANTASTIC_FOUR));
+        if (TurnEngine.endRoundIfAnyPlayerHasNoCards(state, events)) {
+            return events;
+        }
         events.addAll(TurnEngine.endTurn(state));
         return events;
     }

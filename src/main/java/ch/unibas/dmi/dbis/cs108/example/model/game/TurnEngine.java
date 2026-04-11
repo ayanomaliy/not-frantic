@@ -61,7 +61,7 @@ public class TurnEngine {
      *       pending-effects stack; phase becomes {@code RESOLVING_EFFECT}.</li>
      * </ul>
      *
-     * <p>If the player's hand reaches zero after playing, the round ends
+     * <p>If any player's hand reaches zero after the play, the round ends
      * immediately regardless of card type.</p>
      *
      * <p>On failure (wrong turn, wrong phase, invalid card), a single
@@ -75,48 +75,39 @@ public class TurnEngine {
     public static List<GameEvent> playCard(GameState state, String playerName, Card card) {
         List<GameEvent> events = new ArrayList<>();
 
-        // --- Guard: correct player ---
         if (!state.getCurrentPlayer().getPlayerName().equals(playerName)) {
             events.add(GameEvent.error("Not your turn"));
             return events;
         }
 
-        // --- Guard: correct phase ---
         if (state.getPhase() != GamePhase.AWAITING_PLAY) {
             events.add(GameEvent.error("Cannot play card in phase " + state.getPhase()));
             return events;
         }
 
-        // --- Guard: valid play ---
         Card top = state.peekDiscardPile();
         if (!CardValidator.canPlay(card, top, state)) {
             events.add(GameEvent.error("Card " + card.id() + " cannot be played on " + top.id()));
             return events;
         }
 
-        // --- Execute: remove from hand, push to discard ---
         PlayerGameState player = state.getPlayer(playerName);
         player.removeCard(card);
         state.pushToDiscardPile(card);
         player.setHasPlayedThisTurn(true);
 
-        // Clear any active request — effects in Phase 6 will set new ones
         state.setRequestedColor(null);
         state.setRequestedNumber(null);
 
         events.add(GameEvent.cardPlayed(playerName, card.id()));
 
-        // --- Check round end: player emptied hand ---
-        if (player.getHandSize() == 0) {
-            state.setPhase(GamePhase.ROUND_END);
-            events.add(GameEvent.roundEnded("player_empty_hand"));
+        if (endRoundIfAnyPlayerHasNoCards(state, events)) {
             return events;
         }
 
-        // --- Route by card type ---
         switch (card.type()) {
             case BLACK -> {
-                state.setSpecialsBlocked(false); // a new black card lifts any BLOCK_SPECIALS effect
+                state.setSpecialsBlocked(false);
                 Card eventCard = state.drawFromEventPile();
                 if (eventCard != null) {
                     state.setActiveEventCard(eventCard);
@@ -129,10 +120,7 @@ public class TurnEngine {
                 events.add(GameEvent.effectTriggered(card.effect()));
                 state.setPhase(GamePhase.RESOLVING_EFFECT);
             }
-            default -> {
-                // COLOR, FUCK_YOU: no effect — auto-advance
-                events.addAll(endTurn(state));
-            }
+            default -> events.addAll(endTurn(state));
         }
 
         return events;
@@ -156,13 +144,11 @@ public class TurnEngine {
     public static List<GameEvent> drawCard(GameState state, String playerName) {
         List<GameEvent> events = new ArrayList<>();
 
-        // --- Guard: correct player ---
         if (!state.getCurrentPlayer().getPlayerName().equals(playerName)) {
             events.add(GameEvent.error("Not your turn"));
             return events;
         }
 
-        // --- Guard: correct phase ---
         if (state.getPhase() != GamePhase.AWAITING_PLAY) {
             events.add(GameEvent.error("Cannot draw card in phase " + state.getPhase()));
             return events;
@@ -170,13 +156,11 @@ public class TurnEngine {
 
         PlayerGameState player = state.getPlayer(playerName);
 
-        // --- Guard: only one normal draw per turn ---
         if (player.hasDrawnThisTurn()) {
             events.add(GameEvent.error("You already drew a card this turn."));
             return events;
         }
 
-        // --- Draw ---
         Card drawn = state.drawFromDrawPile();
         if (drawn == null) {
             state.setPhase(GamePhase.ROUND_END);
@@ -188,7 +172,6 @@ public class TurnEngine {
         player.setHasDrawnThisTurn(true);
         events.add(GameEvent.cardDrawn(playerName, drawn.id()));
 
-        // Phase stays AWAITING_PLAY — player may still play one valid card
         return events;
     }
 
@@ -211,12 +194,18 @@ public class TurnEngine {
      * @return a list containing either an error event or a turn-advanced event
      */
     public static List<GameEvent> endTurn(GameState state) {
+        List<GameEvent> events = new ArrayList<>();
         PlayerGameState current = state.getCurrentPlayer();
 
+        if (endRoundIfAnyPlayerHasNoCards(state, events)) {
+            return events;
+        }
+
         if (!current.hasPlayedThisTurn() && !current.hasDrawnThisTurn()) {
-            return List.of(GameEvent.error(
+            events.add(GameEvent.error(
                     "You must play a card or draw a card before ending your turn."
             ));
+            return events;
         }
 
         current.setHasPlayedThisTurn(false);
@@ -225,19 +214,42 @@ public class TurnEngine {
         int playerCount = state.getPlayerOrder().size();
         int advanceCount = 0;
 
-        // Advance at least once, keep advancing while the next player is skipped
         do {
             state.advanceToNextPlayer();
             advanceCount++;
             PlayerGameState next = state.getCurrentPlayer();
             if (next.isSkipped()) {
-                next.setSkipped(false); // consume the skip
+                next.setSkipped(false);
             } else {
                 break;
             }
         } while (advanceCount < playerCount);
 
         state.setPhase(GamePhase.TURN_START);
-        return List.of(GameEvent.turnAdvanced(state.getCurrentPlayer().getPlayerName()));
+        events.add(GameEvent.turnAdvanced(state.getCurrentPlayer().getPlayerName()));
+        return events;
+    }
+
+    /**
+     * Ends the round immediately if any player currently has an empty hand.
+     *
+     * <p>This centralizes the "player_empty_hand" rule so that all game actions
+     * can trigger round end consistently once a hand reaches size 0.</p>
+     *
+     * @param state the current game state
+     * @param events the event list to append the round-end event to
+     * @return {@code true} if the round was ended, otherwise {@code false}
+     */
+    public static boolean endRoundIfAnyPlayerHasNoCards(GameState state, List<GameEvent> events) {
+        boolean anyEmpty = state.getPlayerOrder().stream()
+                .anyMatch(player -> player.getHandSize() == 0);
+
+        if (anyEmpty) {
+            state.setPhase(GamePhase.ROUND_END);
+            events.add(GameEvent.roundEnded("player_empty_hand"));
+            return true;
+        }
+
+        return false;
     }
 }
