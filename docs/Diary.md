@@ -399,3 +399,11 @@ Today, I worked on improving the lobby system by enforcing stricter join rules a
 - Prevent joining finished lobbies entirely.
 - Improve UI feedback (e.g., disable join buttons instead of only blocking on server side).
 - Continue refining synchronization between server state and UI.
+
+## Date: April 11, 2026
+
+### QA (Sevval)
+
+#### What did we do today?
+Since i thought our Java version doesn't work with javacoco, I messaged our tutor and we are in touch trying to solve this problem. 
+QA Concept is missing just the javacoco part and the project plan is done aswell.
