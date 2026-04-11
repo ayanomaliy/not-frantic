@@ -1,15 +1,22 @@
 package ch.unibas.dmi.dbis.cs108.example.client.net;
 
+import ch.unibas.dmi.dbis.cs108.example.model.game.CardColor;
 import ch.unibas.dmi.dbis.cs108.example.service.Message;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * High-level protocol client built on top of {@link NetworkClientCore}.
  *
  * <p>This class exposes uniform typed methods for sending protocol messages,
  * so both CLI and GUI can use the same message-sending API without relying on
- * legacy slash commands internally.</p>
+ * raw protocol strings internally.</p>
+ *
+ * <p>All effect-response protocol formatting is centralized in this class so
+ * future protocol changes only have to be implemented in one place.</p>
  */
 public class ClientProtocolClient {
 
@@ -167,6 +174,27 @@ public class ClientProtocolClient {
     }
 
     /**
+     * Requests the current public game state.
+     */
+    public void requestGameState() {
+        send(new Message(Message.Type.GET_GAME_STATE, ""));
+    }
+
+    /**
+     * Requests the most recent round-end summary.
+     */
+    public void requestRoundEnd() {
+        send(new Message(Message.Type.GET_ROUND_END, ""));
+    }
+
+    /**
+     * Requests the game-end summary.
+     */
+    public void requestGameEnd() {
+        send(new Message(Message.Type.GET_GAME_END, ""));
+    }
+
+    /**
      * Requests to draw one card.
      */
     public void drawCard() {
@@ -188,6 +216,214 @@ public class ClientProtocolClient {
     public void playCard(int cardId) {
         send(new Message(Message.Type.PLAY_CARD, String.valueOf(cardId)));
     }
+
+    /**
+     * Sends an effect response with a target player for effects such as
+     * {@code SKIP}, {@code COUNTERATTACK}, or {@code NICE_TRY}.
+     *
+     * @param effectName the effect name as expected by the server
+     * @param targetPlayer the selected target player
+     */
+    public void sendEffectTargetResponse(String effectName, String targetPlayer) {
+        sendEffectResponse(effectName, targetPlayer);
+    }
+
+    /**
+     * Sends a {@code SKIP} effect response.
+     *
+     * @param targetPlayer the player whose next turn should be skipped
+     */
+    public void resolveSkip(String targetPlayer) {
+        sendEffectTargetResponse("SKIP", targetPlayer);
+    }
+
+    /**
+     * Sends a {@code COUNTERATTACK} effect response that only requests a color.
+     *
+     * @param color the requested color
+     */
+    public void resolveCounterattack(CardColor color) {
+        Objects.requireNonNull(color, "color must not be null");
+        sendEffectResponse("COUNTERATTACK", "", color.name());
+    }
+
+    /**
+     * Sends a {@code COUNTERATTACK} effect response that redirects a pending
+     * effect to a target and also requests a color.
+     *
+     * @param targetPlayer the redirected target player
+     * @param color the requested color
+     */
+    public void resolveCounterattack(String targetPlayer, CardColor color) {
+        Objects.requireNonNull(color, "color must not be null");
+        sendEffectResponse("COUNTERATTACK", targetPlayer, color.name());
+    }
+
+    /**
+     * Sends a {@code NICE_TRY} effect response.
+     *
+     * @param targetPlayer the player who must draw after attempting to end the round
+     */
+    public void resolveNiceTry(String targetPlayer) {
+        sendEffectTargetResponse("NICE_TRY", targetPlayer);
+    }
+
+    /**
+     * Sends a {@code GIFT} effect response.
+     *
+     * @param targetPlayer the receiving player
+     * @param cardIds the ids of the cards to transfer
+     */
+    public void resolveGift(String targetPlayer, List<Integer> cardIds) {
+        sendEffectResponse("GIFT", targetPlayer, joinCardIds(cardIds));
+    }
+
+    /**
+     * Sends an {@code EXCHANGE} effect response.
+     *
+     * @param targetPlayer the exchange partner
+     * @param cardIds the ids of the selected cards to exchange
+     */
+    public void resolveExchange(String targetPlayer, List<Integer> cardIds) {
+        sendEffectResponse("EXCHANGE", targetPlayer, joinCardIds(cardIds));
+    }
+
+    /**
+     * Sends a {@code FANTASTIC} effect response.
+     *
+     * <p>The number may be {@code null} if only a color should be requested.</p>
+     *
+     * @param color the selected color
+     * @param number the selected number, or {@code null}
+     */
+    public void resolveFantastic(CardColor color, Integer number) {
+        sendColorOrNumberEffect("FANTASTIC", color, number);
+    }
+
+    /**
+     * Sends a {@code FANTASTIC_FOUR} effect response.
+     *
+     * <p>Exactly one of {@code color} or {@code number} must be set. The
+     * {@code targetPlayers} list must contain exactly four recipient names.
+     * Repeated names are allowed.</p>
+     *
+     * @param color the selected color, or {@code null}
+     * @param number the selected number, or {@code null}
+     * @param targetPlayers the four recipient slots for the distributed cards
+     */
+    public void resolveFantasticFour(CardColor color,
+                                     Integer number,
+                                     List<String> targetPlayers) {
+        Objects.requireNonNull(targetPlayers, "targetPlayers must not be null");
+
+        if (targetPlayers.size() != 4) {
+            throw new IllegalArgumentException("FANTASTIC_FOUR requires exactly 4 target players.");
+        }
+
+        boolean hasColor = color != null;
+        boolean hasNumber = number != null;
+
+        if (hasColor == hasNumber) {
+            throw new IllegalArgumentException("Exactly one of color or number must be set.");
+        }
+
+        String targets = String.join(",", targetPlayers);
+
+        if (hasColor) {
+            sendEffectResponse("FANTASTIC_FOUR", color.name(), "", targets);
+        } else {
+            sendEffectResponse("FANTASTIC_FOUR", "", String.valueOf(number), targets);
+        }
+    }
+
+    /**
+     * Sends an {@code EQUALITY} effect response.
+     *
+     * @param targetPlayer the player who should draw up
+     * @param color the requested color for the next play
+     */
+    public void resolveEquality(String targetPlayer, CardColor color) {
+        Objects.requireNonNull(color, "color must not be null");
+        sendEffectResponse("EQUALITY", targetPlayer, color.name());
+    }
+
+    /**
+     * Sends a {@code SECOND_CHANCE} effect response for playing another card.
+     *
+     * @param cardId the id of the card to play next
+     */
+    public void resolveSecondChance(int cardId) {
+        sendEffectResponse("SECOND_CHANCE", String.valueOf(cardId));
+    }
+
+    /**
+     * Sends a {@code SECOND_CHANCE} effect response indicating that no card
+     * is played and the draw penalty should be applied.
+     */
+    public void resolveSecondChanceDrawPenalty() {
+        send(new Message(Message.Type.EFFECT_RESPONSE, "SECOND_CHANCE|"));
+    }
+
+
+    /**
+     * Sends a raw effect response using the unified protocol type.
+     *
+     * <p>All given parts are joined using {@code |}. Null parts are converted
+     * to empty strings.</p>
+     *
+     * @param parts the payload parts starting with the effect name
+     */
+    private void sendEffectResponse(String... parts) {
+        String payload = String.join("|",
+                java.util.Arrays.stream(parts)
+                        .map(part -> part == null ? "" : part)
+                        .toArray(String[]::new)
+        );
+
+        send(new Message(Message.Type.EFFECT_RESPONSE, payload));
+    }
+
+    /**
+     * Sends an effect response that requests either one color or one number.
+     *
+     * @param effectName the effect name
+     * @param color the selected color, or {@code null}
+     * @param number the selected number, or {@code null}
+     */
+    private void sendColorOrNumberEffect(String effectName, CardColor color, Integer number) {
+        boolean hasColor = color != null;
+        boolean hasNumber = number != null;
+
+        if (hasColor == hasNumber) {
+            throw new IllegalArgumentException("Exactly one of color or number must be set.");
+        }
+
+        if (hasColor) {
+            sendEffectResponse(effectName, color.name());
+        } else {
+            sendEffectResponse(effectName, "", String.valueOf(number));
+        }
+    }
+
+    /**
+     * Joins card ids into the comma-separated format expected by the server.
+     *
+     * @param cardIds the card ids to join
+     * @return a comma-separated card id list
+     */
+    private String joinCardIds(List<Integer> cardIds) {
+        Objects.requireNonNull(cardIds, "cardIds must not be null");
+
+        return cardIds.stream()
+                .map(String::valueOf)
+                .collect(Collectors.joining(","));
+    }
+
+
+
+
+
+
 
     /**
      * Sends a raw terminal-style command by parsing it into a structured message.

@@ -13,6 +13,7 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextInputDialog;
 import javafx.stage.Stage;
+import ch.unibas.dmi.dbis.cs108.example.client.CardTextFormatter;
 
 /**
  * Coordinates JavaFX view changes and user interaction for the graphical
@@ -276,7 +277,7 @@ public class MainController {
                 continue;
             }
 
-            Button cardButton = new Button("Card #" + cardId);
+            Button cardButton = new Button(CardTextFormatter.formatCardLabelWithId(cardId));
             cardButton.getStyleClass().add("game-card-button");
             cardButton.setPrefSize(90, 130);
             cardButton.setMinSize(90, 130);

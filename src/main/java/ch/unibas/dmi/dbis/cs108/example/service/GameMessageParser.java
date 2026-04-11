@@ -21,8 +21,10 @@ import java.util.List;
  *       <li>SKIP / COUNTERATTACK / NICE_TRY: {@code |<targetPlayer>}</li>
  *       <li>GIFT:     {@code |<targetPlayer>|<cardId1>[,<cardId2>]}</li>
  *       <li>EXCHANGE: {@code |<targetPlayer>|<cardId1>,<cardId2>}</li>
- *       <li>FANTASTIC:     {@code |<COLOR>} or {@code |<COLOR>|<number>}</li>
- *       <li>FANTASTIC_FOUR:{@code |<COLOR>} or {@code |<COLOR>|<number>}</li>
+ *       <li>FANTASTIC: {@code |<COLOR>} or {@code ||<number>}</li>
+ *       <li>FANTASTIC_FOUR:
+ *           {@code |<COLOR>||<player1>,<player2>,<player3>,<player4>}
+ *           or {@code ||<number>|<player1>,<player2>,<player3>,<player4>}</li>
  *       <li>EQUALITY: {@code |<targetPlayer>|<COLOR>}</li>
  *       <li>SECOND_CHANCE: {@code |<cardId>}  (empty = draw penalty)</li>
  *     </ul>
@@ -75,9 +77,33 @@ public class GameMessageParser {
         }
 
         EffectArgs args = switch (effect) {
-            case SKIP, COUNTERATTACK, NICE_TRY -> {
-                if (parts.length < 2) yield null;
+            case SKIP, NICE_TRY -> {
+                if (parts.length < 2) {
+                    yield null;
+                }
                 yield EffectArgs.withTarget(parts[1].trim());
+            }
+
+            case COUNTERATTACK -> {
+                String target = null;
+                CardColor color = null;
+
+                if (parts.length >= 2 && !parts[1].isBlank()) {
+                    target = parts[1].trim();
+                }
+
+                if (parts.length >= 3 && !parts[2].isBlank()) {
+                    color = parseColor(parts[2]);
+                    if (color == null) {
+                        yield null;
+                    }
+                }
+
+                if (color == null) {
+                    yield null;
+                }
+
+                yield EffectArgs.of(target, color, null, null);
             }
             case GIFT -> {
                 if (parts.length < 3) yield null;
@@ -91,11 +117,67 @@ public class GameMessageParser {
                 List<Card> cards = parseCardIds(parts[2], state, actingPlayer);
                 yield EffectArgs.withTargetAndCards(target, cards);
             }
-            case FANTASTIC, FANTASTIC_FOUR -> {
-                if (parts.length < 2) yield EffectArgs.empty();
-                CardColor color = parseColor(parts[1]);
-                Integer number = (parts.length >= 3) ? parseNumber(parts[2]) : null;
+            case FANTASTIC -> {
+                if (parts.length < 2) {
+                    yield null;
+                }
+
+                CardColor color = null;
+                Integer number = null;
+
+                if (!parts[1].isBlank()) {
+                    color = parseColor(parts[1]);
+                    if (color == null) {
+                        yield null;
+                    }
+                }
+
+                if (parts.length >= 3 && !parts[2].isBlank()) {
+                    number = parseNumber(parts[2]);
+                    if (number == null) {
+                        yield null;
+                    }
+                }
+
+                if ((color == null && number == null) || (color != null && number != null)) {
+                    yield null;
+                }
+
                 yield EffectArgs.withColorAndNumber(color, number);
+            }
+
+            case FANTASTIC_FOUR -> {
+                if (parts.length < 4) {
+                    yield null;
+                }
+
+                CardColor color = null;
+                Integer number = null;
+
+                if (!parts[1].isBlank()) {
+                    color = parseColor(parts[1]);
+                    if (color == null) {
+                        yield null;
+                    }
+                }
+
+                if (!parts[2].isBlank()) {
+                    number = parseNumber(parts[2]);
+                    if (number == null) {
+                        yield null;
+                    }
+                }
+
+                if ((color == null && number == null) || (color != null && number != null)) {
+                    yield null;
+                }
+
+                List<String> targets = parseTargetPlayers(parts[3], state);
+                if (targets.size() != 4) {
+                    yield null;
+                }
+
+                yield EffectArgs.withTargetsAndColorOrNumber(targets, color, number);
             }
             case EQUALITY -> {
                 if (parts.length < 3) yield null;
@@ -155,5 +237,37 @@ public class GameMessageParser {
         } catch (NumberFormatException e) {
             return null;
         }
+    }
+
+    /**
+     * Parses a comma-separated target-player segment for effects that distribute
+     * cards among multiple recipients.
+     *
+     * <p>Only existing player names from the current game state are accepted.
+     * Invalid names are ignored. The caller is responsible for checking the final
+     * number of parsed targets.</p>
+     *
+     * @param segment the raw comma-separated player-name segment
+     * @param state the current game state
+     * @return the parsed list of valid target player names
+     */
+    private static List<String> parseTargetPlayers(String segment, GameState state) {
+        List<String> result = new ArrayList<>();
+
+        for (String part : segment.split(",")) {
+            String name = part.trim();
+            if (name.isBlank()) {
+                continue;
+            }
+
+            boolean exists = state.getPlayerOrder().stream()
+                    .anyMatch(player -> player.getPlayerName().equals(name));
+
+            if (exists) {
+                result.add(name);
+            }
+        }
+
+        return result;
     }
 }

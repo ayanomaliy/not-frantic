@@ -1,5 +1,6 @@
 package ch.unibas.dmi.dbis.cs108.example.client.net;
 
+import ch.unibas.dmi.dbis.cs108.example.client.CardTextFormatter;
 import ch.unibas.dmi.dbis.cs108.example.client.ClientState;
 import ch.unibas.dmi.dbis.cs108.example.service.Message;
 import javafx.application.Platform;
@@ -14,6 +15,11 @@ import java.util.List;
  * <p>This class contains GUI-specific behavior only. All socket management,
  * message transport, heartbeat handling, and uniform protocol sending are
  * delegated to {@link ClientProtocolClient}.</p>
+ *
+ * <p>Raw command parsing is also delegated to the shared protocol layer via
+ * {@link ClientProtocolClient#parseRawCommand(String)} so the GUI command field
+ * supports the same slash commands as the terminal client, including the
+ * human-friendly effect helper commands parsed in {@link Message#parse(String)}.</p>
  */
 public class FxNetworkClient implements ClientMessageHandler {
 
@@ -177,6 +183,27 @@ public class FxNetworkClient implements ClientMessageHandler {
     }
 
     /**
+     * Requests the current public game state from the server.
+     */
+    public void requestGameState() {
+        protocolClient.requestGameState();
+    }
+
+    /**
+     * Requests the most recent round-end summary from the server.
+     */
+    public void requestRoundEnd() {
+        protocolClient.requestRoundEnd();
+    }
+
+    /**
+     * Requests the game-end summary from the server.
+     */
+    public void requestGameEnd() {
+        protocolClient.requestGameEnd();
+    }
+
+    /**
      * Requests to draw one card.
      */
     public void drawCard() {
@@ -200,7 +227,11 @@ public class FxNetworkClient implements ClientMessageHandler {
     }
 
     /**
-     * Parses and executes a raw terminal-style command for the manual command field.
+     * Parses and executes a raw terminal-style command for the GUI command field.
+     *
+     * <p>This method supports the same slash commands as the terminal client
+     * because parsing is delegated to {@link Message#parse(String)} through the
+     * shared protocol client.</p>
      *
      * @param rawInput the raw command
      * @return {@code true} if the command caused a disconnect
@@ -305,9 +336,9 @@ public class FxNetworkClient implements ClientMessageHandler {
                 List<String> updatedPlayers = message.content().isBlank()
                         ? List.of()
                         : Arrays.stream(message.content().split(","))
-                        .map(String::trim)
-                        .filter(s -> !s.isBlank())
-                        .toList();
+                          .map(String::trim)
+                          .filter(s -> !s.isBlank())
+                          .toList();
 
                 state.getPlayers().setAll(updatedPlayers);
 
@@ -321,9 +352,9 @@ public class FxNetworkClient implements ClientMessageHandler {
                         message.content().isBlank()
                                 ? List.of()
                                 : Arrays.stream(message.content().split(","))
-                                .map(String::trim)
-                                .filter(s -> !s.isBlank())
-                                .toList()
+                                  .map(String::trim)
+                                  .filter(s -> !s.isBlank())
+                                  .toList()
                 );
             });
 
@@ -331,10 +362,10 @@ public class FxNetworkClient implements ClientMessageHandler {
                 List<String> formattedLobbies = message.content().isBlank()
                         ? List.of()
                         : Arrays.stream(message.content().split(","))
-                        .map(String::trim)
-                        .filter(s -> !s.isBlank())
-                        .map(this::formatLobbyEntry)
-                        .toList();
+                          .map(String::trim)
+                          .filter(s -> !s.isBlank())
+                          .map(this::formatLobbyEntry)
+                          .toList();
 
                 state.getLobbies().setAll(formattedLobbies);
             });
@@ -356,9 +387,9 @@ public class FxNetworkClient implements ClientMessageHandler {
                         message.content().isBlank()
                                 ? List.of()
                                 : Arrays.stream(message.content().split(","))
-                                .map(String::trim)
-                                .filter(s -> !s.isBlank())
-                                .toList()
+                                  .map(String::trim)
+                                  .filter(s -> !s.isBlank())
+                                  .toList()
                 );
                 state.getGameMessages().add("[HAND] " + message.content());
             });
@@ -374,6 +405,7 @@ public class FxNetworkClient implements ClientMessageHandler {
 
             case GAME_END -> Platform.runLater(() ->
                     state.getGameMessages().add("[GAME_END] " + message.content()));
+
             case BROADCAST -> {
                 String[] parts = message.splitChatPayload();
                 Platform.runLater(() ->
@@ -450,9 +482,18 @@ public class FxNetworkClient implements ClientMessageHandler {
             switch (key) {
                 case "phase" -> state.setCurrentPhase(value);
                 case "currentPlayer" -> state.setCurrentPlayer(value);
-                case "discardTop" -> state.setTopCardText(
-                        "none".equalsIgnoreCase(value) ? "-" : "Card #" + value
-                );
+                case "discardTop" -> {
+                    if ("none".equalsIgnoreCase(value)) {
+                        state.setTopCardText("-");
+                    } else {
+                        try {
+                            int cardId = Integer.parseInt(value);
+                            state.setTopCardText(CardTextFormatter.formatCardLabelWithId(cardId));
+                        } catch (NumberFormatException e) {
+                            state.setTopCardText("Card #" + value);
+                        }
+                    }
+                }
                 default -> {
                     // Ignore unknown fields for forward compatibility.
                 }
