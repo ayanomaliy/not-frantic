@@ -405,5 +405,5 @@ Today, I worked on improving the lobby system by enforcing stricter join rules a
 ### QA (Sevval)
 
 #### What did we do today?
-Since i thought our Java version doesn't work with javacoco, I messaged our tutor and we are in touch trying to solve this problem. 
-QA Concept is missing just the javacoco part and i'll revise the project plan soon.
+Since I thought our Java version doesn't work with javacoco, I messaged our tutor and we are in touch trying to solve this problem. 
+QA Concept is missing just the javacoco part and i'll revise the project plan soon since we didn't get the point for it on MS1.
