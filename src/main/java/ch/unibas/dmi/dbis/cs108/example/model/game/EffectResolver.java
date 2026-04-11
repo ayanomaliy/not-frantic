@@ -180,23 +180,40 @@ public class EffectResolver {
         return events;
     }
 
-    // -------------------------------------------------------------------------
-    // FANTASTIC_FOUR — distribute 4 cards from draw pile, then set request
-    // -------------------------------------------------------------------------
-
+    /**
+     * Resolves {@code FANTASTIC_FOUR}.
+     *
+     * <p>The acting player distributes four drawn cards among exactly four chosen
+     * recipient slots. Repeated recipient names are allowed, which means one player
+     * may receive multiple of the four cards.</p>
+     *
+     * <p>After the distribution, the acting player also sets either a requested
+     * color or a requested number for the next play.</p>
+     *
+     * @param state the current game state
+     * @param actingPlayer the player who played Fantastic Four
+     * @param args the effect arguments containing recipient distribution and
+     *             requested color or number
+     * @return the generated game events
+     */
     private static List<GameEvent> resolveFantasticFour(GameState state,
-                                                         String actingPlayer,
-                                                         EffectArgs args) {
+                                                        String actingPlayer,
+                                                        EffectArgs args) {
         List<GameEvent> events = new ArrayList<>();
-        List<PlayerGameState> players = state.getPlayerOrder();
-        int actorIdx = players.indexOf(state.getPlayer(actingPlayer));
-        int count    = players.size();
+        List<String> targets = args.getTargetPlayers();
 
-        // Distribute up to 4 cards starting with the player after the actor
-        for (int i = 1; i <= 4; i++) {
+        if (targets.size() != 4) {
+            events.add(GameEvent.error("FANTASTIC_FOUR requires exactly 4 target recipients."));
+            return events;
+        }
+
+        for (String targetName : targets) {
             Card drawn = state.drawFromDrawPile();
-            if (drawn == null) break;
-            PlayerGameState recipient = players.get((actorIdx + i) % count);
+            if (drawn == null) {
+                break;
+            }
+
+            PlayerGameState recipient = state.getPlayer(targetName);
             recipient.addCard(drawn);
             events.add(GameEvent.cardDrawn(recipient.getPlayerName(), drawn.id()));
         }

@@ -303,13 +303,37 @@ public class ClientProtocolClient {
     /**
      * Sends a {@code FANTASTIC_FOUR} effect response.
      *
-     * <p>The number may be {@code null} if only a color should be requested.</p>
+     * <p>Exactly one of {@code color} or {@code number} must be set. The
+     * {@code targetPlayers} list must contain exactly four recipient names.
+     * Repeated names are allowed.</p>
      *
-     * @param color the selected color
+     * @param color the selected color, or {@code null}
      * @param number the selected number, or {@code null}
+     * @param targetPlayers the four recipient slots for the distributed cards
      */
-    public void resolveFantasticFour(CardColor color, Integer number) {
-        sendColorOrNumberEffect("FANTASTIC_FOUR", color, number);
+    public void resolveFantasticFour(CardColor color,
+                                     Integer number,
+                                     List<String> targetPlayers) {
+        Objects.requireNonNull(targetPlayers, "targetPlayers must not be null");
+
+        if (targetPlayers.size() != 4) {
+            throw new IllegalArgumentException("FANTASTIC_FOUR requires exactly 4 target players.");
+        }
+
+        boolean hasColor = color != null;
+        boolean hasNumber = number != null;
+
+        if (hasColor == hasNumber) {
+            throw new IllegalArgumentException("Exactly one of color or number must be set.");
+        }
+
+        String targets = String.join(",", targetPlayers);
+
+        if (hasColor) {
+            sendEffectResponse("FANTASTIC_FOUR", color.name(), "", targets);
+        } else {
+            sendEffectResponse("FANTASTIC_FOUR", "", String.valueOf(number), targets);
+        }
     }
 
     /**

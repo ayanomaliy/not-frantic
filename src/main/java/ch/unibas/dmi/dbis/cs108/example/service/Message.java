@@ -195,7 +195,7 @@ public record Message(Type type, String content) {
                 case "/gift" -> parseGiftCommand(payload);
                 case "/exchange" -> parseExchangeCommand(payload);
                 case "/fantastic" -> parseColorOrNumberEffectCommand("FANTASTIC", payload);
-                case "/fantasticfour" -> parseColorOrNumberEffectCommand("FANTASTIC_FOUR", payload);
+                case "/fantasticfour" -> parseFantasticFourCommand(payload);
                 case "/equality" -> parseEqualityCommand(payload);
                 case "/secondchance" -> parseSecondChanceCommand(payload);
                 default -> new Message(Type.UNKNOWN, trimmed);
@@ -559,5 +559,56 @@ public record Message(Type type, String content) {
                 || "GREEN".equals(text)
                 || "BLUE".equals(text)
                 || "YELLOW".equals(text);
+    }
+
+    /**
+     * Parses a human-friendly {@code /fantasticfour} command.
+     *
+     * <p>Format:</p>
+     * <ul>
+     *   <li>{@code /fantasticfour <color> <player1> <player2> <player3> <player4>}</li>
+     *   <li>{@code /fantasticfour <number> <player1> <player2> <player3> <player4>}</li>
+     * </ul>
+     *
+     * <p>The first argument is either one playable color or one requested number.
+     * The next four arguments specify the recipients of the four distributed cards.
+     * Repeated player names are allowed.</p>
+     *
+     * <p>Examples:</p>
+     * <ul>
+     *   <li>{@code /fantasticfour blue Alice Bob Charlie David}</li>
+     *   <li>{@code /fantasticfour 7 Alice Alice Bob Charlie}</li>
+     * </ul>
+     *
+     * @param payload the raw payload after {@code /fantasticfour}
+     * @return an {@code EFFECT_RESPONSE} message or {@code UNKNOWN} if invalid
+     */
+    private static Message parseFantasticFourCommand(String payload) {
+        if (payload == null || payload.isBlank()) {
+            return new Message(Type.UNKNOWN, "/fantasticfour");
+        }
+
+        String[] parts = payload.trim().split("\\s+");
+        if (parts.length != 5) {
+            return new Message(Type.UNKNOWN, "/fantasticfour " + payload);
+        }
+
+        String first = parts[0].trim();
+        String upper = first.toUpperCase();
+
+        String targets = parts[1].trim() + "," +
+                parts[2].trim() + "," +
+                parts[3].trim() + "," +
+                parts[4].trim();
+
+        if (isPlayableColor(upper)) {
+            return new Message(Type.EFFECT_RESPONSE, "FANTASTIC_FOUR|" + upper + "||" + targets);
+        }
+
+        if (isInteger(first)) {
+            return new Message(Type.EFFECT_RESPONSE, "FANTASTIC_FOUR||" + first.trim() + "|" + targets);
+        }
+
+        return new Message(Type.UNKNOWN, "/fantasticfour " + payload);
     }
 }

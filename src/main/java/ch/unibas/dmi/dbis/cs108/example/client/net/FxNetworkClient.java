@@ -1,5 +1,6 @@
 package ch.unibas.dmi.dbis.cs108.example.client.net;
 
+import ch.unibas.dmi.dbis.cs108.example.client.CardTextFormatter;
 import ch.unibas.dmi.dbis.cs108.example.client.ClientState;
 import ch.unibas.dmi.dbis.cs108.example.service.Message;
 import javafx.application.Platform;
@@ -481,9 +482,18 @@ public class FxNetworkClient implements ClientMessageHandler {
             switch (key) {
                 case "phase" -> state.setCurrentPhase(value);
                 case "currentPlayer" -> state.setCurrentPlayer(value);
-                case "discardTop" -> state.setTopCardText(
-                        "none".equalsIgnoreCase(value) ? "-" : "Card #" + value
-                );
+                case "discardTop" -> {
+                    if ("none".equalsIgnoreCase(value)) {
+                        state.setTopCardText("-");
+                    } else {
+                        try {
+                            int cardId = Integer.parseInt(value);
+                            state.setTopCardText(CardTextFormatter.formatCardLabelWithId(cardId));
+                        } catch (NumberFormatException e) {
+                            state.setTopCardText("Card #" + value);
+                        }
+                    }
+                }
                 default -> {
                     // Ignore unknown fields for forward compatibility.
                 }
