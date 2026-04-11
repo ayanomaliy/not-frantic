@@ -369,8 +369,14 @@ public class FxNetworkClient implements ClientMessageHandler {
             case EFFECT_REQUEST -> Platform.runLater(() ->
                     state.getGameMessages().add("[EFFECT_REQUEST] " + message.content()));
 
-            case ROUND_END -> Platform.runLater(() ->
-                    state.getGameMessages().add("[ROUND_END] " + message.content()));
+            case ROUND_END -> Platform.runLater(() -> {
+                state.getGameMessages().add("[ROUND_END] Round over! Scores: " + message.content());
+                // Update phase label. Do NOT clear the hand here — this message is also
+                // sent by GET_ROUND_END (a read-only query) which sends no follow-up
+                // HAND_UPDATE. For real round ends, the HAND_UPDATE from broadcastAllHands
+                // will replace the hand momentarily after this message arrives.
+                state.setCurrentPhase("ROUND_END");
+            });
 
             case GAME_END -> Platform.runLater(() ->
                     state.getGameMessages().add("[GAME_END] " + message.content()));

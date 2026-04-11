@@ -850,7 +850,13 @@ class FxNetworkClientTest {
     }
 
     /**
-     * Verifies round-end handling.
+     * Verifies round-end handling: message logged and phase updated.
+     *
+     * <p>The hand must NOT be cleared here because the same ROUND_END message type is
+     * also returned by the GET_ROUND_END query (a read-only request), which sends no
+     * follow-up HAND_UPDATE. Clearing the hand would leave the player with an empty hand
+     * until they manually re-request it. For real round ends the HAND_UPDATE from
+     * broadcastAllHands replaces the hand immediately after ROUND_END arrives.</p>
      *
      * @throws Exception if the test fails
      */
@@ -858,10 +864,17 @@ class FxNetworkClientTest {
     void onMessageHandlesRoundEnd() throws Exception {
         TestContext ctx = createContext();
 
+        ctx.state().getCurrentHandCards().addAll(List.of("card1", "card2"));
+        ctx.state().setCurrentPhase("AWAITING_PLAY");
+
         ctx.fxClient().onMessage(new Message(Message.Type.ROUND_END, "Alice:5:10"));
         flushFx();
 
-        assertEquals(List.of("[ROUND_END] Alice:5:10"), ctx.state().getGameMessages());
+        assertEquals(List.of("[ROUND_END] Round over! Scores: Alice:5:10"), ctx.state().getGameMessages());
+        assertEquals(List.of("card1", "card2"), ctx.state().getCurrentHandCards(),
+                "Hand must NOT be cleared on ROUND_END — GET_ROUND_END queries send no follow-up HAND_UPDATE");
+        assertEquals("ROUND_END", ctx.state().getCurrentPhase(),
+                "Phase must be set to ROUND_END");
     }
 
     /**

@@ -634,8 +634,6 @@ public class ServerService {
             return;
         }
 
-        // 🚨 CRITICAL CHECKS (THIS FIXES YOUR PROBLEM)
-
         if (lobby.getLobbyStatus() == LobbyStatus.PLAYING) {
             session.send(new Message(
                     Message.Type.ERROR,
@@ -1187,14 +1185,35 @@ public class ServerService {
         if (state.getPhase() == GamePhase.ROUND_END) {
             handleRoundEnd(lobby);
         } else if (state.getPhase() == GamePhase.RESOLVING_EFFECT) {
-            String effectName = state.getPendingEffects().isEmpty()
-                    ? "UNKNOWN"
-                    : state.getPendingEffects().peek().name();
+            Card eventCard = state.getActiveEventCard();
+            if (eventCard != null) {
+                // Event card from a BLACK play — resolve immediately, no client input needed
+                List<GameEvent> eventEvents = EventResolver.resolve(eventCard, state);
+                broadcastEvents(lobby, eventEvents);
+                broadcastGameState(lobby);
 
-            broadcastToLobby(lobby, new Message(
-                    Message.Type.EFFECT_REQUEST,
-                    GameStateSerializer.serializeEffectRequest(effectName, playerName)
-            ));
+                // Re-check phase after event resolution
+                if (state.getPhase() == GamePhase.ROUND_END) {
+                    handleRoundEnd(lobby);
+                } else if (state.getPhase() == GamePhase.RESOLVING_EFFECT
+                        && !state.getPendingEffects().isEmpty()) {
+                    String nextEffect = state.getPendingEffects().peek().name();
+                    broadcastToLobby(lobby, new Message(
+                            Message.Type.EFFECT_REQUEST,
+                            GameStateSerializer.serializeEffectRequest(nextEffect, playerName)
+                    ));
+                } else if (state.getPhase() == GamePhase.TURN_START) {
+                    TurnEngine.startTurn(state);
+                    broadcastGameState(lobby);
+                }
+            } else if (!state.getPendingEffects().isEmpty()) {
+                // Special card effect — send to client for resolution (unchanged)
+                String effectName = state.getPendingEffects().peek().name();
+                broadcastToLobby(lobby, new Message(
+                        Message.Type.EFFECT_REQUEST,
+                        GameStateSerializer.serializeEffectRequest(effectName, playerName)
+                ));
+            }
         } else if (state.getPhase() == GamePhase.TURN_START) {
             TurnEngine.startTurn(state);
             broadcastGameState(lobby);
@@ -1313,7 +1332,8 @@ public class ServerService {
                     GameStateSerializer.serializeEffectRequest(nextEffect, target)
             ));
         } else if (state.getPhase() == GamePhase.TURN_START) {
-            TurnEngine.startTurn(state);
+            List<GameEvent> turnEvents = TurnEngine.startTurn(state);
+            broadcastEvents(lobby, turnEvents);
             broadcastGameState(lobby);
         }
     }
@@ -1329,7 +1349,7 @@ public class ServerService {
         GameState state = lobby.getGameState();
 
         Map<String, Integer> roundScores =
-                ScoreCalculator.calculateRoundScores(state.getPlayerOrder());
+                ScoreCalculator.calculateRoundScores(state.getPlayerOrder(), state);
 
         for (PlayerGameState p : state.getPlayerOrder()) {
             lobby.getCumulativeScores().put(p.getPlayerName(), p.getTotalScore());
@@ -1367,7 +1387,8 @@ public class ServerService {
             log("Starting round " + nextRound + " in lobby " + lobby.getLobbyId());
             broadcastGameState(lobby);
             broadcastAllHands(lobby);
-            TurnEngine.startTurn(nextState);
+            List<GameEvent> turnEvents = TurnEngine.startTurn(nextState);
+            broadcastEvents(lobby, turnEvents);
             broadcastGameState(lobby);
         }
     }
