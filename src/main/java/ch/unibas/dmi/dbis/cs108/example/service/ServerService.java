@@ -1497,6 +1497,9 @@ public class ServerService {
                     Message.Type.EFFECT_REQUEST,
                     GameStateSerializer.serializeEffectRequest(nextEffect, target)
             ));
+        } else if (state.getPhase() == GamePhase.RESOLVING_EFFECT) {
+            state.setPhase(GamePhase.AWAITING_PLAY);
+            broadcastGameState(lobby);
         } else if (state.getPhase() == GamePhase.TURN_START) {
             List<GameEvent> turnEvents = TurnEngine.startTurn(state);
             broadcastEvents(lobby, turnEvents);

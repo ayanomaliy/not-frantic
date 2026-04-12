@@ -2,7 +2,7 @@
 
 This manual explains how to use and play **Frantic^-1** with the **GUI client**.
 
-It is written for someone who receives the JAR file and has never seen the project before. It reflects the current implementation in the source code. :contentReference[oaicite:0]{index=0} 
+It is written for someone who receives the JAR file and has never seen the project before. It reflects the current implementation in the source code.
 
 ---
 
@@ -138,14 +138,14 @@ You can also create a lobby through the command field:
 
 If another player already created a lobby, you can join it in two ways.
 
-### Method 1: use the lobby list
+### Method 1: Use the lobby list
 
 * click the lobby in the lobby list
 * press **Join Selected Lobby**
 
 You can also double-click a lobby entry.
 
-### Method 2: use the command field
+### Method 2: Use the command field
 
 ```text
 /join TestLobby
@@ -293,7 +293,9 @@ to request a fresh hand update from the server.
 
 During effect resolution, clickable card play in the GUI may not always be enough on its own yet.
 
-If the game asks you to resolve an effect, use the **command input**.
+If the game asks you to resolve a **special-card effect**, use the **command input**.
+
+Black-card **event effects** are resolved automatically by the server.
 
 ---
 
@@ -696,7 +698,7 @@ When the game asks you to resolve something, use this guide:
 
 ## 19. Most Important Things to Remember
 
-* Use the **command input** whenever the game asks you to resolve an effect.
+* Use the **command input** whenever the game asks you to resolve a special effect.
 * When a command needs a card, use the **card ID number shown on the card**.
 * Do **not** type the card name instead of the ID.
 * When a command needs a player, type the **player name exactly**.
@@ -927,7 +929,15 @@ means:
 
 When the whole match ends, the winner is shown through a `GAME_END` message.
 
-That message is displayed in the **Game / Info** area, so yes: when someone wins, you will see it there.
+In the current implementation, the payload contains the **winner name**.
+
+Example:
+
+```text
+GAME_END|Alice
+```
+
+That message is displayed in the **Game / Info** area.
 
 ---
 
@@ -952,25 +962,25 @@ Then the player with the **lowest total score** wins.
 
 ## 25. Example: Full GUI Play Session
 
-### Step 1: start the server
+### Step 1: Start the server
 
 ```bash
 java -jar not-frantic.jar server 5555
 ```
 
-### Step 2: player 1 opens the GUI
+### Step 2: Player 1 opens the GUI
 
 ```bash
 java -jar not-frantic.jar client localhost:5555 Alice
 ```
 
-### Step 3: player 2 opens the GUI
+### Step 3: Player 2 opens the GUI
 
 ```bash
 java -jar not-frantic.jar client localhost:5555 Bob
 ```
 
-### Step 4: one player creates a lobby
+### Step 4: One player creates a lobby
 
 Use the **Create New Lobby** button or type:
 
@@ -978,7 +988,7 @@ Use the **Create New Lobby** button or type:
 /create TestLobby
 ```
 
-### Step 5: the other player joins
+### Step 5: The other player joins
 
 Select the lobby and press **Join Selected Lobby** or type:
 
@@ -986,7 +996,7 @@ Select the lobby and press **Join Selected Lobby** or type:
 /join TestLobby
 ```
 
-### Step 6: start the game
+### Step 6: Start the game
 
 Click **Start Game** or type:
 
@@ -994,7 +1004,7 @@ Click **Start Game** or type:
 /start
 ```
 
-### Step 7: play
+### Step 7: Play
 
 During the round you might use:
 
@@ -1008,7 +1018,6 @@ During the round you might use:
 
 ---
 
-
 ## 26. Important Notes
 
 * The GUI and its command field are the easiest way to play the current implementation.
@@ -1020,7 +1029,7 @@ During the round you might use:
 
 This appendix lists the card ID ranges and their meanings.
 
-### 28.1 Normal color cards: IDs 0–71
+### 27.1 Normal color cards: IDs 0–71
 
 These are the normal colored number cards.
 
@@ -1047,7 +1056,6 @@ Examples:
 * `12` and `13` = Red 7
 * `14` and `15` = Red 8
 * `16` and `17` = Red 9
-
 
 ### 27.2 Black cards: IDs 72–80
 
@@ -1169,4 +1177,3 @@ They are triggered automatically by black cards and are not part of the normal h
 /l <text>
 /w <player> <text>
 ```
-

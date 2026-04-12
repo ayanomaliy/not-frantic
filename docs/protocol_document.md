@@ -32,7 +32,7 @@ The protocol is line-based over TCP and uses UTF-8 text messages.
 - Main wire format: `TYPE|payload`
 - `TYPE` is parsed case-insensitively.
 - The parser splits only at the first `|`.
-- Some payloads themselves contain additional subfields separated by `|`, `,`, or `:` depending on the message type. :contentReference[oaicite:2]{index=2}
+- Some payloads themselves contain additional subfields separated by `|`, `,`, or `:` depending on the message type.
 
 Examples:
 
@@ -638,8 +638,7 @@ GET_GAME_END|
 Typical response:
 
 ```text
-GAME_END|winner:Alice,scores:Alice:0,Bob:156
-```
+GAME_END|Alice```
 
 Slash alias:
 
@@ -652,6 +651,7 @@ Slash alias:
 ### 4.22 `EFFECT_RESPONSE|...`
 
 Purpose: resolve a pending special effect by supplying the necessary arguments.
+This is used for pending special-card effects. Black-card event effects are resolved automatically by the server and normally do not require an `EFFECT_RESPONSE`.
 
 This is a family of payloads rather than one single fixed syntax.
 
@@ -877,7 +877,7 @@ Purpose: human-readable informational message.
 Examples:
 
 ```text
-INFO|WELCOME
+INFO|Connected to server. Use /create <lobby> or /join <lobby>.
 INFO|Your name has been set to Alice
 INFO|Lobby created and joined: MyLobby
 INFO|Joined lobby: MyLobby
@@ -916,7 +916,7 @@ GAME|ERROR:Cannot play card in phase RESOLVING_EFFECT
 ```
 
 The payload format is event-specific and is intended mainly as a human-readable event stream.
-
+The payload format is event-specific and is intended mainly as a human-readable event stream.
 ---
 
 ### 5.4 `GAME_STATE|<statePayload>`
@@ -997,15 +997,15 @@ Current repeated entry format:
 
 ### 5.8 `GAME_END|<summary>`
 
-Purpose: provide final game-over summary.
+Purpose: provide the final game-over result.
 
 Example:
 
 ```text
-GAME_END|winner:Alice,scores:Alice:0,Bob:156
+GAME_END|Alice
 ```
 
-The exact payload may evolve, but the message type is already part of the current protocol.
+In the current implementation, the payload contains the winner name.
 
 ---
 
@@ -1113,7 +1113,7 @@ SYS|PONG
 
 ### 7.1 Startup
 
-On a fresh connection, the server sends a normal protocol info message:
+On a fresh connection, the server sends a normal protocol info message such as:
 
 ```text
 INFO|WELCOME
@@ -1156,7 +1156,7 @@ In some cases, game-rule failures may also be surfaced as `GAME|ERROR:...` event
 A typical modern communication flow might look like this:
 
 ```text
-Server -> Client: INFO|WELCOME
+Server -> Client: INFO|Connected to server. Use /create <lobby> or /join <lobby>.
 
 Client -> Server: NAME|Alice
 Server -> Client: INFO|Your name has been set to Alice
@@ -1205,8 +1205,4 @@ Future additions can introduce:
 
 The current message enum and parser design already allow adding new types without changing the basic wire format.
 
-```
 
-A couple of especially important differences from your old document are these: `CHAT` should be removed in favor of `GLOBALCHAT`, `LOBBYCHAT`, and `WHISPERCHAT`; the startup note should now say `INFO|WELCOME` instead of raw plain text; and the document needs to include the full game/action set and `DEV|<scenario>` support. Those are the biggest blockers for the “up to date” achievement. 
-
-```
