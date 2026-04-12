@@ -1529,37 +1529,19 @@ public class ServerService {
 
         broadcastToLobby(lobby, new Message(Message.Type.ROUND_END, roundEndPayload));
 
-        if (ScoreCalculator.isGameOver(lobby.getCumulativeScores(), state.getMaxScore())) {
-            String winner = ScoreCalculator.getWinner(lobby.getCumulativeScores());
+        // End the whole game immediately after this round
+        String winner = ScoreCalculator.getWinner(lobby.getCumulativeScores());
 
-            broadcastToLobby(lobby, new Message(Message.Type.GAME_END, winner));
+        broadcastToLobby(lobby, new Message(Message.Type.GAME_END, winner));
 
-            state.setPhase(GamePhase.GAME_OVER);
-            lobby.setGameState(null);
-            lobby.setGameStarted(false);
-            lobby.setLobbyStatus(LobbyStatus.FINISHED);
+        state.setPhase(GamePhase.GAME_OVER);
+        lobby.setGameState(null);
+        lobby.setGameStarted(false);
+        lobby.setLobbyStatus(LobbyStatus.FINISHED);
 
-            broadcastLobbyListToAllClients();
+        broadcastLobbyListToAllClients();
 
-            log("Game over in lobby " + lobby.getLobbyId() + ". Winner: " + winner);
-        } else {
-            int nextRound = lobby.nextRound();
-            List<String> playerNames = new ArrayList<>();
-            for (Player p : lobby.getPlayers()) {
-                playerNames.add(p.name());
-            }
-
-            GameState nextState = GameInitializer.initialize(
-                    playerNames, nextRound, lobby.getCumulativeScores(), new Random());
-            lobby.setGameState(nextState);
-
-            log("Starting round " + nextRound + " in lobby " + lobby.getLobbyId());
-            broadcastGameState(lobby);
-            broadcastAllHands(lobby);
-            List<GameEvent> turnEvents = TurnEngine.startTurn(nextState);
-            broadcastEvents(lobby, turnEvents);
-            broadcastGameState(lobby);
-        }
+        log("Game over in lobby " + lobby.getLobbyId() + ". Winner: " + winner);
     }
 
     /**
