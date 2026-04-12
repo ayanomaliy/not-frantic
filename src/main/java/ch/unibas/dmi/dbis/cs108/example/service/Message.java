@@ -42,7 +42,7 @@ public record Message(Type type, String content) {
         /** Message used to create a new lobby. */
         CREATE,
 
-        /** Message to give a list of all existing lobbies*/
+        /** Message used to request or transmit the list of all existing lobbies. */
         LOBBIES,
 
         /** Message used to join an existing lobby. */
@@ -63,7 +63,7 @@ public record Message(Type type, String content) {
         /** Game-related message sent by the server. */
         GAME,
 
-        /** Message to broadcast a text to all clients*/
+        /** Message used to broadcast a text to all clients. */
         BROADCAST,
 
         /** Cheat command to instantly win the match. */

@@ -137,14 +137,9 @@ public class MainController {
             updateDisplayedChat(view);
         });
 
-        /**
-         * Handles the Join Lobby button action.
-         *
-         * <p>The selected lobby entry in the GUI contains not only the lobby name,
-         * but also status and player-count information in a display format like
-         * {@code LobbyName (WAITING) 2/5}. Before sending the join request to the
-         * server, only the pure lobby name is extracted.</p>
-         */
+        // Join Lobby button: the displayed entry contains status and player-count
+        // metadata (e.g. "LobbyName (WAITING) 2/5"), so the pure lobby name must
+        // be extracted before sending the join request to the server.
         view.getJoinLobbyButton().setOnAction(e -> {
             String selectedLobby = view.getLobbiesList().getSelectionModel().getSelectedItem();
 
@@ -153,13 +148,8 @@ public class MainController {
             }
         });
 
-        /**
-         * Handles double-clicking a lobby entry in the lobby list.
-         *
-         * <p>If the user double-clicks a displayed lobby entry, the controller
-         * extracts the pure lobby name from the formatted display string and
-         * sends a join request to the server.</p>
-         */
+        // Double-clicking a lobby entry also triggers a join, using the same
+        // lobby-name extraction logic as the Join button.
         view.getLobbiesList().setOnMouseClicked(e -> {
             if (e.getClickCount() == 2) {
                 String selectedLobby = view.getLobbiesList().getSelectionModel().getSelectedItem();

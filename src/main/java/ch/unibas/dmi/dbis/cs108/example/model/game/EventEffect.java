@@ -3,12 +3,7 @@ package ch.unibas.dmi.dbis.cs108.example.model.game;
 /**
  * The 20 distinct effects that can be triggered by playing a {@link CardType#BLACK} card.
  *
- * <p><b>Phase 9 placeholder — team must assign final definitions before
- * implementing {@link EventResolver}.</b>
- *
- * <p>Each constant maps 1-to-1 to an event card ID (0–19) via its
- * {@link #ordinal()}.  The brief descriptions below are working hypotheses;
- * the team should replace them with the agreed-upon rules before Phase 9.
+ * <p>Each constant maps 1-to-1 to an event card ID (0–19) via its {@link #ordinal()}.
  *
  * <ul>
  *   <li>Ordinal 0  – {@link #ALL_DRAW_TWO}           – all players draw 2 cards</li>

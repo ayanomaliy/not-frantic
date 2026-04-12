@@ -8,10 +8,6 @@ import java.util.List;
 /**
  * Resolves an event card effect when a {@link CardType#BLACK} card is played.
  *
- * <p><b>Phase 9 stub — implementations are placeholders.</b>
- * The team must agree on the exact rules for each {@link EventEffect} and fill
- * in the corresponding {@code handle*} method before Phase 9 begins.
- *
  * <h2>Contract</h2>
  * <ol>
  *   <li>The caller (ServerService) sets {@link GameState#setActiveEventCard(Card)}

@@ -17,6 +17,11 @@ public class PlayerGameState {
     private boolean hasPlayedThisTurn;
     private boolean hasDrawnThisTurn;
 
+    /**
+     * Creates a new player state with a cumulative score of zero.
+     *
+     * @param playerName the display name of the player
+     */
     public PlayerGameState(String playerName) {
         this.playerName = playerName;
         this.hand = new ArrayList<>();
@@ -31,45 +36,101 @@ public class PlayerGameState {
         this.totalScore = totalScore;
     }
 
+    /**
+     * Returns the display name of the player.
+     *
+     * @return the player name
+     */
     public String getPlayerName() {
         return playerName;
     }
 
+    /**
+     * Returns the player's current hand.
+     *
+     * @return the mutable list of cards in hand
+     */
     public List<Card> getHand() {
         return hand;
     }
 
+    /**
+     * Returns the number of cards currently in the player's hand.
+     *
+     * @return the hand size
+     */
     public int getHandSize() {
         return hand.size();
     }
 
+    /**
+     * Returns the player's cumulative score across all completed rounds.
+     *
+     * @return the total score
+     */
     public int getTotalScore() {
         return totalScore;
     }
 
+    /**
+     * Adds points to the player's cumulative score.
+     *
+     * @param points the number of points to add (may be negative)
+     */
     public void addToTotalScore(int points) {
         this.totalScore += points;
     }
 
+    /**
+     * Returns whether this player's next turn is skipped.
+     *
+     * @return {@code true} if the player must skip their next turn
+     */
     public boolean isSkipped() {
         return skipped;
     }
 
+    /**
+     * Sets whether this player's next turn should be skipped.
+     *
+     * @param skipped {@code true} to mark the player as skipped
+     */
     public void setSkipped(boolean skipped) {
         this.skipped = skipped;
     }
 
+    /**
+     * Returns whether the player has already played a card during the current turn.
+     *
+     * @return {@code true} if a card was played this turn
+     */
     public boolean hasPlayedThisTurn() {
         return hasPlayedThisTurn;
     }
 
+    /**
+     * Sets whether the player has played a card during the current turn.
+     *
+     * @param hasPlayedThisTurn {@code true} if a card was played this turn
+     */
     public void setHasPlayedThisTurn(boolean hasPlayedThisTurn) {
         this.hasPlayedThisTurn = hasPlayedThisTurn;
     }
+
+    /**
+     * Returns whether the player has already drawn a card during the current turn.
+     *
+     * @return {@code true} if a card was drawn this turn
+     */
     public boolean hasDrawnThisTurn() {
         return hasDrawnThisTurn;
     }
 
+    /**
+     * Sets whether the player has drawn a card during the current turn.
+     *
+     * @param hasDrawnThisTurn {@code true} if a card was drawn this turn
+     */
     public void setHasDrawnThisTurn(boolean hasDrawnThisTurn) {
         this.hasDrawnThisTurn = hasDrawnThisTurn;
     }

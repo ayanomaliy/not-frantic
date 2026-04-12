@@ -53,6 +53,15 @@ public class GameState {
      */
     private boolean doubleScoringActive = false;
 
+    /**
+     * Creates a new game state for one round.
+     *
+     * @param playerOrder the ordered list of players for this round
+     * @param drawPile    the shuffled draw pile
+     * @param discardPile the initial discard pile (containing the starter card)
+     * @param eventPile   the shuffled event card pile
+     * @param maxScore    the score threshold at which the game ends
+     */
     public GameState(List<PlayerGameState> playerOrder,
                      Deque<Card> drawPile,
                      Deque<Card> discardPile,
@@ -70,10 +79,18 @@ public class GameState {
 
     // --- Current player ---
 
+    /**
+     * Returns the {@link PlayerGameState} of the player whose turn it currently is.
+     *
+     * @return the current player's state
+     */
     public PlayerGameState getCurrentPlayer() {
         return playerOrder.get(currentPlayerIndex);
     }
 
+    /**
+     * Advances the current player index to the next player in round-robin order.
+     */
     public void advanceToNextPlayer() {
         currentPlayerIndex = (currentPlayerIndex + 1) % playerOrder.size();
     }
@@ -111,90 +128,211 @@ public class GameState {
 
     // --- Getters & setters ---
 
+    /**
+     * Returns the ordered list of all players in this round.
+     *
+     * @return the player order list
+     */
     public List<PlayerGameState> getPlayerOrder() {
         return playerOrder;
     }
 
+    /**
+     * Returns the index into {@link #getPlayerOrder()} of the current player.
+     *
+     * @return the current player index
+     */
     public int getCurrentPlayerIndex() {
         return currentPlayerIndex;
     }
 
+    /**
+     * Sets the current player index directly.
+     *
+     * <p>Used by {@link ch.unibas.dmi.dbis.cs108.example.model.game.EventResolver}
+     * when reversing player order, so the same player remains active after the reversal.</p>
+     *
+     * @param currentPlayerIndex the new player index
+     */
     public void setCurrentPlayerIndex(int currentPlayerIndex) {
         this.currentPlayerIndex = currentPlayerIndex;
     }
 
+    /**
+     * Returns the current phase of this round.
+     *
+     * @return the current game phase
+     */
     public GamePhase getPhase() {
         return phase;
     }
 
+    /**
+     * Sets the current phase of this round.
+     *
+     * @param phase the new game phase
+     */
     public void setPhase(GamePhase phase) {
         this.phase = phase;
     }
 
+    /**
+     * Returns the draw pile for this round.
+     *
+     * @return the draw pile deque (top at {@link Deque#peek()})
+     */
     public Deque<Card> getDrawPile() {
         return drawPile;
     }
 
+    /**
+     * Returns the discard pile for this round.
+     *
+     * @return the discard pile deque (top at {@link Deque#peek()})
+     */
     public Deque<Card> getDiscardPile() {
         return discardPile;
     }
 
+    /**
+     * Returns the event card pile for this round.
+     *
+     * @return the event pile deque (top at {@link Deque#peek()})
+     */
     public Deque<Card> getEventPile() {
         return eventPile;
     }
 
+    /**
+     * Returns the event card currently being resolved, or {@code null} if none.
+     *
+     * @return the active event card
+     */
     public Card getActiveEventCard() {
         return activeEventCard;
     }
 
+    /**
+     * Sets the event card currently being resolved.
+     *
+     * <p>Set to the flipped event card before calling
+     * {@link ch.unibas.dmi.dbis.cs108.example.model.game.EventResolver#resolve}, and
+     * cleared to {@code null} after resolution is complete.</p>
+     *
+     * @param activeEventCard the event card to set, or {@code null} to clear it
+     */
     public void setActiveEventCard(Card activeEventCard) {
         this.activeEventCard = activeEventCard;
     }
 
+    /**
+     * Returns the score threshold at which the game ends.
+     *
+     * @return the maximum score
+     */
     public int getMaxScore() {
         return maxScore;
     }
 
+    /**
+     * Returns the color requested by Fantastic / Fantastic Four / Equality, or {@code null}.
+     *
+     * @return the requested color, or {@code null} if no color is requested
+     */
     public CardColor getRequestedColor() {
         return requestedColor;
     }
 
+    /**
+     * Sets a color request for the next played card.
+     *
+     * @param requestedColor the required color, or {@code null} to clear the request
+     */
     public void setRequestedColor(CardColor requestedColor) {
         this.requestedColor = requestedColor;
     }
 
+    /**
+     * Returns the number requested by Fantastic / Fantastic Four, or {@code null}.
+     *
+     * @return the requested number, or {@code null} if no number is requested
+     */
     public Integer getRequestedNumber() {
         return requestedNumber;
     }
 
+    /**
+     * Sets a number request for the next played card.
+     *
+     * @param requestedNumber the required card value, or {@code null} to clear the request
+     */
     public void setRequestedNumber(Integer requestedNumber) {
         this.requestedNumber = requestedNumber;
     }
 
+    /**
+     * Returns the stack of pending special effects waiting to be resolved.
+     *
+     * <p>Effects are pushed when a special card is played and popped as they are resolved.
+     * A Counterattack may redirect but not remove the effect beneath it.</p>
+     *
+     * @return the pending-effects deque (top at {@link Deque#peek()})
+     */
     public Deque<SpecialEffect> getPendingEffects() {
         return pendingEffects;
     }
 
+    /**
+     * Returns the name of the player targeted by the top pending effect, or {@code null}.
+     *
+     * @return the pending effect target, or {@code null} if none is set
+     */
     public String getPendingEffectTarget() {
         return pendingEffectTarget;
     }
 
+    /**
+     * Sets the player targeted by the top pending effect.
+     *
+     * @param pendingEffectTarget the target player name, or {@code null} to clear it
+     */
     public void setPendingEffectTarget(String pendingEffectTarget) {
         this.pendingEffectTarget = pendingEffectTarget;
     }
 
+    /**
+     * Returns whether playing special cards is currently blocked.
+     *
+     * @return {@code true} if {@link ch.unibas.dmi.dbis.cs108.example.model.game.CardType#SPECIAL_SINGLE}
+     *         and {@link ch.unibas.dmi.dbis.cs108.example.model.game.CardType#SPECIAL_FOUR} cannot be played
+     */
     public boolean isSpecialsBlocked() {
         return specialsBlocked;
     }
 
+    /**
+     * Sets whether playing special cards is blocked.
+     *
+     * @param specialsBlocked {@code true} to block special cards until the next black card
+     */
     public void setSpecialsBlocked(boolean specialsBlocked) {
         this.specialsBlocked = specialsBlocked;
     }
 
+    /**
+     * Returns whether double scoring is active for this round.
+     *
+     * @return {@code true} if card scoring values are doubled at round end
+     */
     public boolean isDoubleScoringActive() {
         return doubleScoringActive;
     }
 
+    /**
+     * Sets whether double scoring is active for this round.
+     *
+     * @param doubleScoringActive {@code true} to double all card scoring values at round end
+     */
     public void setDoubleScoringActive(boolean doubleScoringActive) {
         this.doubleScoringActive = doubleScoringActive;
     }

@@ -38,7 +38,10 @@ public class Lobby {
     /** Round counter, incremented at the start of each new round (1-based). */
     private int currentRound = 0;
 
+    /** Whether dev mode is enabled for this lobby. */
     private boolean devModeEnabled = false;
+
+    /** Name of the dev-mode scenario to apply at the next game start, or {@code "none"}. */
     private String devScenario = "none";
 
     /**
@@ -239,18 +242,40 @@ public class Lobby {
         return players;
     }
 
+    /**
+     * Returns whether dev mode is enabled for this lobby.
+     *
+     * @return {@code true} if dev mode is active
+     */
     public boolean isDevModeEnabled() {
         return devModeEnabled;
     }
 
+    /**
+     * Sets whether dev mode is enabled for this lobby.
+     *
+     * @param devModeEnabled {@code true} to enable dev mode
+     */
     public void setDevModeEnabled(boolean devModeEnabled) {
         this.devModeEnabled = devModeEnabled;
     }
 
+    /**
+     * Returns the name of the dev-mode scenario to apply at the next game start.
+     *
+     * @return the scenario name, or {@code "none"} if no scenario is configured
+     */
     public String getDevScenario() {
         return devScenario;
     }
 
+    /**
+     * Sets the dev-mode scenario name to apply at the next game start.
+     *
+     * <p>A {@code null} value is stored as {@code "none"}.</p>
+     *
+     * @param devScenario the scenario name, without path or file extension
+     */
     public void setDevScenario(String devScenario) {
         this.devScenario = devScenario == null ? "none" : devScenario;
     }
