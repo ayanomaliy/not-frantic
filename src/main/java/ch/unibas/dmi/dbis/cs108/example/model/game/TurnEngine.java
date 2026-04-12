@@ -99,6 +99,18 @@ public class TurnEngine {
         state.setRequestedColor(null);
         state.setRequestedNumber(null);
 
+        // Preserve the previous top-card matching context for NICE_TRY
+        if (card.type() == CardType.SPECIAL_FOUR && card.effect() == SpecialEffect.NICE_TRY) {
+            if (top != null) {
+                if (top.color() != null) {
+                    state.setRequestedColor(top.color());
+                }
+                if (top.type() == CardType.COLOR || top.type() == CardType.BLACK) {
+                    state.setRequestedNumber(top.value());
+                }
+            }
+        }
+
         events.add(GameEvent.cardPlayed(playerName, card.id()));
 
         if (endRoundIfAnyPlayerHasNoCards(state, events)) {
