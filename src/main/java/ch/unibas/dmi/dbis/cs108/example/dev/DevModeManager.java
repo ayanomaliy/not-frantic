@@ -157,7 +157,11 @@ public final class DevModeManager {
      */
     private static void clearAllHands(GameState state) {
         for (PlayerGameState player : state.getPlayerOrder()) {
-            player.getHand().clear();
+            while (!player.getHand().isEmpty()) {
+                Card removed = player.getHand().remove(player.getHand().size() - 1);
+                state.getDrawPile().addLast(removed);
+            }
+
             player.setHasPlayedThisTurn(false);
             player.setHasDrawnThisTurn(false);
             player.setSkipped(false);
@@ -431,7 +435,22 @@ public final class DevModeManager {
             return card;
         }
 
-        throw new IllegalArgumentException("Card " + cardId + " not found in remaining piles.");
+        card = removeCardById(state.getDiscardPile(), cardId);
+        if (card != null) {
+            return card;
+        }
+
+        for (PlayerGameState player : state.getPlayerOrder()) {
+            for (int i = 0; i < player.getHand().size(); i++) {
+                Card current = player.getHand().get(i);
+                if (current.id() == cardId) {
+                    player.getHand().remove(i);
+                    return current;
+                }
+            }
+        }
+
+        throw new IllegalArgumentException("Card " + cardId + " not found anywhere in game state.");
     }
 
     /**
