@@ -1234,8 +1234,31 @@ public class ServerService {
     }
 
     /**
-     * Handles a {@code PLAY_CARD} message: the acting player plays one card.
-     * Broadcasts updated game state and events to the whole lobby.
+     * Handles a {@code PLAY_CARD} message: the acting player attempts to play one
+     * card from their hand.
+     *
+     * <p>This method validates that a game is active, parses the requested card id,
+     * checks that the card is currently in the acting player's hand, delegates the
+     * actual play to {@link TurnEngine#playCard(GameState, String, Card)}, and then
+     * broadcasts the resulting events, hand updates, and public game state.</p>
+     *
+     * <p>Follow-up handling depends on the resulting phase:</p>
+     * <ul>
+     *   <li>If the play ends the round, round-end handling is triggered.</li>
+     *   <li>If the play flips an active event card from a black-card play, the event
+     *       is resolved immediately on the server without additional client input.</li>
+     *   <li>If the game is still waiting for one or more pending special-effect
+     *       responses, an {@code EFFECT_REQUEST} is broadcast.</li>
+     *   <li>If effect resolution finishes with no further pending effects, the phase
+     *       is advanced back to {@link GamePhase#AWAITING_PLAY} so the turn can
+     *       continue instead of getting stuck in
+     *       {@link GamePhase#RESOLVING_EFFECT}.</li>
+     *   <li>If the play advances the game to {@link GamePhase#TURN_START}, the next
+     *       turn is started immediately.</li>
+     * </ul>
+     *
+     * @param session the client session that sent the play request
+     * @param payload the raw payload containing the card id to play
      */
     private void handlePlayCard(ClientSession session, String payload) {
         Lobby lobby = getLobbyOf(session);
@@ -1259,8 +1282,10 @@ public class ServerService {
                 .orElse(null);
 
         if (card == null) {
-            session.send(new Message(Message.Type.ERROR,
-                    "Card " + cardId + " not in your hand.").encode());
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Card " + cardId + " not in your hand."
+            ).encode());
             return;
         }
 
@@ -1271,8 +1296,12 @@ public class ServerService {
         if (state.getPhase() == GamePhase.ROUND_END) {
             broadcastGameState(lobby);
             handleRoundEnd(lobby);
-        } else if (state.getPhase() == GamePhase.RESOLVING_EFFECT) {
+            return;
+        }
+
+        if (state.getPhase() == GamePhase.RESOLVING_EFFECT) {
             Card eventCard = state.getActiveEventCard();
+
             if (eventCard != null) {
                 // Event card from a BLACK play — resolve immediately, no client input needed
                 List<GameEvent> eventEvents = EventResolver.resolve(eventCard, state);
@@ -1289,25 +1318,42 @@ public class ServerService {
                             Message.Type.EFFECT_REQUEST,
                             GameStateSerializer.serializeEffectRequest(nextEffect, playerName)
                     ));
+                } else if (state.getPhase() == GamePhase.RESOLVING_EFFECT) {
+                    state.setPhase(GamePhase.AWAITING_PLAY);
+                    broadcastGameState(lobby);
                 } else if (state.getPhase() == GamePhase.TURN_START) {
                     TurnEngine.startTurn(state);
                     broadcastGameState(lobby);
                 }
-            } else if (!state.getPendingEffects().isEmpty()) {
-                // Special card effect — send to client for resolution (unchanged)
+
+                return;
+            }
+
+            if (!state.getPendingEffects().isEmpty()) {
+                // Special card effect — send to client for resolution
                 String effectName = state.getPendingEffects().peek().name();
                 broadcastToLobby(lobby, new Message(
                         Message.Type.EFFECT_REQUEST,
                         GameStateSerializer.serializeEffectRequest(effectName, playerName)
                 ));
+                return;
             }
-        } else if (state.getPhase() == GamePhase.TURN_START) {
+
+            // Safety fallback: do not remain stuck in RESOLVING_EFFECT if there is
+            // nothing left to resolve.
+            state.setPhase(GamePhase.AWAITING_PLAY);
+            broadcastGameState(lobby);
+            return;
+        }
+
+        if (state.getPhase() == GamePhase.TURN_START) {
             broadcastGameState(lobby);
             TurnEngine.startTurn(state);
             broadcastGameState(lobby);
-        } else {
-            broadcastGameState(lobby);
+            return;
         }
+
+        broadcastGameState(lobby);
     }
 
     /**
@@ -1367,8 +1413,18 @@ public class ServerService {
     }
 
     /**
-     * Handles an {@code EFFECT_RESPONSE} message: the acting player supplies
-     * arguments to resolve a pending special effect.
+     * Handles a client's response to a pending special-effect request.
+     *
+     * <p>This method validates that a game is active, parses the effect-response
+     * payload, resolves the effect, and broadcasts the resulting events and
+     * updated game state to the lobby.</p>
+     *
+     * <p>Invalid effect arguments, such as an unknown target player or a selected
+     * card that is not valid, must not terminate the client session. Instead,
+     * the acting player receives an {@code ERROR} message and stays connected.</p>
+     *
+     * @param session the client session that sent the effect response
+     * @param payload the raw effect-response payload
      */
     private void handleEffectResponse(ClientSession session, String payload) {
         Lobby lobby = getLobbyOf(session);
@@ -1380,26 +1436,50 @@ public class ServerService {
         GameState state = lobby.getGameState();
         String playerName = session.getPlayerName();
 
-        Object[] parsed = GameMessageParser.parseEffectResponse(payload, state, playerName);
+        final Object[] parsed;
+        try {
+            parsed = GameMessageParser.parseEffectResponse(payload, state, playerName);
+        } catch (IllegalArgumentException e) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    e.getMessage()
+            ).encode());
+            return;
+        }
+
         if (parsed == null) {
-            session.send(new Message(Message.Type.ERROR,
-                    "Malformed effect response.").encode());
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Malformed effect response."
+            ).encode());
             return;
         }
 
         String effectName = (String) parsed[0];
         EffectArgs args = (EffectArgs) parsed[1];
 
-        SpecialEffect effect;
+        final SpecialEffect effect;
         try {
             effect = SpecialEffect.valueOf(effectName);
         } catch (IllegalArgumentException e) {
-            session.send(new Message(Message.Type.ERROR,
-                    "Unknown effect: " + effectName).encode());
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Unknown effect: " + effectName
+            ).encode());
             return;
         }
 
-        List<GameEvent> events = EffectResolver.resolve(effect, state, playerName, args);
+        final List<GameEvent> events;
+        try {
+            events = EffectResolver.resolve(effect, state, playerName, args);
+        } catch (IllegalArgumentException e) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    e.getMessage()
+            ).encode());
+            return;
+        }
+
         broadcastEvents(lobby, events);
         broadcastAllHands(lobby);
         broadcastGameState(lobby);

@@ -338,4 +338,36 @@ class CardValidatorTest {
     private boolean canPlay(Card card) {
         return CardValidator.canPlay(card, state.peekDiscardPile(), state);
     }
+
+
+
+    @Test
+    void specialSingle_withRequestedNumber_isInvalid() {
+        setTop(Card.colorCard(0, CardColor.RED, 3));
+        state.setRequestedNumber(1);
+
+        assertFalse(canPlay(
+                Card.specialSingleCard(1, CardColor.YELLOW, SpecialEffect.EXCHANGE)
+        ));
+    }
+
+    @Test
+    void colorCard_withRequestedNumber_matchingNumber_isValid() {
+        setTop(Card.colorCard(0, CardColor.RED, 3));
+        state.setRequestedNumber(1);
+
+        assertTrue(canPlay(
+                Card.colorCard(2, CardColor.YELLOW, 1)
+        ));
+    }
+
+    @Test
+    void colorCard_withRequestedNumber_nonMatchingNumber_isInvalid() {
+        setTop(Card.colorCard(0, CardColor.RED, 3));
+        state.setRequestedNumber(1);
+
+        assertFalse(canPlay(
+                Card.colorCard(2, CardColor.YELLOW, 5)
+        ));
+    }
 }
