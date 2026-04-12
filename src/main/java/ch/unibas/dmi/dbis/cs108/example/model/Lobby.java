@@ -38,6 +38,9 @@ public class Lobby {
     /** Round counter, incremented at the start of each new round (1-based). */
     private int currentRound = 0;
 
+    private boolean devModeEnabled = false;
+    private String devScenario = "none";
+
     /**
      * Cumulative scores carried across rounds.
      * Key = player name, value = total score so far.
@@ -234,5 +237,21 @@ public class Lobby {
             players.add(new Player(session.getPlayerName()));
         }
         return players;
+    }
+
+    public boolean isDevModeEnabled() {
+        return devModeEnabled;
+    }
+
+    public void setDevModeEnabled(boolean devModeEnabled) {
+        this.devModeEnabled = devModeEnabled;
+    }
+
+    public String getDevScenario() {
+        return devScenario;
+    }
+
+    public void setDevScenario(String devScenario) {
+        this.devScenario = devScenario == null ? "none" : devScenario;
     }
 }

@@ -67,33 +67,35 @@ public class EffectResolver {
     // -------------------------------------------------------------------------
 
     private static List<GameEvent> resolveSecondChance(GameState state,
-                                                        String actingPlayer,
-                                                        EffectArgs args) {
-        List<GameEvent> events = new ArrayList<>();
-        PlayerGameState actor = state.getPlayer(actingPlayer);
+                                                       String actingPlayer,
+                                                       EffectArgs args) {
         List<Card> selected = args.getSelectedCards();
 
         if (!selected.isEmpty()) {
-            // Play the chosen card directly (no nested TurnEngine.playCard to avoid re-routing)
             Card toPlay = selected.get(0);
-            actor.removeCard(toPlay);
-            state.pushToDiscardPile(toPlay);
-            events.add(GameEvent.cardPlayed(actingPlayer, toPlay.id()));
 
-            if (TurnEngine.endRoundIfAnyPlayerHasNoCards(state, events)) {
-                return events;
-            }
-        } else {
-            // No valid card — draw 1 as penalty
-            Card drawn = state.drawFromDrawPile();
-            if (drawn != null) {
-                actor.addCard(drawn);
-                events.add(GameEvent.cardDrawn(actingPlayer, drawn.id()));
-            }
+            /*
+             * Reuse the normal play pipeline so the second card behaves exactly like
+             * a regular played card, including black-card events, special effects,
+             * round-end checks, and phase transitions.
+             */
+            return TurnEngine.playCard(state, actingPlayer, toPlay);
         }
+
+        List<GameEvent> events = new ArrayList<>();
+
+        // No valid card — draw 1 as penalty
+        Card drawn = state.drawFromDrawPile();
+        if (drawn != null) {
+            PlayerGameState actor = state.getPlayer(actingPlayer);
+            actor.addCard(drawn);
+            events.add(GameEvent.cardDrawn(actingPlayer, drawn.id()));
+        }
+
         if (TurnEngine.endRoundIfAnyPlayerHasNoCards(state, events)) {
             return events;
         }
+
         events.addAll(TurnEngine.endTurn(state));
         return events;
     }

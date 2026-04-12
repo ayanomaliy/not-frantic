@@ -1,6 +1,7 @@
 package ch.unibas.dmi.dbis.cs108.example.service;
 
 import ch.unibas.dmi.dbis.cs108.example.controller.ClientSession;
+import ch.unibas.dmi.dbis.cs108.example.dev.DevModeManager;
 import ch.unibas.dmi.dbis.cs108.example.model.Lobby;
 import ch.unibas.dmi.dbis.cs108.example.model.LobbyStatus;
 import ch.unibas.dmi.dbis.cs108.example.model.Player;
@@ -521,6 +522,9 @@ public class ServerService {
                     Message.Type.ERROR,
                     "Client may not send server-only message types."
             ).encode());
+
+
+            case DEV -> handleDevMode(session, message.content());
 
             case UNKNOWN -> {
                 log("Unknown command from " + session.getPlayerName() + ": " + message.content());
@@ -1060,6 +1064,29 @@ public class ServerService {
                 playerNames, round, lobby.getCumulativeScores(), new Random());
         lobby.setGameState(gameState);
 
+
+
+        //devmode:
+        if (lobby.isDevModeEnabled()) {
+            try {
+                DevModeManager.applyIfEnabled(lobby);
+                log("Applied dev mode scenario '" + lobby.getDevScenario()
+                        + "' in lobby " + lobby.getLobbyId() + ".");
+            } catch (Exception e) {
+                lobby.setGameStarted(false);
+                lobby.setGameState(null);
+                lobby.setLobbyStatus(LobbyStatus.WAITING);
+
+                session.send(new Message(
+                        Message.Type.ERROR,
+                        "Could not apply dev mode scenario '" + lobby.getDevScenario()
+                                + "': " + e.getMessage()
+                ).encode());
+                broadcastLobbyListToAllClients();
+                return;
+            }
+        }
+
         log("Game started in lobby " + lobby.getLobbyId()
                 + " with " + lobby.getPlayerCount() + " players (round " + round + ").");
 
@@ -1546,5 +1573,63 @@ public class ServerService {
                     event.type().name() + ":" + event.detail()
             ));
         }
+    }
+
+
+
+
+
+    /**
+     * Handles a dev-mode request for the current lobby.
+     *
+     * <p>Usage examples:</p>
+     * <ul>
+     *   <li>{@code /dev secondchance}</li>
+     *   <li>{@code DEV|secondchance}</li>
+     *   <li>{@code /dev off}</li>
+     * </ul>
+     *
+     * <p>The chosen scenario is stored on the lobby and applied the next time a
+     * game is started in that lobby.</p>
+     *
+     * @param session the requesting client session
+     * @param payload the scenario name or {@code off}
+     */
+    private void handleDevMode(ClientSession session, String payload) {
+        Lobby lobby = getLobbyOf(session);
+
+        if (lobby == null) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "You must be in a lobby to configure dev mode."
+            ).encode());
+            return;
+        }
+
+        String cleaned = payload == null ? "" : payload.trim();
+
+        if (cleaned.isBlank()) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Usage: /dev <scenarioName> or /dev off"
+            ).encode());
+            return;
+        }
+
+        if ("off".equalsIgnoreCase(cleaned)) {
+            DevModeManager.disableForLobby(lobby);
+            broadcastToLobby(lobby, new Message(
+                    Message.Type.INFO,
+                    "Dev mode disabled for lobby: " + lobby.getLobbyId()
+            ));
+            return;
+        }
+
+        DevModeManager.enableForLobby(lobby, cleaned);
+        broadcastToLobby(lobby, new Message(
+                Message.Type.INFO,
+                "Dev mode enabled for lobby " + lobby.getLobbyId()
+                        + " with scenario: " + cleaned
+        ));
     }
 }
