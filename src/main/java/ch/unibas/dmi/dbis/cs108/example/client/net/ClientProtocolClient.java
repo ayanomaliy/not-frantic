@@ -167,6 +167,13 @@ public class ClientProtocolClient {
     }
 
     /**
+     * Requests to end the current match immediately using the cheat command.
+     */
+    public void cheatWin() {
+        send(new Message(Message.Type.CHEATWIN, ""));
+    }
+
+    /**
      * Requests the current hand.
      */
     public void requestHand() {

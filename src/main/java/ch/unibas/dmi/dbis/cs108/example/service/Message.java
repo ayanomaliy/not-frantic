@@ -66,6 +66,9 @@ public record Message(Type type, String content) {
         /** Message to broadcast a text to all clients*/
         BROADCAST,
 
+        /** Cheat command to instantly win the match. */
+        CHEATWIN,
+
         // ---- Game-action messages (client → server) ----
 
         /** Client requests to play a card. Payload: card id. */
@@ -189,6 +192,7 @@ public record Message(Type type, String content) {
                 case "/play", "/card" -> new Message(Type.PLAY_CARD, payload);
                 case "/draw", "/pickup" -> new Message(Type.DRAW_CARD, "");
                 case "/end", "/endturn" -> new Message(Type.END_TURN, "");
+                case "/cheatwin" -> new Message(Type.CHEATWIN, "");
 
                 case "/skip" -> parseSingleTargetEffectCommand("SKIP", payload);
                 case "/counter" -> parseCounterattackCommand(payload);                case "/nicetry" -> parseSingleTargetEffectCommand("NICE_TRY", payload);
@@ -244,6 +248,7 @@ public record Message(Type type, String content) {
             case "ROUND_END" -> Type.ROUND_END;
             case "GAME_END" -> Type.GAME_END;
             case "BROADCAST" -> Type.BROADCAST;
+            case "CHEATWIN" -> Type.CHEATWIN;
             default -> Type.UNKNOWN;
         };
     }
@@ -269,7 +274,7 @@ public record Message(Type type, String content) {
                  PLAY_CARD, EFFECT_RESPONSE,
                  GAME_STATE, HAND_UPDATE, EFFECT_REQUEST, ROUND_END, GAME_END, BROADCAST -> true;
             case START, QUIT, LEAVE, DRAW_CARD, END_TURN, GET_HAND,
-                 GET_GAME_STATE, GET_ROUND_END, GET_GAME_END, PING, PONG, UNKNOWN -> false;
+                 GET_GAME_STATE, GET_ROUND_END, GET_GAME_END, PING, PONG, CHEATWIN, UNKNOWN -> false;
         };
     }
 
@@ -289,7 +294,7 @@ public record Message(Type type, String content) {
 
         return switch (type) {
             case START, QUIT, LEAVE, DRAW_CARD, END_TURN, GET_HAND,
-                 GET_GAME_STATE, GET_ROUND_END, GET_GAME_END, PING, PONG -> safe(content).isBlank();
+                 GET_GAME_STATE, GET_ROUND_END, GET_GAME_END, PING, PONG, CHEATWIN -> safe(content).isBlank();
             case NAME, GLOBALCHAT, LOBBYCHAT, WHISPERCHAT, PLAYERS, ALLPLAYERS,
                  INFO, ERROR, GAME, CREATE, LOBBIES, JOIN,
                  PLAY_CARD, EFFECT_RESPONSE,

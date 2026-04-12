@@ -459,6 +459,17 @@ public class ServerService {
                 handleStart(session);
             }
 
+            case CHEATWIN -> {
+                if (!message.content().isBlank()) {
+                    session.send(new Message(
+                            Message.Type.ERROR,
+                            "CHEATWIN must not contain content."
+                    ).encode());
+                    return;
+                }
+                handleCheatWin(session);
+            }
+
             case QUIT -> {
                 if (!message.content().isBlank()) {
                     session.send(new Message(
@@ -1057,6 +1068,54 @@ public class ServerService {
 
         TurnEngine.startTurn(gameState);
         broadcastGameState(lobby);
+    }
+
+    /**
+     * Handles a cheat command that instantly ends the current match
+     * and declares the requesting player as the winner.
+     *
+     * @param session the client session triggering the cheat
+     */
+    private void handleCheatWin(ClientSession session) {
+        Lobby lobby = getLobbyOf(session);
+
+        if (lobby == null) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "You are not in a lobby."
+            ).encode());
+            return;
+        }
+
+        if (lobby.getGameState() == null) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "No active game."
+            ).encode());
+            return;
+        }
+
+        GameState state = lobby.getGameState();
+
+        // 🔥 FORCE GAME OVER
+        String winner = session.getPlayerName();
+
+        // send GAME_END to everyone
+        broadcastToLobby(lobby, new Message(
+                Message.Type.GAME_END,
+                winner
+        ));
+
+        // update lobby state
+        state.setPhase(GamePhase.GAME_OVER);
+        lobby.setGameState(null);
+        lobby.setGameStarted(false);
+        lobby.setLobbyStatus(LobbyStatus.FINISHED);
+
+        // update lobby list globally
+        broadcastLobbyListToAllClients();
+
+        log("CHEATWIN used by " + winner + " in lobby " + lobby.getLobbyId());
     }
 
     /**
