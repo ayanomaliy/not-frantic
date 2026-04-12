@@ -69,27 +69,45 @@ public class EffectResolver {
     private static List<GameEvent> resolveSecondChance(GameState state,
                                                        String actingPlayer,
                                                        EffectArgs args) {
+        List<GameEvent> events = new ArrayList<>();
+        PlayerGameState actor = state.getPlayer(actingPlayer);
         List<Card> selected = args.getSelectedCards();
 
         if (!selected.isEmpty()) {
             Card toPlay = selected.get(0);
 
-            /*
-             * Reuse the normal play pipeline so the second card behaves exactly like
-             * a regular played card, including black-card events, special effects,
-             * round-end checks, and phase transitions.
-             */
-            return TurnEngine.playCard(state, actingPlayer, toPlay);
-        }
+            actor.removeCard(toPlay);
+            state.pushToDiscardPile(toPlay);
+            events.add(GameEvent.cardPlayed(actingPlayer, toPlay.id()));
 
-        List<GameEvent> events = new ArrayList<>();
+            if (actor.getHandSize() == 0) {
+                state.setPhase(GamePhase.ROUND_END);
+                events.add(GameEvent.roundEnded("player_empty_hand"));
+                return events;
+            }
 
-        // No valid card — draw 1 as penalty
-        Card drawn = state.drawFromDrawPile();
-        if (drawn != null) {
-            PlayerGameState actor = state.getPlayer(actingPlayer);
-            actor.addCard(drawn);
-            events.add(GameEvent.cardDrawn(actingPlayer, drawn.id()));
+            if (toPlay.type() == CardType.BLACK) {
+                Card eventCard = state.drawFromEventPile();
+                if (eventCard != null) {
+                    state.setActiveEventCard(eventCard);
+                    events.add(GameEvent.eventCardFlipped(eventCard.id()));
+                }
+                state.setPhase(GamePhase.RESOLVING_EFFECT);
+                return events;
+            }
+
+            if (toPlay.type() == CardType.SPECIAL_SINGLE || toPlay.type() == CardType.SPECIAL_FOUR) {
+                state.getPendingEffects().push(toPlay.effect());
+                state.setPhase(GamePhase.RESOLVING_EFFECT);
+                events.add(GameEvent.effectTriggered(toPlay.effect()));
+                return events;
+            }
+        } else {
+            Card drawn = state.drawFromDrawPile();
+            if (drawn != null) {
+                actor.addCard(drawn);
+                events.add(GameEvent.cardDrawn(actingPlayer, drawn.id()));
+            }
         }
 
         if (TurnEngine.endRoundIfAnyPlayerHasNoCards(state, events)) {
