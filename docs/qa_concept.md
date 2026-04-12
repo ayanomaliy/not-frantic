@@ -14,4 +14,4 @@ Documentation is treated as a mandatory part of development. We write JavaDoc fo
 
 ## Version Control
 
-We use GitHub for version control, following a structured branching strategy to keep the main branch stable and all development traceable. The main branch only contains tested, production-ready code. For each new feature or task, team members create their own branch based on the latest version of main, committing changes regularly with clear and descriptive messages.
+We use GitLab for version control, following a structured branching strategy to keep the main branch stable and all development traceable. The main branch only contains tested, production-ready code. For each new feature or task, team members create their own branch based on the latest version of main, committing changes regularly with clear and descriptive messages.
