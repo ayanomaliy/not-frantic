@@ -12,28 +12,33 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
-import javafx.scene.layout.Region;
 
 /**
  * Game screen for the Frantic^-1 GUI client.
  *
- * <p>This view follows the same visual design language as the connect and
+ * <p>This view uses a responsive JavaFX layout so that the content adapts
+ * better to different window sizes. The main content is wrapped in a
+ * {@link ScrollPane} to prevent clipping on smaller screens, while the hand,
+ * sidebar, and center table areas scale more gracefully with the stage size.</p>
+ *
+ * <p>The class follows the same visual design language as the connect and
  * lobby screens by relying on shared CSS classes such as {@code panel},
  * {@code section-title}, {@code frantic-button}, and
  * {@code frantic-list-view}.</p>
  */
 public class GameView extends BorderPane {
 
-    private static final double SIDEBAR_PREF_WIDTH = 340;
-    private static final double SIDEBAR_MIN_WIDTH = 320;
+    private static final double SIDEBAR_MIN_WIDTH = 250;
 
     private static final double PLAYERS_HEIGHT_COLLAPSED = 230;
     private static final double INFO_HEIGHT_COLLAPSED = 230;
@@ -45,8 +50,6 @@ public class GameView extends BorderPane {
 
     private static final Duration PANEL_ANIMATION_DURATION = Duration.millis(260);
     private static final Duration CHAT_HIDE_DELAY = Duration.millis(180);
-
-    private final Region topSpacer = new Region();
 
     private final VBox gameArea = new VBox(16);
     private final StackPane centerTablePane = new StackPane();
@@ -133,12 +136,26 @@ public class GameView extends BorderPane {
 
     /**
      * Builds the overall screen layout.
+     *
+     * <p>The main content is placed inside an outer scroll pane so that the
+     * complete game screen remains accessible even on smaller displays.</p>
      */
     private void buildLayout() {
-        setCenter(buildGamePanel());
-        setRight(buildSidebar());
+        BorderPane content = new BorderPane();
+
+        content.setCenter(buildGamePanel());
+        content.setRight(buildSidebar());
 
         BorderPane.setMargin(gameArea, new Insets(0, 12, 0, 0));
+
+        ScrollPane outerScrollPane = new ScrollPane(content);
+        outerScrollPane.setFitToWidth(true);
+        outerScrollPane.setFitToHeight(true);
+        outerScrollPane.setPannable(true);
+        outerScrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        outerScrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+
+        setCenter(outerScrollPane);
     }
 
     /**
@@ -148,6 +165,14 @@ public class GameView extends BorderPane {
      */
     private VBox buildGamePanel() {
         gameArea.getStyleClass().add("panel");
+        gameArea.setMaxWidth(Double.MAX_VALUE);
+
+        /*
+         * Keep the game area responsive relative to the available width.
+         * This binding is intentionally conservative so that the sidebar
+         * still keeps enough room on medium-sized screens.
+         */
+        gameArea.prefWidthProperty().bind(widthProperty().multiply(0.70));
 
         buildCenterArea();
         buildBottomHandArea();
@@ -167,8 +192,8 @@ public class GameView extends BorderPane {
      * Builds the central table area with piles, labels, and main action buttons.
      */
     private void buildCenterArea() {
-        centerTablePane.setMinHeight(420);
-        centerTablePane.setPrefHeight(500);
+        centerTablePane.setMinHeight(250);
+        centerTablePane.prefHeightProperty().bind(heightProperty().multiply(0.50));
 
         HBox pilesBox = new HBox(28);
         pilesBox.setAlignment(Pos.CENTER);
@@ -176,6 +201,10 @@ public class GameView extends BorderPane {
         VBox drawPileBox = createPileBox("Draw Pile");
         VBox discardPileBox = createPileBox("Discard Pile");
         pilesBox.getChildren().addAll(drawPileBox, discardPileBox);
+
+        currentPlayerLabel.setWrapText(true);
+        phaseLabel.setWrapText(true);
+        discardTopLabel.setWrapText(true);
 
         HBox statusRow = new HBox(20, currentPlayerLabel, phaseLabel, discardTopLabel);
         statusRow.setAlignment(Pos.CENTER);
@@ -192,27 +221,44 @@ public class GameView extends BorderPane {
 
     /**
      * Builds the bottom hand section.
+     *
+     * <p>The player's hand is placed inside its own scroll pane so that many
+     * cards remain accessible without breaking the overall layout.</p>
      */
     private void buildBottomHandArea() {
-        handSection.getChildren().addAll(
-                createSectionTitle("Your Hand"),
-                playerHandPane
-        );
-
         playerHandPane.setHgap(12);
         playerHandPane.setVgap(12);
-        playerHandPane.setPrefWrapLength(900);
+
+        /*
+         * Make the wrapping width adapt to the current window width instead
+         * of relying on a fixed number.
+         */
+        playerHandPane.prefWrapLengthProperty().bind(widthProperty().multiply(0.60));
+
+        ScrollPane handScrollPane = new ScrollPane(playerHandPane);
+        handScrollPane.setFitToWidth(true);
+        handScrollPane.setPannable(true);
+        handScrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        handScrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        handScrollPane.setPrefViewportHeight(180);
+        handScrollPane.setMinHeight(150);
+
+        handSection.getChildren().addAll(
+                createSectionTitle("Your Hand"),
+                handScrollPane
+        );
     }
 
     /**
-     * Builds the right sidebar containing players, game info, command input, and chat.
+     * Builds the right sidebar containing players, game info, command input,
+     * and chat.
      *
      * @return the configured sidebar
      */
     private VBox buildSidebar() {
-        sideBar.setPrefWidth(SIDEBAR_PREF_WIDTH);
-        sideBar.setMinWidth(SIDEBAR_MIN_WIDTH);
         sideBar.setFillWidth(true);
+        sideBar.setMinWidth(SIDEBAR_MIN_WIDTH);
+        sideBar.prefWidthProperty().bind(widthProperty().multiply(0.28));
 
         playersBox = new VBox(
                 8,
@@ -331,7 +377,8 @@ public class GameView extends BorderPane {
     }
 
     /**
-     * Collapses the chat panel and animates the other panels back to their default sizes.
+     * Collapses the chat panel and animates the other panels back to their
+     * default sizes.
      */
     private void collapseChat() {
         toggleChatButton.setText("Expand Chat");
@@ -380,7 +427,7 @@ public class GameView extends BorderPane {
     private HBox createChatHeader() {
         Label title = createSectionTitle("Chat");
 
-        HBox spacer = new HBox();
+        Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
         HBox header = new HBox(10, title, spacer, chatModeButton, toggleChatButton);
