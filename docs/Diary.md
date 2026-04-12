@@ -444,3 +444,11 @@ Today, I worked on cleaning up several parts of the project that were still roug
 * Keep the external documentation in sync with the current source code, especially the protocol, manual files, and effect-resolution behavior.
 * Continue polishing usability so the project feels more complete and easier to understand for someone testing it for the first time.
 * Add more targeted tests and dev-mode scenarios for tricky interactions involving black cards, event effects, requested colors/numbers, and chained effect resolution.
+
+## Date: April 12, 2026
+
+### QA (Sevval)
+
+#### What did we do today?
+Today I redid our project plan and did a gantt chart aswell. 
+I uploaded the project plan and our qa concept.
