@@ -66,6 +66,7 @@ class FullRoundSimulationTest {
     private Map<String, Integer>  totalScoresAfterRound1;
 
     // Round 2 initial state (captured before simulation runs)
+    private GameState             round2State;
     private List<String>          round2OrderedPlayerNames;
     private Map<String, Integer>  round2StartingTotalScores;
     private Map<String, Integer>  round2InitialHandSizes;
@@ -75,6 +76,20 @@ class FullRoundSimulationTest {
     private Map<String, Integer>  finalTotalScores;
     private String                declaredWinner;
     private int                   totalRoundsPlayed;
+
+    /**
+     * Bundles the explicit post-round coordination step that the simulation
+     * test performs after a round reaches {@link GamePhase#ROUND_END}.
+     *
+     * <p>This mirrors the server responsibility: score the finished round and,
+     * if the game is not over, create the next round with carried scores.
+     * The turn simulation itself intentionally stops at {@code ROUND_END} and
+     * does not initialize the next round automatically.</p>
+     */
+    private record RoundTransition(Map<String, Integer> roundScores,
+                                   Map<String, Integer> cumulativeScores,
+                                   GameState nextRoundState) {
+    }
 
     // =========================================================================
     // @BeforeAll — run the full game once, then assert against stored results
@@ -88,24 +103,29 @@ class FullRoundSimulationTest {
         simulateRound(r1);
         round1FinalState = r1;
 
-        round1RoundScores = ScoreCalculator.calculateRoundScores(r1.getPlayerOrder(), r1);
-        totalScoresAfterRound1 = buildTotalScoreMap(r1);
+        RoundTransition afterRound1 = transitionToNextRound(r1, 2, SEED + 1);
+        round1RoundScores = afterRound1.roundScores();
+        totalScoresAfterRound1 = afterRound1.cumulativeScores();
+        round2State = afterRound1.nextRoundState();
 
-        // ── Round 2 initial snapshot (always created for ordering assertions) ─
-        GameState r2 = GameInitializer.initialize(
-                PLAYER_NAMES, 2, totalScoresAfterRound1, new Random(SEED + 1));
-
-        round2OrderedPlayerNames = r2.getPlayerOrder().stream()
+        // ── Round 2 initial snapshot (captured only after explicit transition) ─
+        if (round2State != null) {
+            round2OrderedPlayerNames = round2State.getPlayerOrder().stream()
                 .map(PlayerGameState::getPlayerName)
                 .collect(Collectors.toList());
-        round2StartingTotalScores = buildTotalScoreMap(r2);
-        round2InitialHandSizes    = r2.getPlayerOrder().stream()
+            round2StartingTotalScores = buildTotalScoreMap(round2State);
+            round2InitialHandSizes = round2State.getPlayerOrder().stream()
                 .collect(Collectors.toMap(
                         PlayerGameState::getPlayerName,
                         PlayerGameState::getHandSize));
+        } else {
+            round2OrderedPlayerNames = List.of();
+            round2StartingTotalScores = Map.of();
+            round2InitialHandSizes = Map.of();
+        }
 
         // Early exit if the game somehow ended in round 1
-        if (ScoreCalculator.isGameOver(totalScoresAfterRound1, r1.getMaxScore())) {
+        if (round2State == null) {
             finalGameState = r1;
             finalTotalScores = totalScoresAfterRound1;
             finalGameState.setPhase(GamePhase.GAME_OVER);
@@ -115,15 +135,15 @@ class FullRoundSimulationTest {
         }
 
         // ── Simulate round 2 and beyond until game over ───────────────────────
-        GameState current = r2;
+        GameState current = round2State;
         int round = 2;
 
         while (true) {
             simulateRound(current);
-            ScoreCalculator.calculateRoundScores(current.getPlayerOrder(), current);
-            Map<String, Integer> cumulativeScores = buildTotalScoreMap(current);
+            RoundTransition transition = transitionToNextRound(current, round + 1, SEED + round + 1);
+            Map<String, Integer> cumulativeScores = transition.cumulativeScores();
 
-            if (ScoreCalculator.isGameOver(cumulativeScores, current.getMaxScore())) {
+            if (transition.nextRoundState() == null) {
                 finalGameState   = current;
                 finalTotalScores = cumulativeScores;
                 finalGameState.setPhase(GamePhase.GAME_OVER);
@@ -136,8 +156,7 @@ class FullRoundSimulationTest {
             }
 
             round++;
-            current = GameInitializer.initialize(
-                    PLAYER_NAMES, round, cumulativeScores, new Random(SEED + round));
+            current = transition.nextRoundState();
         }
 
         declaredWinner = ScoreCalculator.getWinner(finalTotalScores);
@@ -189,6 +208,14 @@ class FullRoundSimulationTest {
         assertEquals(Set.of("Alice", "Bob", "Charlie"),
                 Set.copyOf(round2OrderedPlayerNames),
                 "All 3 players must be present at the start of round 2");
+    }
+
+    @Test
+    void round2_isCreatedByExplicitRoundTransitionStep() {
+        assertNotNull(round2State,
+                "Round 2 should only exist after the test performs the post-round transition step.");
+        assertNotSame(round1FinalState, round2State,
+                "Round 2 must be a freshly initialized state, not the finished round-1 object.");
     }
 
     @Test
@@ -290,6 +317,29 @@ class FullRoundSimulationTest {
         fail("Round did not reach ROUND_END within " + MAX_STEPS_PER_ROUND + " steps. "
                 + "Phase=" + state.getPhase()
                 + ", drawPile=" + state.getDrawPile().size());
+    }
+
+    /**
+     * Applies the explicit post-round transition step that production code
+     * performs outside the pure turn engine.
+     */
+    private RoundTransition transitionToNextRound(GameState finishedRound,
+                                                  int nextRoundNumber,
+                                                  long nextSeed) {
+        assertEquals(GamePhase.ROUND_END, finishedRound.getPhase(),
+                "A next round may only be initialized after the current round has ended.");
+
+        Map<String, Integer> roundScores =
+                ScoreCalculator.calculateRoundScores(finishedRound.getPlayerOrder(), finishedRound);
+        Map<String, Integer> cumulativeScores = buildTotalScoreMap(finishedRound);
+
+        if (ScoreCalculator.isGameOver(cumulativeScores, finishedRound.getMaxScore())) {
+            return new RoundTransition(roundScores, cumulativeScores, null);
+        }
+
+        GameState nextRoundState = GameInitializer.initialize(
+                PLAYER_NAMES, nextRoundNumber, cumulativeScores, new Random(nextSeed));
+        return new RoundTransition(roundScores, cumulativeScores, nextRoundState);
     }
 
     /** Dispatches a single simulation step based on the current phase. */

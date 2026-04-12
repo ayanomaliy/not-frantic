@@ -1,10 +1,19 @@
 package ch.unibas.dmi.dbis.cs108.example.service;
 
 import ch.unibas.dmi.dbis.cs108.example.controller.ClientSession;
+import ch.unibas.dmi.dbis.cs108.example.model.Lobby;
+import ch.unibas.dmi.dbis.cs108.example.model.game.Card;
+import ch.unibas.dmi.dbis.cs108.example.model.game.CardColor;
+import ch.unibas.dmi.dbis.cs108.example.model.game.GamePhase;
+import ch.unibas.dmi.dbis.cs108.example.model.game.GameState;
+import ch.unibas.dmi.dbis.cs108.example.model.game.PlayerGameState;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Field;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -89,6 +98,45 @@ class ServerServiceTest {
         long countMessagesContaining(String text) {
             return sentMessages.stream().filter(m -> m.contains(text)).count();
         }
+    }
+
+    /**
+     * Returns the lobby with the given id from the private server lobby map.
+     */
+    @SuppressWarnings("unchecked")
+    private static Lobby getLobby(ServerService service, String lobbyId) throws ReflectiveOperationException {
+        Field lobbiesField = ServerService.class.getDeclaredField("lobbies");
+        lobbiesField.setAccessible(true);
+        Map<String, Lobby> lobbies = (Map<String, Lobby>) lobbiesField.get(service);
+        return lobbies.get(lobbyId);
+    }
+
+    /**
+     * Creates a minimal round state where Alice can end the round immediately
+     * by playing her final card.
+     */
+    private static GameState createRoundEndingState() {
+        PlayerGameState alice = new PlayerGameState("Alice");
+        PlayerGameState bob = new PlayerGameState("Bob");
+
+        alice.addCard(Card.colorCard(1, CardColor.RED, 5));
+        bob.addCard(Card.colorCard(2, CardColor.BLUE, 7));
+
+        ArrayDeque<Card> drawPile = new ArrayDeque<>();
+        ArrayDeque<Card> discardPile = new ArrayDeque<>();
+        ArrayDeque<Card> eventPile = new ArrayDeque<>();
+
+        discardPile.push(Card.colorCard(99, CardColor.RED, 9));
+
+        GameState state = new GameState(
+                new ArrayList<>(List.of(alice, bob)),
+                drawPile,
+                discardPile,
+                eventPile,
+                100
+        );
+        state.setPhase(GamePhase.AWAITING_PLAY);
+        return state;
     }
 
     /**
@@ -985,6 +1033,70 @@ class ServerServiceTest {
         service.handleMessage(session, new Message(Message.Type.START, ""));
 
         assertEquals("ERROR|Need at least 2 players in the lobby to start.", session.getLastMessage());
+    }
+
+    /**
+     * Verifies that a real server-side round end initializes the next round
+     * with a fresh game state and newly dealt hands.
+     */
+    @Test
+    void handlePlayCardAtRoundEndInitializesNextRound() throws ReflectiveOperationException {
+        ServerService service = new ServerService();
+        TestClientSession alice = new TestClientSession();
+        TestClientSession bob = new TestClientSession();
+
+        service.registerClient(alice);
+        service.registerClient(bob);
+
+        service.handleMessage(alice, new Message(Message.Type.NAME, "Alice"));
+        service.handleMessage(bob, new Message(Message.Type.NAME, "Bob"));
+        service.handleMessage(alice, new Message(Message.Type.CREATE, "Lobby1"));
+        service.handleMessage(bob, new Message(Message.Type.JOIN, "Lobby1"));
+        service.handleMessage(alice, new Message(Message.Type.START, ""));
+
+        Lobby lobby = getLobby(service, "Lobby1");
+        assertNotNull(lobby, "Lobby should exist after creation.");
+        assertEquals(1, lobby.getCurrentRound(), "A successful game start must create round 1.");
+
+        GameState scriptedRound = createRoundEndingState();
+        lobby.setGameState(scriptedRound);
+
+        alice.getSentMessages().clear();
+        bob.getSentMessages().clear();
+
+        service.handleMessage(alice, new Message(Message.Type.PLAY_CARD, "1"));
+
+        GameState nextRound = lobby.getGameState();
+        assertNotNull(nextRound, "Server should replace the finished round with a new game state.");
+        assertNotSame(scriptedRound, nextRound, "Next round must be a freshly initialized state object.");
+        assertEquals(2, lobby.getCurrentRound(), "Server should advance from round 1 to round 2.");
+        assertEquals(GamePhase.AWAITING_PLAY, nextRound.getPhase(),
+                "New round should already be started and waiting for the first play.");
+
+        assertEquals(0, nextRound.getPlayer("Alice").getTotalScore(),
+                "Alice emptied her hand and should carry 0 points into round 2.");
+        assertEquals(7, nextRound.getPlayer("Bob").getTotalScore(),
+                "Bob should carry his round-1 hand value into round 2.");
+
+        for (PlayerGameState player : nextRound.getPlayerOrder()) {
+            assertEquals(7, player.getHandSize(),
+                    player.getPlayerName() + " should receive a fresh 7-card hand in the next round.");
+        }
+
+        assertTrue(alice.containsSentMessage("ROUND_END|"),
+                "Server should broadcast the round-end summary before starting the next round.");
+        assertTrue(bob.containsSentMessage("ROUND_END|"),
+                "All players should receive the round-end summary.");
+
+        assertTrue(alice.countMessagesContaining("HAND_UPDATE|") >= 2,
+                "Round-end handling should broadcast one final hand update and one fresh next-round hand.");
+        assertTrue(bob.countMessagesContaining("HAND_UPDATE|") >= 2,
+                "Every player should receive fresh next-round cards.");
+
+        assertTrue(alice.countMessagesContaining("GAME_STATE|") >= 2,
+                "Round-end handling should broadcast both the finished-round and next-round public states.");
+        assertTrue(bob.countMessagesContaining("GAME_STATE|") >= 2,
+                "All players should see the new round state.");
     }
 
     /**
