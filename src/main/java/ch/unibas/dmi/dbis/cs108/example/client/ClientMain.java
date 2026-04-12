@@ -29,8 +29,7 @@ public class ClientMain {
             String[] hostPort = args[0].split(":", 2);
 
             if (hostPort.length != 2 || hostPort[0].isBlank() || hostPort[1].isBlank()) {
-                System.err.println("Usage: client <hostaddress>:<port> [<username>]");
-                return;
+                System.err.println("Usage: cli <hostaddress>:<port> [<username>]");                return;
             }
 
             host = hostPort[0].trim();
@@ -44,8 +43,7 @@ public class ClientMain {
                 }
             } catch (NumberFormatException e) {
                 System.err.println("Invalid port: " + hostPort[1]);
-                System.err.println("Usage: client <hostaddress>:<port> [<username>]");
-                return;
+                System.err.println("Usage: cli <hostaddress>:<port> [<username>]");                return;
             }
         }
 
@@ -54,8 +52,7 @@ public class ClientMain {
         }
 
         if (args.length > 2) {
-            System.err.println("Usage: client <hostaddress>:<port> [<username>]");
-            return;
+            System.err.println("Usage: cli <hostaddress>:<port> [<username>]");            return;
         }
 
         if (suggestedName == null || suggestedName.isBlank()) {

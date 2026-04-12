@@ -53,10 +53,21 @@ public class MainController {
     }
 
     /**
-     * Shows the connect screen.
+     * Shows the connect screen with default values.
      */
     public void showConnectView() {
-        ConnectView view = new ConnectView();
+        showConnectView("localhost", "5555", System.getProperty("user.name", "Player"));
+    }
+
+    /**
+     * Shows the connect screen with prefilled values.
+     *
+     * @param initialHost the prefilled host
+     * @param initialPort the prefilled port
+     * @param initialUsername the prefilled username
+     */
+    public void showConnectView(String initialHost, String initialPort, String initialUsername) {
+        ConnectView view = new ConnectView(initialHost, initialPort, initialUsername);
         view.getStatusLabel().textProperty().bind(state.statusTextProperty());
 
         view.getConnectButton().setOnAction(e -> {

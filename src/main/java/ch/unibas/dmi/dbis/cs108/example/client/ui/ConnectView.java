@@ -23,16 +23,34 @@ import java.io.InputStream;
  */
 public class ConnectView extends VBox {
 
-    private final TextField hostField = new TextField("localhost");
-    private final TextField portField = new TextField("5555");
-    private final TextField usernameField = new TextField(System.getProperty("user.name", "Player"));
+    private final TextField hostField;
+    private final TextField portField;
+    private final TextField usernameField;
     private final Button connectButton = new Button("Connect");
     private final Label statusLabel = new Label();
 
     /**
-     * Creates the connect view.
+     * Creates the connect view with default values.
      */
     public ConnectView() {
+        this("localhost", "5555", System.getProperty("user.name", "Player"));
+    }
+
+    /**
+     * Creates the connect view with prefilled host, port, and username values.
+     *
+     * @param initialHost the prefilled host
+     * @param initialPort the prefilled port
+     * @param initialUsername the prefilled username
+     */
+    public ConnectView(String initialHost, String initialPort, String initialUsername) {
+        this.hostField = new TextField(initialHost == null || initialHost.isBlank()
+                ? "localhost" : initialHost);
+        this.portField = new TextField(initialPort == null || initialPort.isBlank()
+                ? "5555" : initialPort);
+        this.usernameField = new TextField(initialUsername == null || initialUsername.isBlank()
+                ? System.getProperty("user.name", "Player") : initialUsername);
+
         getStyleClass().addAll("screen", "connect-screen");
         setSpacing(18);
         setPadding(new Insets(40));
@@ -90,59 +108,26 @@ public class ConnectView extends VBox {
         getChildren().add(card);
     }
 
-    /**
-     * Returns the host input field.
-     *
-     * @return the host field
-     */
     public TextField getHostField() {
         return hostField;
     }
 
-    /**
-     * Returns the port input field.
-     *
-     * @return the port field
-     */
     public TextField getPortField() {
         return portField;
     }
 
-    /**
-     * Returns the username input field.
-     *
-     * @return the username field
-     */
     public TextField getUsernameField() {
         return usernameField;
     }
 
-    /**
-     * Returns the button used to establish the connection.
-     *
-     * @return the connect button
-     */
     public Button getConnectButton() {
         return connectButton;
     }
 
-    /**
-     * Returns the status label shown below the connect form.
-     *
-     * @return the status label
-     */
     public Label getStatusLabel() {
         return statusLabel;
     }
 
-    /**
-     * Creates an image view for a PNG resource if the resource exists.
-     *
-     * @param resourcePath the classpath resource path
-     * @param fitWidth preferred width
-     * @param fitHeight preferred height
-     * @return the configured image view, or {@code null} if the image is missing
-     */
     private ImageView createImageView(String resourcePath, double fitWidth, double fitHeight) {
         try (InputStream in = getClass().getResourceAsStream(resourcePath)) {
             if (in == null) {
