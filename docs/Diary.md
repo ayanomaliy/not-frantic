@@ -409,3 +409,38 @@ Since I thought our Java version doesn't work with javacoco, I messaged our tuto
 QA Concept is missing just the javacoco part and I'll revise the project plan soon since we didn't get the points for it on MS1.
 Our QA report is finished and will be uploaded. 
 For our Project plan I decided to redo it tomorrow and finish it.
+Here is the updated diary entry with the work from this chat added:
+
+## Date: April 12, 2026 (Aiysha)
+
+### Bug Fixing, GUI Styling Cleanup, and Manual Writing
+
+#### What did we do today?
+
+Today, I worked on cleaning up several parts of the project that were still rough around the edges. The focus was on fixing gameplay-related bugs, improving the visual consistency of the GUI, writing a proper manual so someone can receive the JAR and understand how to run and play the game, and debugging several edge cases in card validation and server-side effect handling.
+
+#### Work Summary
+
+* I fixed and investigated several gameplay bugs, especially around effect resolution and dev mode scenarios.
+* I improved the dev mode setup so scenario configuration works more reliably and is less dependent on exact player names.
+* I worked on the launcher/client flow so the GUI client starts through the new `client` mode and can open with host, port, and username already prefilled.
+* I checked and adjusted the GUI scroll pane styling so the scroll areas no longer show mismatched default JavaFX backgrounds and instead follow the CSS theme properly.
+* I cleaned up documentation-related inconsistencies, especially around the current protocol and command behavior.
+* I wrote and refined the game manual so it now explains how to start the server, connect with the GUI, create and join lobbies, start a game, understand turns, resolve card effects, read the game log, and understand scoring.
+* I also added clearer explanations for special-card commands, card IDs, round-end output, and how match scoring works.
+* I investigated a bug where invalid effect targets such as `/gift 82 81` caused the player to be disconnected because the server treated the invalid target as an uncaught exception instead of a normal game error.
+* I adjusted the server-side effect-response handling so invalid effect arguments now return an `ERROR` message to the player instead of terminating the client session.
+* I found and fixed a card-validation bug where a `Fantastic` number request incorrectly allowed colored special cards like `Yellow Exchange` to be played even though only cards matching the requested number should be valid.
+* I added and planned test scenarios for request-based card validation, including requested color, requested number, same-symbol matching for special cards, black-card edge cases, and invalid Gift/Exchange targets.
+* I investigated black-card event handling and clarified that event effects are currently resolved automatically by the server rather than through manual slash commands.
+* I found a server flow bug where automatic event resolution, especially `CANCEL_EFFECTS`, could leave the game stuck in `RESOLVING_EFFECT`, which then prevented normal actions like drawing a card.
+* I updated the `handlePlayCard` logic so that after automatic event resolution, the game correctly falls back to `AWAITING_PLAY` when nothing is left to resolve, instead of remaining stuck in the wrong phase.
+* I also reviewed the general phase follow-up logic after card plays and effect resolution so the turn flow is now more consistent and less likely to get stuck in edge cases.
+
+#### Future Plans
+
+* Continue fixing remaining gameplay bugs, especially edge cases in effect handling, turn transitions, and GUI updates.
+* Improve the Game View further so game-state changes are reflected even more clearly without relying on manual refresh commands.
+* Keep the external documentation in sync with the current source code, especially the protocol, manual files, and effect-resolution behavior.
+* Continue polishing usability so the project feels more complete and easier to understand for someone testing it for the first time.
+* Add more targeted tests and dev-mode scenarios for tricky interactions involving black cards, event effects, requested colors/numbers, and chained effect resolution.
