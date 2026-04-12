@@ -406,4 +406,6 @@ Today, I worked on improving the lobby system by enforcing stricter join rules a
 
 #### What did we do today?
 Since I thought our Java version doesn't work with javacoco, I messaged our tutor and we are in touch trying to solve this problem. 
-QA Concept is missing just the javacoco part and i'll revise the project plan soon since we didn't get the point for it on MS1.
+QA Concept is missing just the javacoco part and I'll revise the project plan soon since we didn't get the points for it on MS1.
+Our QA report is finished and will be uploaded. 
+For our Project plan I decided to redo it tomorrow and finish it.
