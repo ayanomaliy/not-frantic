@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Frantic Game Loop Animation</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #eee;
+      overflow: hidden;
+    }
+
+    .wrap {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      padding: 14px 20px;
+      background: #181818;
+      border-bottom: 1px solid #2a2a2a;
+    }
+
+    .title {
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: #bbb;
+      margin-top: 4px;
+    }
+
+    .main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      gap: 18px;
+      padding: 18px;
+      box-sizing: border-box;
+      min-height: 0;
+    }
+
+    .graph-area {
+      position: relative;
+      min-width: 0;
+    }
+
+    svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: radial-gradient(circle at center, #1a1a1a 0%, #0d0d0d 100%);
+    }
+
+    .node {
+      fill: #222;
+      stroke: #555;
+      stroke-width: 2;
+      rx: 18;
+      ry: 18;
+      transition: all 0.4s ease;
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+
+    .node-text {
+      fill: #eee;
+      font-size: 18px;
+      font-weight: 600;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
+
+    .small-text {
+      fill: #aaa;
+      font-size: 13px;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
+
+    .edge {
+      stroke: #666;
+      stroke-width: 3;
+      fill: none;
+      marker-end: url(#arrow);
+      opacity: 0.5;
+      transition: all 0.4s ease;
+    }
+
+    .edge-label {
+      fill: #bdbdbd;
+      font-size: 13px;
+      text-anchor: middle;
+      dominant-baseline: middle;
+    }
+
+    .active {
+      fill: #2d5cff;
+      stroke: #9ab2ff;
+      stroke-width: 4;
+      filter: drop-shadow(0 0 16px rgba(45, 92, 255, 0.65));
+    }
+
+    .active-text {
+      fill: white;
+    }
+
+    .active-edge {
+      stroke: #ffcc33;
+      opacity: 1;
+      stroke-width: 5;
+      filter: drop-shadow(0 0 10px rgba(255, 204, 51, 0.6));
+      stroke-dasharray: 18 12;
+      animation: edgeFlow 1.1s linear infinite;
+    }
+
+    .panel {
+      width: 100%;
+      background: rgba(20, 20, 20, 0.92);
+      border: 1px solid #333;
+      border-radius: 16px;
+      padding: 16px 18px;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.35);
+      box-sizing: border-box;
+      align-self: start;
+      max-height: 100%;
+      overflow: auto;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .panel h2 {
+      margin: 0 0 10px 0;
+      font-size: 20px;
+    }
+
+    .step-indicator {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 3px solid rgba(127, 176, 255, 0.25);
+      border-top-color: #7fb0ff;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .spinner.spinning {
+      opacity: 1;
+      animation: spin 0.6s linear 1;
+    }
+
+    .panel .step {
+      color: #7fb0ff;
+      font-weight: 700;
+    }
+
+    .panel .desc {
+      color: #ddd;
+      line-height: 1.45;
+      font-size: 14px;
+      min-height: 90px;
+      white-space: pre-line;
+    }
+
+    .controls {
+      margin-top: 14px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: #2a2a2a;
+      color: #fff;
+      border: 1px solid #444;
+      border-radius: 10px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    button:hover {
+      background: #3a3a3a;
+    }
+
+    .legend {
+      position: absolute;
+      left: 20px;
+      bottom: 20px;
+      background: rgba(20,20,20,0.9);
+      border: 1px solid #333;
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 13px;
+      color: #ccc;
+      line-height: 1.5;
+      max-width: 360px;
+    }
+
+    .pulse {
+      animation: pulse 1.4s infinite;
+    }
+
+    @keyframes pulse {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.06); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes edgeFlow {
+      from { stroke-dashoffset: 30; }
+      to { stroke-dashoffset: 0; }
+    }
+
+    @media (max-width: 1100px) {
+      .main {
+        grid-template-columns: 1fr;
+        grid-template-rows: minmax(0, 1fr) auto;
+      }
+
+      .graph-area {
+        min-height: 520px;
+      }
+
+      .legend {
+        max-width: min(360px, calc(100% - 40px));
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="title">Frantic Card Game — Logical Loop</div>
+      <div class="subtitle">Animated overview of initialization, phase flow, and turn progression</div>
+    </div>
+
+    <div class="main">
+      <div class="graph-area">
+        <svg viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+              <path d="M0,0 L12,6 L0,12 Z" fill="#888"></path>
+            </marker>
+          </defs>
+
+          <!-- Initialization -->
+          <rect id="init" class="node" x="70" y="120" width="320" height="120"></rect>
+          <text id="initText" class="node-text" x="230" y="160">Game Initialization</text>
+          <text class="small-text" x="230" y="195">GameInitializer.java</text>
+          <text class="small-text" x="230" y="218">ServerService.handleStart()</text>
+
+          <!-- Turn Start -->
+          <rect id="turnstart" class="node" x="1200" y="90" width="260" height="110"></rect>
+          <text id="turnstartText" class="node-text" x="1330" y="128">TURN_START</text>
+          <text class="small-text" x="1330" y="160">TurnEngine.startTurn()</text>
+
+          <!-- Main phase machine -->
+          <rect id="waiting" class="node" x="560" y="80" width="220" height="90"></rect>
+          <text id="waitingText" class="node-text" x="670" y="125">WAITING</text>
+
+          <rect id="awaiting" class="node" x="550" y="260" width="240" height="100"></rect>
+          <text id="awaitingText" class="node-text" x="670" y="300">AWAITING_PLAY</text>
+          <text class="small-text" x="670" y="332">play / draw / validate</text>
+
+          <rect id="resolving" class="node" x="950" y="260" width="260" height="100"></rect>
+          <text id="resolvingText" class="node-text" x="1080" y="300">RESOLVING_EFFECT</text>
+          <text class="small-text" x="1080" y="332">special / black / event</text>
+
+          <rect id="roundend" class="node" x="560" y="500" width="220" height="90"></rect>
+          <text id="roundendText" class="node-text" x="670" y="545">ROUND_END</text>
+
+          <rect id="gameover" class="node" x="950" y="500" width="220" height="90"></rect>
+          <text id="gameoverText" class="node-text" x="1060" y="545">GAME_OVER</text>
+
+          <!-- Edges -->
+          <path id="e1" class="edge" d="M390 180 C460 180, 500 125, 560 125"></path>
+          <text class="edge-label" x="485" y="138">create GameState</text>
+
+          <path id="e2" class="edge" d="M670 170 L670 260"></path>
+          <text class="edge-label" x="720" y="215">start game</text>
+
+          <path id="e3" class="edge" d="M790 310 L950 310"></path>
+          <text class="edge-label" x="870" y="288">SPECIAL / BLACK</text>
+
+          <path id="e4" class="edge" d="M1080 260 C1080 180, 1210 180, 1210 145"></path>
+          <text class="edge-label" x="1160" y="205">resolved</text>
+
+          <path id="e5" class="edge" d="M1330 200 C1330 235, 1210 300, 790 300"></path>
+          <text class="edge-label" x="1260" y="250">startTurn()</text>
+
+          <path id="e6" class="edge" d="M670 360 C670 420, 670 450, 670 500"></path>
+          <text class="edge-label" x="735" y="435">draw pile empty / hand empty</text>
+
+          <path id="e7" class="edge" d="M780 545 L950 545"></path>
+          <text class="edge-label" x="865" y="523">score check</text>
+
+          <path id="e8" class="edge" d="M1170 545 C1280 545, 1360 440, 1360 300 C1360 220, 1410 160, 1460 145"></path>
+          <text class="edge-label" x="1360" y="245">next round</text>
+
+          <path id="e9" class="edge" d="M790 330 C860 330, 875 330, 950 330"></path>
+          <text class="edge-label" x="870" y="352">BLACK / SPECIAL</text>
+
+          <path id="e10" class="edge" d="M1080 360 C1080 430, 900 430, 790 330"></path>
+          <text class="edge-label" x="1025" y="420">BONUS_PLAY / return</text>
+
+          <path id="e11" class="edge" d="M790 280 C980 200, 1170 150, 1200 145"></path>
+          <text class="edge-label" x="1010" y="180">COLOR / FUCK_YOU → endTurn()</text>
+        </svg>
+
+        <div class="legend">
+          <strong>What this animation shows</strong><br>
+          1. The server initializes the round<br>
+          2. The phase machine drives the match flow<br>
+          3. TURN_START resets the active player's turn state<br>
+          4. AWAITING_PLAY branches into normal play, effect resolution, or round end
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Current Step</h2>
+          <div id="stepSpinner" class="spinner" aria-hidden="true"></div>
+        </div>
+        <div class="step-indicator">
+          <div id="stepName" class="step">1. Initialization</div>
+        </div>
+        <div id="stepDesc" class="desc"></div>
+
+        <div class="controls">
+          <button id="playPauseBtn">Pause</button>
+          <button id="prevBtn">Prev</button>
+          <button id="nextBtn">Next</button>
+          <button id="restartBtn">Restart</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const nodeIds = [
+      "init", "waiting", "awaiting", "resolving", "turnstart", "roundend", "gameover"
+    ];
+
+    const textIds = [
+      "initText", "waitingText", "awaitingText", "resolvingText", "turnstartText", "roundendText", "gameoverText"
+    ];
+
+    const edgeIds = ["e1","e2","e3","e4","e5","e6","e7","e8","e9","e10","e11"];
+
+    const steps = [
+      {
+        title: "1. Initialization",
+        desc:
+`ServerService.handleStart() triggers GameInitializer.java.
+
+- Build main deck and event deck
+- Shuffle both decks
+- Compute maxScore
+- Order players
+- Deal 7 cards
+- Find a valid starter card
+- Return GameState with phase = TURN_START`,
+        activeNodes: ["init"],
+        activeEdges: []
+      },
+      {
+        title: "2. Enter state machine",
+        desc:
+`The created GameState enters the round flow.
+
+The logical progression is:
+WAITING → TURN_START → AWAITING_PLAY`,
+        activeNodes: ["init", "waiting"],
+        activeEdges: ["e1"]
+      },
+      {
+        title: "3. Start game",
+        desc:
+`The round leaves WAITING and begins active play.
+
+The server transitions into TURN_START, then immediately prepares the active player.`,
+        activeNodes: ["waiting", "turnstart"],
+        activeEdges: ["e2"]
+      },
+      {
+        title: "4. Turn start",
+        desc:
+`TurnEngine.startTurn()
+
+- hasPlayedThisTurn = false
+- hasDrawnThisTurn = false
+- phase = AWAITING_PLAY
+- emit TURN_ADVANCED`,
+        activeNodes: ["turnstart", "awaiting"],
+        activeEdges: ["e5"]
+      },
+      {
+        title: "5. Normal play",
+        desc:
+`Inside AWAITING_PLAY, the player can play a normal COLOR card or FUCK_YOU.
+
+That ends the turn immediately:
+AWAITING_PLAY → TURN_START`,
+        activeNodes: ["awaiting", "turnstart"],
+        activeEdges: ["e11"]
+      },
+      {
+        title: "6. Special or black card",
+        desc:
+`If the player plays SPECIAL_SINGLE, SPECIAL_FOUR, or BLACK:
+
+- the card is removed from hand
+- effect/event is queued
+- phase becomes RESOLVING_EFFECT`,
+        activeNodes: ["awaiting", "resolving"],
+        activeEdges: ["e3"]
+      },
+      {
+        title: "7. Effect resolution complete",
+        desc:
+`After the pending effect or event is resolved, the flow continues.
+
+Usually:
+RESOLVING_EFFECT → TURN_START`,
+        activeNodes: ["resolving", "turnstart"],
+        activeEdges: ["e4"]
+      },
+      {
+        title: "8. Bonus play branch",
+        desc:
+`Some events, especially BONUS_PLAY, do not end the turn.
+
+Instead the player returns to:
+RESOLVING_EFFECT → AWAITING_PLAY`,
+        activeNodes: ["resolving", "awaiting"],
+        activeEdges: ["e10"]
+      },
+      {
+        title: "9. Round end trigger",
+        desc:
+`The round ends if:
+- a player's hand reaches 0 cards
+- draw pile is exhausted
+- an event forces round end
+
+That gives:
+AWAITING_PLAY → ROUND_END`,
+        activeNodes: ["awaiting", "roundend"],
+        activeEdges: ["e6"]
+      },
+      {
+        title: "10. Score and game check",
+        desc:
+`ROUND_END computes scores.
+
+Then:
+- if game end condition is met → GAME_OVER
+- otherwise → next round begins`,
+        activeNodes: ["roundend", "gameover"],
+        activeEdges: ["e7"]
+      },
+      {
+        title: "11. Next round loop",
+        desc:
+`If the match is not over, the server prepares the next round and re-enters TURN_START.
+
+That closes the full high-level loop.`,
+        activeNodes: ["roundend", "turnstart"],
+        activeEdges: ["e8"]
+      }
+    ];
+
+    let current = 0;
+    let playing = true;
+    let timer = null;
+    const delay = 2200;
+    let spinnerResetTimer = null;
+
+    const stepName = document.getElementById("stepName");
+    const stepDesc = document.getElementById("stepDesc");
+    const playPauseBtn = document.getElementById("playPauseBtn");
+    const stepSpinner = document.getElementById("stepSpinner");
+
+    function clearHighlights() {
+      nodeIds.forEach(id => {
+        document.getElementById(id).classList.remove("active", "pulse");
+      });
+
+      textIds.forEach(id => {
+        document.getElementById(id).classList.remove("active-text");
+      });
+
+      edgeIds.forEach(id => {
+        document.getElementById(id).classList.remove("active-edge");
+      });
+    }
+
+    function activateStep(index) {
+      clearHighlights();
+      const step = steps[index];
+
+      triggerSpinner();
+      stepName.textContent = step.title;
+      stepDesc.textContent = step.desc;
+
+      step.activeNodes.forEach(id => {
+        const el = document.getElementById(id);
+        el.classList.add("active", "pulse");
+
+        const textId = id + "Text";
+        const textEl = document.getElementById(textId);
+        if (textEl) textEl.classList.add("active-text");
+      });
+
+      step.activeEdges.forEach(id => {
+        document.getElementById(id).classList.add("active-edge");
+      });
+    }
+
+    function triggerSpinner() {
+      stepSpinner.classList.remove("spinning");
+
+      if (spinnerResetTimer) {
+        clearTimeout(spinnerResetTimer);
+      }
+
+      // Restart the CSS animation on every step change.
+      void stepSpinner.offsetWidth;
+      stepSpinner.classList.add("spinning");
+
+      spinnerResetTimer = setTimeout(() => {
+        stepSpinner.classList.remove("spinning");
+      }, 650);
+    }
+
+    function nextStep() {
+      current = (current + 1) % steps.length;
+      activateStep(current);
+    }
+
+    function prevStep() {
+      current = (current - 1 + steps.length) % steps.length;
+      activateStep(current);
+    }
+
+    function startAuto() {
+      stopAuto();
+      timer = setInterval(nextStep, delay);
+      playing = true;
+      playPauseBtn.textContent = "Pause";
+    }
+
+    function stopAuto() {
+      if (timer) clearInterval(timer);
+      timer = null;
+      playing = false;
+      playPauseBtn.textContent = "Play";
+    }
+
+    playPauseBtn.addEventListener("click", () => {
+      if (playing) stopAuto();
+      else startAuto();
+    });
+
+    document.getElementById("nextBtn").addEventListener("click", () => {
+      stopAuto();
+      nextStep();
+    });
+
+    document.getElementById("prevBtn").addEventListener("click", () => {
+      stopAuto();
+      prevStep();
+    });
+
+    document.getElementById("restartBtn").addEventListener("click", () => {
+      current = 0;
+      activateStep(current);
+      startAuto();
+    });
+
+    activateStep(current);
+    startAuto();
+  </script>
+</body>
+</html>
