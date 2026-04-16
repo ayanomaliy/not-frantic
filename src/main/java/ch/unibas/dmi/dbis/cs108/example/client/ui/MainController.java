@@ -552,21 +552,10 @@ public class MainController {
     public void showWinnerView() {
         GameEndView view = new GameEndView();
 
-        // example data hookup
-        view.setWinner("Alice");
-        view.setRanking(java.util.List.of(
-                "1. Alice - 0 points",
-                "2. Bob - 24 points",
-                "3. Carol - 37 points"
-        ));
+        view.setWinner(state.getWinnerName());
+        view.setRanking(state.getFinalScoreRows());
 
-        view.getPlayAgainButton().setOnAction(e -> {
-            networkClient.startGame();
-        });
-
-        view.getLeaveLobbyButton().setOnAction(e -> {
-            leaveCurrentLobbyAndShowLobbyView();
-        });
+        view.getLeaveLobbyButton().setOnAction(e -> leaveCurrentLobbyAndShowLobbyView());
 
         Scene scene = createStyledScene(view, 900, 700);
         stage.setScene(scene);
