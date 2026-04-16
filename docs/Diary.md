@@ -461,3 +461,4 @@ We figured out that something might be wrong with the /cheatwin command.
 #### Future Plans
 * Connect the score with persistent High Score storing. It should store the High Score in a txt file.
 * Figure out a way to display the resolve effect and the layout of the game.
+* Figure out what is wrong with the /cheatwin command
