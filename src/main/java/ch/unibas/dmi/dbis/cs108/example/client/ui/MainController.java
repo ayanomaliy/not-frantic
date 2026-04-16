@@ -44,6 +44,9 @@ public class MainController {
         this.stage = stage;
         this.state = state;
         this.networkClient = networkClient;
+        this.networkClient.setGameEndListener(() -> {
+            showWinnerView();
+        });
 
         this.networkClient.setGameStartListener(() -> {
             if (stage.getScene() == null || !(stage.getScene().getRoot() instanceof GameView)) {
@@ -543,5 +546,19 @@ public class MainController {
             return displayedLobby.substring(0, statusStart).trim();
         }
         return displayedLobby.trim();
+    }
+
+
+    public void showWinnerView() {
+        GameEndView view = new GameEndView();
+
+        view.setWinner(state.getWinnerName());
+        view.setRanking(state.getFinalScoreRows());
+
+        view.getLeaveLobbyButton().setOnAction(e -> leaveCurrentLobbyAndShowLobbyView());
+
+        Scene scene = createStyledScene(view, 900, 700);
+        stage.setScene(scene);
+        new FadeIn(view).play();
     }
 }

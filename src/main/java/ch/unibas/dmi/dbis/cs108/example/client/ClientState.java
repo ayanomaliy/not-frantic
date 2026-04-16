@@ -60,6 +60,12 @@ public class ClientState {
     /** Name of the lobby the client is currently in, or empty if not in a lobby. */
     private final StringProperty currentLobby = new SimpleStringProperty("");
 
+    /** Name of the winner*/
+    private final StringProperty winnerName = new SimpleStringProperty("");
+    /** List of final scores*/
+    private final ObservableList<String> finalScoreRows = FXCollections.observableArrayList();
+
+
     /**
      * Creates a new shared client state object.
      */
@@ -356,4 +362,21 @@ public class ClientState {
     public void setCurrentLobby(String value) {
         currentLobby.set(value == null ? "" : value);
     }
+
+    public StringProperty winnerNameProperty() {
+        return winnerName;
+    }
+
+    public String getWinnerName() {
+        return winnerName.get();
+    }
+
+    public void setWinnerName(String value) {
+        winnerName.set(value == null ? "" : value);
+    }
+
+    public ObservableList<String> getFinalScoreRows() {
+        return finalScoreRows;
+    }
+
 }
