@@ -35,6 +35,8 @@ public class FxNetworkClient implements ClientMessageHandler {
     /** Prevents reopening the game view for every GAME_STATE update. */
     private boolean gameViewShown = false;
 
+    private Runnable gameEndListener;
+
     /**
      * Creates a new GUI network adapter.
      *
@@ -227,6 +229,15 @@ public class FxNetworkClient implements ClientMessageHandler {
     }
 
     /**
+     * Set Game end Listener
+     *
+     * @param gameEndListener as Runnable
+     */
+    public void setGameEndListener(Runnable gameEndListener) {
+        this.gameEndListener = gameEndListener;
+    }
+
+    /**
      * Parses and executes a raw terminal-style command for the GUI command field.
      *
      * <p>This method supports the same slash commands as the terminal client
@@ -402,15 +413,35 @@ public class FxNetworkClient implements ClientMessageHandler {
 
             case ROUND_END -> Platform.runLater(() -> {
                 state.getGameMessages().add("[ROUND_END] Round over! Scores: " + message.content());
-                // Update phase label. Do NOT clear the hand here — this message is also
-                // sent by GET_ROUND_END (a read-only query) which sends no follow-up
-                // HAND_UPDATE. For real round ends, the HAND_UPDATE from broadcastAllHands
-                // will replace the hand momentarily after this message arrives.
                 state.setCurrentPhase("ROUND_END");
+
+                state.getFinalScoreRows().clear();
+
+                if (!message.content().isBlank()) {
+                    for (String entry : message.content().split(",")) {
+                        String[] parts = entry.split(":");
+                        if (parts.length == 3) {
+                            String player = parts[0].trim();
+                            String roundPoints = parts[1].trim();
+                            String totalPoints = parts[2].trim();
+
+                            state.getFinalScoreRows().add(
+                                    player + " | Round: " + roundPoints + " | Total: " + totalPoints
+                            );
+                        }
+                    }
+                }
             });
 
-            case GAME_END -> Platform.runLater(() ->
-                    state.getGameMessages().add("[GAME_END] " + message.content()));
+            case GAME_END -> Platform.runLater(() -> {
+                state.getGameMessages().add("[GAME_END] " + message.content());
+                state.setWinnerName(message.content());
+                state.setCurrentPhase("GAME_OVER");
+
+                if (gameEndListener != null) {
+                    gameEndListener.run();
+                }
+            });
 
             case BROADCAST -> {
                 String[] parts = message.splitChatPayload();
