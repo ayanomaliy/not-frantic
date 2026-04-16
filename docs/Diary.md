@@ -452,3 +452,12 @@ Today, I worked on cleaning up several parts of the project that were still roug
 #### What did we do today?
 Today I redid our project plan and did a gantt chart aswell. 
 I uploaded the project plan and our qa concept.
+
+## Date: April 16, 2026
+### Win Endscreen (Sevval, Aiysha)
+We created a new view GameEndView to display the end score and tested if it works, which it did. 
+We figured out that something might be wrong with the /cheatwin command.
+
+#### Future Plans
+* Connect the score with persistent High Score storing. It should store the High Score in a txt file.
+* Figure out a way to display the resolve effect and the layout of the game.
