@@ -1,0 +1,269 @@
+.root {
+    -fx-font-family: "Segoe UI", "Inter", sans-serif;
+    -fx-background-color: bg-color;
+
+    /* Core palette */
+    bg-color: #bfc5ff;
+    color-deep: #404255;
+    color-mid: #7f83aa;
+    color-warm: #aa7f83;
+    color-warm-dark: #554042;
+
+    /* Matching support colors */
+    bg-soft: #d7dbff;
+    bg-soft-2: #e6e8ff;
+
+    panel-bg: rgba(237, 239, 252, 0.92);
+    panel-border: rgba(127, 131, 170, 0.35);
+    panel-shadow: rgba(64, 66, 85, 0.16);
+
+    text-main: #404255;
+    text-heading: #554042;
+    text-secondary: #6a6d8d;
+    text-muted: #8b8fb2;
+    text-on-accent: #fffdfd;
+
+    surface-main: #eef0fb;
+    surface-soft: #e7eaf8;
+    surface-focus: #f7f8ff;
+
+    border-main: #b0b6dc;
+    border-soft: #c8cdef;
+    border-accent: #aa7f83;
+
+    primary-top: #aa7f83;
+    primary-bottom: #926b6f;
+    primary-hover-top: #b98d91;
+    primary-hover-bottom: #9d767a;
+
+    secondary-bg: #d7daf1;
+    secondary-hover-bg: #c9cde8;
+    secondary-border: #8f93ba;
+
+    danger-top: #7a5b5f;
+    danger-bottom: #554042;
+    danger-hover-top: #8a696d;
+    danger-hover-bottom: #644b4f;
+
+    selection-bg: #c7b2c8;
+    selection-text: #404255;
+    hover-bg: rgba(127, 131, 170, 0.18);
+
+    status-text: #7a6165;
+}
+
+.screen {
+    -fx-background-color: transparent;
+}
+
+.panel {
+    -fx-background-color: panel-bg;
+    -fx-background-radius: 18;
+    -fx-border-radius: 18;
+    -fx-border-color: panel-border;
+    -fx-border-width: 1;
+    -fx-padding: 18;
+    -fx-effect: dropshadow(gaussian, panel-shadow, 20, 0.2, 0, 6);
+}
+
+.screen-title {
+    -fx-font-size: 30px;
+    -fx-font-weight: bold;
+    -fx-text-fill: text-heading;
+}
+
+.screen-subtitle {
+    -fx-font-size: 14px;
+    -fx-text-fill: text-secondary;
+}
+
+.section-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: text-heading;
+}
+
+.field-label {
+    -fx-text-fill: text-heading;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+}
+
+.status-label {
+    -fx-text-fill: status-text;
+    -fx-font-size: 13px;
+}
+
+.frantic-text-field {
+    -fx-background-color: surface-main;
+    -fx-text-fill: text-main;
+    -fx-prompt-text-fill: text-muted;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-border-color: border-main;
+    -fx-border-width: 1;
+    -fx-padding: 10 12 10 12;
+}
+
+.frantic-text-field:focused {
+    -fx-border-color: border-accent;
+    -fx-background-color: surface-focus;
+}
+
+.frantic-button {
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-padding: 10 14 10 14;
+    -fx-font-weight: 600;
+    -fx-cursor: hand;
+}
+
+.primary-button {
+    -fx-background-color: linear-gradient(to bottom, primary-top, primary-bottom);
+    -fx-text-fill: text-on-accent;
+}
+
+.primary-button:hover {
+    -fx-background-color: linear-gradient(to bottom, primary-hover-top, primary-hover-bottom);
+}
+
+.secondary-button {
+    -fx-background-color: secondary-bg;
+    -fx-text-fill: text-main;
+    -fx-border-color: secondary-border;
+    -fx-border-width: 1;
+}
+
+.secondary-button:hover {
+    -fx-background-color: secondary-hover-bg;
+}
+
+.danger-button {
+    -fx-background-color: linear-gradient(to bottom, danger-top, danger-bottom);
+    -fx-text-fill: text-on-accent;
+}
+
+.danger-button:hover {
+    -fx-background-color: linear-gradient(to bottom, danger-hover-top, danger-hover-bottom);
+}
+
+.list-view.frantic-list-view {
+    -fx-background-color: surface-main;
+    -fx-background-radius: 14;
+    -fx-border-radius: 14;
+    -fx-border-color: border-soft;
+    -fx-padding: 4;
+}
+
+.list-view.frantic-list-view .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: text-main;
+    -fx-padding: 10 10 10 10;
+    -fx-background-radius: 10;
+}
+
+.list-view.frantic-list-view .list-cell:filled:selected {
+    -fx-background-color: selection-bg;
+    -fx-text-fill: selection-text;
+}
+
+.list-view.frantic-list-view .list-cell:filled:hover {
+    -fx-background-color: hover-bg;
+}
+
+.list-view.frantic-list-view .scroll-bar:vertical,
+.list-view.frantic-list-view .scroll-bar:horizontal {
+    -fx-background-color: transparent;
+}
+
+.list-view.frantic-list-view .list-cell.self-player-cell {
+    -fx-background-color: hover-bg;
+    -fx-font-weight: 700;
+}
+
+.list-view.frantic-list-view .list-cell.self-player-cell:filled:selected {
+    -fx-background-color: selection-bg;
+    -fx-text-fill: selection-text;
+}
+
+.list-view.frantic-list-view .list-cell.current-lobby-cell {
+    -fx-background-color: hover-bg;
+    -fx-font-weight: 700;
+}
+
+.list-view.frantic-list-view .list-cell.current-lobby-cell:filled:selected {
+    -fx-background-color: selection-bg;
+    -fx-text-fill: selection-text;
+}
+
+.connect-screen {
+    -fx-padding: 36;
+}
+
+.lobby-screen {
+    -fx-padding: 16;
+}
+
+.game-screen {
+    -fx-padding: 16;
+}
+
+.pile-placeholder {
+    -fx-background-color: surface-main;
+    -fx-background-radius: 16;
+    -fx-border-radius: 16;
+    -fx-border-color: border-main;
+    -fx-border-width: 1;
+}
+
+.hand-pane {
+    -fx-padding: 4 0 0 0;
+}
+
+.game-card-button {
+    -fx-background-color: surface-main;
+    -fx-text-fill: text-main;
+    -fx-background-radius: 16;
+    -fx-border-radius: 16;
+    -fx-border-color: border-main;
+    -fx-border-width: 1;
+    -fx-padding: 10 10 10 10;
+    -fx-font-weight: 700;
+    -fx-cursor: hand;
+}
+
+.game-card-button:hover {
+    -fx-background-color: bg-soft;
+    -fx-border-color: border-accent;
+}
+
+.game-card-button:pressed {
+    -fx-background-color: surface-soft;
+}
+.scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+}
+
+.scroll-pane > .viewport {
+    -fx-background-color: transparent;
+}
+
+.scroll-pane > .corner {
+    -fx-background-color: transparent;
+}
+
+.scroll-pane .scroll-bar:vertical,
+.scroll-pane .scroll-bar:horizontal {
+    -fx-background-color: transparent;
+}
+
+.scroll-pane .track {
+    -fx-background-color: transparent;
+}
+
+.scroll-pane .thumb {
+    -fx-background-color: transparent;
+}
