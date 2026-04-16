@@ -16,7 +16,7 @@ public class GameEndView extends BorderPane {
 
     private final ListView<String> rankingList;
 
-    private final Button playAgainButton;
+
     private final Button leaveLobbyButton;
 
     private final VBox centerBox;
@@ -67,13 +67,13 @@ public class GameEndView extends BorderPane {
         });
 
         // Buttons
-        playAgainButton = new Button("Play Again");
+
         leaveLobbyButton = new Button("Leave Lobby");
 
-        playAgainButton.getStyleClass().add("primary-button");
+
         leaveLobbyButton.getStyleClass().add("danger-button");
 
-        buttonBox = new HBox(10, playAgainButton, leaveLobbyButton);
+        buttonBox = new HBox(10, leaveLobbyButton);
         buttonBox.getStyleClass().add("button-box");
 
         // Layout
@@ -112,10 +112,6 @@ public class GameEndView extends BorderPane {
 
     public ListView<String> getRankingList() {
         return rankingList;
-    }
-
-    public Button getPlayAgainButton() {
-        return playAgainButton;
     }
 
     public Button getLeaveLobbyButton() {
