@@ -1124,22 +1124,42 @@ public class ServerService {
 
         GameState state = lobby.getGameState();
 
-        // 🔥 FORCE GAME OVER
+        // calculate round scores from current hands
+        Map<String, Integer> roundScores =
+                ScoreCalculator.calculateRoundScores(state.getPlayerOrder(), state);
+
+        // keep cumulative scores in the lobby
+        for (PlayerGameState player : state.getPlayerOrder()) {
+            lobby.getCumulativeScores().put(player.getPlayerName(), player.getTotalScore());
+        }
+
+        // build ROUND_END payload: player:roundPoints:totalPoints,...
+        String roundEndPayload = state.getPlayerOrder().stream()
+                .map(player -> {
+                    int roundPoints = roundScores.getOrDefault(player.getPlayerName(), 0);
+                    int totalPoints = player.getTotalScore();
+                    return player.getPlayerName() + ":" + roundPoints + ":" + totalPoints;
+                })
+                .collect(java.util.stream.Collectors.joining(","));
+
+        broadcastToLobby(lobby, new Message(
+                Message.Type.ROUND_END,
+                roundEndPayload
+        ));
+
+        // winner stays the cheat user if that is your intended cheat behavior
         String winner = session.getPlayerName();
 
-        // send GAME_END to everyone
         broadcastToLobby(lobby, new Message(
                 Message.Type.GAME_END,
                 winner
         ));
 
-        // update lobby state
         state.setPhase(GamePhase.GAME_OVER);
         lobby.setGameState(null);
         lobby.setGameStarted(false);
         lobby.setLobbyStatus(LobbyStatus.FINISHED);
 
-        // update lobby list globally
         broadcastLobbyListToAllClients();
 
         log("CHEATWIN used by " + winner + " in lobby " + lobby.getLobbyId());
