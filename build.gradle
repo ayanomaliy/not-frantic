@@ -24,13 +24,14 @@ repositories {
 
 javafx {
     version = "17.0.10"
-    modules = ['javafx.controls', 'javafx.fxml', 'javafx.base','javafx.swing']
+    modules = ['javafx.controls', 'javafx.fxml', 'javafx.base', 'javafx.swing', 'javafx.media']
 }
 
 dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.10.0")
     implementation 'io.github.typhon0:AnimateFX:1.2.4'
+    implementation 'com.fluxvend:svgfx:0.0.4'
 }
 
 test {
@@ -70,7 +71,9 @@ tasks.register('fatJar', Jar) {
     dependsOn(configurations.runtimeClasspath)
 
     from {
-        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+        configurations.runtimeClasspath
+            .findAll { it.isDirectory() || it.name.endsWith('.jar') }
+            .collect { it.isDirectory() ? it : zipTree(it) }
     }
 }
 

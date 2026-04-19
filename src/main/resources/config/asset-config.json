@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "cards": {
+    "by_effect": {
+      "SKIP":          { "icon": "icons/card_skip.svg",           "sound": "card_play_skip" },
+      "GIFT":          { "icon": "icons/card_gift.svg",           "sound": "card_play_gift" },
+      "EXCHANGE":      { "icon": "icons/card_exchange.svg",       "sound": "card_play_exchange" },
+      "FANTASTIC":     { "icon": "icons/card_fantastic.svg",      "sound": "card_play_fantastic" },
+      "FANTASTIC_FOUR":{ "icon": "icons/card_fantastic_four.svg", "sound": "card_play_fantastic_four" },
+      "SECOND_CHANCE": { "icon": "icons/card_second_chance.svg",  "sound": "card_play_second_chance" },
+      "EQUALITY":      { "icon": "icons/card_equality.svg",       "sound": "card_play_equality" },
+      "COUNTERATTACK": { "icon": "icons/card_counterattack.svg",  "sound": "card_play_counterattack" },
+      "NICE_TRY":      { "icon": "icons/card_nice_try.svg",       "sound": "card_play_nice_try" }
+    },
+    "by_type": {
+      "COLOR":         { "icon": null, "sound": "card_play_generic" },
+      "BLACK":         { "icon": null, "sound": "card_play_black" },
+      "FUCK_YOU":      { "icon": null, "sound": "card_play_fuck_you" },
+      "EVENT":         { "icon": null, "sound": "card_play_event" }
+    },
+    "by_color": {
+      "RED":    { "background": "#e05050", "text": "#ffffff" },
+      "GREEN":  { "background": "#4caf74", "text": "#ffffff" },
+      "BLUE":   { "background": "#4a90d9", "text": "#ffffff" },
+      "YELLOW": { "background": "#f5c842", "text": "#333333" },
+      "BLACK":  { "background": "#2c2c2c", "text": "#ffffff" }
+    },
+    "by_number": {
+      "1": { "icon": "icons/card_1.svg", "sound": "card_play_generic" },
+      "2": { "icon": "icons/card_2.svg", "sound": "card_play_generic" },
+      "3": { "icon": "icons/card_3.svg", "sound": "card_play_generic" },
+      "4": { "icon": "icons/card_4.svg", "sound": "card_play_generic" },
+      "5": { "icon": "icons/card_5.svg", "sound": "card_play_generic" },
+      "6": { "icon": "icons/card_6.svg", "sound": "card_play_generic" },
+      "7": { "icon": "icons/card_7.svg", "sound": "card_play_generic" },
+      "8": { "icon": "icons/card_8.svg", "sound": "card_play_generic" },
+      "9": { "icon": "icons/card_9.svg", "sound": "card_play_generic" }
+    }
+  },
+  "sounds": {
+    "card_play_generic": "sounds/card_play_generic.mp3",
+    "card_draw":         "sounds/card_draw.mp3",
+    "game_start":        "sounds/game_start.mp3",
+    "game_end":          "sounds/game_end.mp3",
+    "card_play_skip":   "sounds/card_play_skip.mp3",
+    "card_play_gift":   "sounds/card_play_gift.mp3",
+    "card_play_exchange":"sounds/card_play_exchange.mp3",
+    "card_play_fantastic":"sounds/card_play_fantastic.mp3",
+    "card_play_fantastic_four":"sounds/card_play_fantastic_four.mp3",
+    "card_play_second_chance":"sounds/card_play_second_chance.mp3",
+    "card_play_equality":"sounds/card_play_equality.mp3",
+    "card_play_counterattack":"sounds/card_play_counterattack.mp3",
+    "card_play_nice_try":"sounds/card_play_nice_try.mp3",
+    "card_play_black":   "sounds/card_play_black.mp3",
+    "card_play_fuck_you": "sounds/card_play_fuck_you.mp3"
+  },
+  "events": {
+    "GAME_STARTED": { "sound": "game_start" },
+    "GAME_ENDED":   { "sound": "game_end"   },
+    "CARD_DRAWN":   { "sound": "card_draw"  }
+  },
+  "fallback": {
+    "icon":       "icons/icon_missing.svg",
+    "sound":      "sounds/alarm.mp3",
+    "background": "#603228",
+    "text":       "#ffffff"
+  }
+}

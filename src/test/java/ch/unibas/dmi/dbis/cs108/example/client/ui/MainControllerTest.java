@@ -4,8 +4,9 @@ import ch.unibas.dmi.dbis.cs108.example.client.ClientState;
 import ch.unibas.dmi.dbis.cs108.example.client.net.FxNetworkClient;
 import javafx.application.Platform;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -21,9 +22,8 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Tests for {@link MainController}.
  *
- * <p>These tests focus on controller behavior that is worth verifying in this
- * project: view switching, event wiring, chat-mode behavior, command handling,
- * and game-hand rendering.</p>
+ * <p>The test suite focuses on controller responsibilities such as screen switching, event
+ * wiring, chat behavior, command handling, and rendering the current hand in the game view.</p>
  */
 class MainControllerTest {
 
@@ -74,9 +74,7 @@ class MainControllerTest {
         }
     }
 
-    /**
-     * Functional interface for FX-thread helpers.
-     */
+    /** Functional interface for helper code that runs on the JavaFX Application Thread. */
     @FunctionalInterface
     private interface ThrowingRunnable {
         /**
@@ -88,7 +86,7 @@ class MainControllerTest {
     }
 
     /**
-     * Fake network client used to capture controller interactions.
+     * Test double for {@link FxNetworkClient} that records controller interactions.
      */
     private static class FakeFxNetworkClient extends FxNetworkClient {
 
@@ -626,7 +624,7 @@ class MainControllerTest {
     }
 
     /**
-     * Verifies rendered hand buttons trigger playCard with the correct card id.
+     * Verifies rendered hand cards trigger playCard with the correct card id when clicked.
      *
      * @throws Exception if the test fails
      */
@@ -641,9 +639,12 @@ class MainControllerTest {
         runOnFxAndWait(() -> {
             controller.showGameView();
             GameView view = (GameView) stage.getScene().getRoot();
-            Button cardButton = (Button) view.getPlayerHandPane().getChildren().get(0);
-            assertEquals("Card #42", cardButton.getText());
-            cardButton.fire();
+            CardView cardView = (CardView) view.getPlayerHandPane().getChildren().get(0);
+            cardView.fireEvent(new MouseEvent(
+                    MouseEvent.MOUSE_CLICKED, 0, 0, 0, 0,
+                    MouseButton.PRIMARY, 1,
+                    false, false, false, false,
+                    false, false, false, false, false, false, null));
         });
 
         assertEquals(List.of(42), network.playedCards);

@@ -4,24 +4,23 @@ import animatefx.animation.FadeIn;
 import animatefx.animation.FadeInUp;
 import ch.unibas.dmi.dbis.cs108.example.client.ClientState;
 import ch.unibas.dmi.dbis.cs108.example.client.net.FxNetworkClient;
+import ch.unibas.dmi.dbis.cs108.example.client.assets.AssetRegistry;
+import ch.unibas.dmi.dbis.cs108.example.client.assets.SoundManager;
 import javafx.beans.binding.Bindings;
 import javafx.collections.ListChangeListener;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextInputDialog;
 import javafx.stage.Stage;
-import ch.unibas.dmi.dbis.cs108.example.client.CardTextFormatter;
 
 /**
- * Coordinates JavaFX view changes and user interaction for the graphical
- * Frantic^-1 client.
+ * Coordinates screen changes and user interaction in the Frantic^-1 JavaFX client.
  *
- * <p>This controller connects the visual components to the client state and
- * the network layer. It also applies the shared stylesheet and simple
- * AnimateFX transitions whenever a new screen is shown.</p>
+ * <p>This controller connects UI views to the shared {@link ClientState}, delegates user
+ * actions to {@link FxNetworkClient}, and applies the shared theme and transition effects
+ * when switching screens.</p>
  */
 public class MainController {
 
@@ -30,34 +29,51 @@ public class MainController {
     private final Stage stage;
     private final ClientState state;
     private final FxNetworkClient networkClient;
+    private final AssetRegistry registry;
+    private final SoundManager soundManager;
 
     private ListChangeListener<String> handCardsListener;
 
     /**
-     * Creates a new main controller.
+     * Creates a new main controller using assets loaded from the classpath.
      *
      * @param stage the primary stage
      * @param state the shared client state
      * @param networkClient the network client used for server communication
      */
     public MainController(Stage stage, ClientState state, FxNetworkClient networkClient) {
+        this(stage, state, networkClient, AssetRegistry.load());
+    }
+
+    /**
+     * Creates a new main controller with a specific asset registry.
+     *
+     * @param stage the primary stage
+     * @param state the shared client state
+     * @param networkClient the network client used for server communication
+     * @param registry the asset registry to use for icons, colors, and sounds
+     */
+    public MainController(Stage stage, ClientState state, FxNetworkClient networkClient, AssetRegistry registry) {
         this.stage = stage;
         this.state = state;
         this.networkClient = networkClient;
+        this.registry = registry;
+        this.soundManager = new SoundManager(registry);
+
         this.networkClient.setGameEndListener(() -> {
+            registry.getSoundId("GAME_ENDED").ifPresent(soundManager::play);
             showWinnerView();
         });
 
         this.networkClient.setGameStartListener(() -> {
+            registry.getSoundId("GAME_STARTED").ifPresent(soundManager::play);
             if (stage.getScene() == null || !(stage.getScene().getRoot() instanceof GameView)) {
                 showGameView();
             }
         });
     }
 
-    /**
-     * Shows the connect screen with default values.
-     */
+    /** Shows the connect screen using the default host, port, and username values. */
     public void showConnectView() {
         showConnectView("localhost", "5555", System.getProperty("user.name", "Player"));
     }
@@ -91,9 +107,7 @@ public class MainController {
         new FadeInUp(view).play();
     }
 
-    /**
-     * Shows the lobby screen.
-     */
+    /** Shows the lobby screen and wires it to the current shared client state. */
     public void showLobbyView() {
         LobbyView view = new LobbyView();
 
@@ -192,10 +206,10 @@ public class MainController {
     }
 
     /**
-     * Shows the game screen.
+     * Shows the game screen and binds it to the current game-related client state.
      *
-     * <p>This view is driven by server-backed GUI state. It no longer creates a
-     * fake local game or fake demo hand.</p>
+     * <p>The rendered content is entirely driven by server-backed state rather than local
+     * placeholder data.</p>
      */
     public void showGameView() {
         GameView view = new GameView();
@@ -242,7 +256,10 @@ public class MainController {
         view.getCommandButton().setOnAction(e -> sendCommand(view));
         view.getCommandInput().setOnAction(e -> sendCommand(view));
 
-        view.getDrawButton().setOnAction(e -> networkClient.drawCard());
+        view.getDrawButton().setOnAction(e -> {
+            registry.getSoundId("CARD_DRAWN").ifPresent(soundManager::play);
+            networkClient.drawCard();
+        });
         view.getEndTurnButton().setOnAction(e -> networkClient.endTurn());
 
         view.getLeaveButton().setOnAction(e -> leaveCurrentLobbyAndShowLobbyView());
@@ -281,23 +298,19 @@ public class MainController {
                 continue;
             }
 
-            Button cardButton = new Button(CardTextFormatter.formatCardLabelWithId(cardId));
-            cardButton.getStyleClass().add("game-card-button");
-            cardButton.setPrefSize(90, 130);
-            cardButton.setMinSize(90, 130);
-            cardButton.setMaxSize(90, 130);
-            cardButton.setFocusTraversable(false);
-            cardButton.setWrapText(true);
-            cardButton.setOnAction(e -> networkClient.playCard(cardId));
+            CardView cardView = new CardView(cardId, registry, () -> {
+                registry.getSoundId(CardView.lookupCard(cardId)).ifPresent(soundManager::play);
+                networkClient.playCard(cardId);
+            });
 
-            view.getPlayerHandPane().getChildren().add(cardButton);
+            view.getPlayerHandPane().getChildren().add(cardView);
         }
     }
 
     /**
-     * Updates the chat list view to display the message list of the currently selected chat mode.
+     * Updates the lobby chat area to show the message list for the active chat mode.
      *
-     * @param view the lobby view containing the chat list
+     * @param view the lobby view whose chat controls should be updated
      */
     private void updateDisplayedChat(LobbyView view) {
         switch (state.getChatMode()) {
@@ -317,10 +330,9 @@ public class MainController {
     }
 
     /**
-     * Updates the game-view chat list to display the message list of the
-     * currently selected chat mode.
+     * Updates the game-view chat area to show the message list for the active chat mode.
      *
-     * @param view the game view containing the chat list
+     * @param view the game view whose chat controls should be updated
      */
     private void updateDisplayedChat(GameView view) {
         switch (state.getChatMode()) {
@@ -340,9 +352,9 @@ public class MainController {
     }
 
     /**
-     * Sends the content of the chat input field using the currently selected chat mode.
+     * Sends the current lobby-view chat input using the selected chat mode.
      *
-     * @param view the lobby view containing the chat input
+     * @param view the lobby view containing the chat input field
      */
     private void sendChat(LobbyView view) {
         String text = view.getChatInput().getText().trim();
@@ -362,10 +374,9 @@ public class MainController {
     }
 
     /**
-     * Sends the content of the chat input field using the currently selected
-     * chat mode from the game view.
+     * Sends the current game-view chat input using the selected chat mode.
      *
-     * @param view the game view containing the chat input
+     * @param view the game view containing the chat input field
      */
     private void sendChat(GameView view) {
         String text = view.getChatInput().getText().trim();
@@ -404,9 +415,9 @@ public class MainController {
     }
 
     /**
-     * Executes the content of the command field as a terminal-style client command.
+     * Executes the lobby-view command input as a client command.
      *
-     * @param view the lobby view containing the command input
+     * @param view the lobby view containing the command input field
      */
     private void sendCommand(LobbyView view) {
         String command = view.getCommandInput().getText().trim();
@@ -423,10 +434,9 @@ public class MainController {
     }
 
     /**
-     * Executes the content of the command field as a terminal-style client
-     * command from the game view.
+     * Executes the game-view command input as a client command.
      *
-     * @param view the game view containing the command input
+     * @param view the game view containing the command input field
      */
     private void sendCommand(GameView view) {
         String command = view.getCommandInput().getText().trim();
@@ -548,7 +558,9 @@ public class MainController {
         return displayedLobby.trim();
     }
 
-
+    /**
+     * Shows the game-end screen with the winner and final ranking from the shared state.
+     */
     public void showWinnerView() {
         GameEndView view = new GameEndView();
 
