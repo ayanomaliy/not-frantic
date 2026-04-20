@@ -267,3 +267,33 @@
 .scroll-pane .thumb {
     -fx-background-color: transparent;
 }
+
+.game-end-screen {
+    -fx-alignment: center;
+}
+
+.title-label {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+}
+
+.winner-label {
+    -fx-font-size: 20px;
+    -fx-text-fill: gold;
+    -fx-font-weight: bold;
+}
+
+.winner-cell {
+    -fx-background-color: linear-gradient(to right, gold, orange);
+    -fx-text-fill: black;
+    -fx-font-weight: bold;
+}
+
+.center-box {
+    -fx-alignment: center;
+    -fx-padding: 20;
+}
+
+.button-box {
+    -fx-alignment: center;
+}
