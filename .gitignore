@@ -25,3 +25,5 @@ Thumbs.db
 *.ps1
 
 all_sources_concatenated.txt
+
+highscores.txt
