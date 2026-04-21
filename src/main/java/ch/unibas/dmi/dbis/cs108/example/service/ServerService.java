@@ -14,6 +14,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import java.nio.file.Path;
+import java.util.stream.Collectors;
+
+
 /**
  * Manages server-side game state, client connections, and message handling.
  *
@@ -34,6 +38,9 @@ public class ServerService {
 
     /** All currently connected client sessions. */
     private final List<ClientSession> connectedClients = new ArrayList<>();
+
+    private final HighScoreHistory highScoreHistory =
+            new HighScoreHistory(Path.of("highscores.txt"));
 
     /**
      * Logs a message to the console with a server prefix.
@@ -506,6 +513,7 @@ public class ServerService {
             case GET_GAME_STATE -> handleGetGameState(session);
             case GET_ROUND_END -> handleGetRoundEnd(session);
             case GET_GAME_END -> handleGetGameEnd(session);
+            case GET_HIGHSCORES -> handleGetHighScores(session);
 
             case PING, PONG -> {
                 log("Heartbeat message reached ServerService from "
@@ -1149,6 +1157,11 @@ public class ServerService {
 
         // winner stays the cheat user if that is your intended cheat behavior
         String winner = session.getPlayerName();
+        highScoreHistory.appendFinishedGame(
+                lobby.getLobbyId(),
+                winner,
+                new LinkedHashMap<>(lobby.getCumulativeScores())
+        );
 
         broadcastToLobby(lobby, new Message(
                 Message.Type.GAME_END,
@@ -1552,6 +1565,12 @@ public class ServerService {
         // End the whole game immediately after this round
         String winner = ScoreCalculator.getWinner(lobby.getCumulativeScores());
 
+        highScoreHistory.appendFinishedGame(
+                lobby.getLobbyId(),
+                winner,
+                new LinkedHashMap<>(lobby.getCumulativeScores())
+        );
+
         broadcastToLobby(lobby, new Message(Message.Type.GAME_END, winner));
 
         state.setPhase(GamePhase.GAME_OVER);
@@ -1716,5 +1735,20 @@ public class ServerService {
                 "Dev mode enabled for lobby " + lobby.getLobbyId()
                         + " with scenario: " + cleaned
         ));
+    }
+
+    private void handleGetHighScores(ClientSession session) {
+        List<HighScoreHistory.LeaderboardRow> rows = highScoreHistory.buildLeaderboard();
+        String payload = serializeHighScores(rows);
+        session.send(new Message(Message.Type.HIGHSCORES, payload).encode());
+    }
+
+    private String serializeHighScores(List<HighScoreHistory.LeaderboardRow> rows) {
+        return rows.stream()
+                .map(row -> row.playerName()
+                        + ":" + row.wins()
+                        + ":" + row.gamesPlayed()
+                        + ":" + row.totalPenaltyPoints())
+                .collect(Collectors.joining(","));
     }
 }

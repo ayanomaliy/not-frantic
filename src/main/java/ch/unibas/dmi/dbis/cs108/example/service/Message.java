@@ -115,6 +115,12 @@ public record Message(Type type, String content) {
         /** Message used to enable or configure dev mode for the current lobby. */
         DEV,
 
+        /** Client requests the persistent high score list. Server responds with HIGHSCORES. No payload. */
+        GET_HIGHSCORES,
+
+        /** Server sends the aggregated high score list. Payload: player:wins:gamesPlayed:totalPenaltyPoints,... */
+        HIGHSCORES,
+
         /** Fallback type for unrecognized or malformed messages. */
         UNKNOWN
     }
@@ -208,6 +214,8 @@ public record Message(Type type, String content) {
 
                 case "/dev" -> new Message(Type.DEV, payload);
 
+                case "/highscores", "/scores" -> new Message(Type.GET_HIGHSCORES, "");
+
                 default -> new Message(Type.UNKNOWN, trimmed);
             };
         }
@@ -256,6 +264,8 @@ public record Message(Type type, String content) {
             case "BROADCAST" -> Type.BROADCAST;
             case "CHEATWIN" -> Type.CHEATWIN;
             case "DEV" -> Type.DEV;
+            case "GET_HIGHSCORES" -> Type.GET_HIGHSCORES;
+            case "HIGHSCORES" -> Type.HIGHSCORES;
             default -> Type.UNKNOWN;
         };
     }
@@ -281,7 +291,7 @@ public record Message(Type type, String content) {
                  PLAY_CARD, EFFECT_RESPONSE, DEV,
                  GAME_STATE, HAND_UPDATE, EFFECT_REQUEST, ROUND_END, GAME_END, BROADCAST -> true;
             case START, QUIT, LEAVE, DRAW_CARD, END_TURN, GET_HAND,
-                 GET_GAME_STATE, GET_ROUND_END, GET_GAME_END, PING, PONG, CHEATWIN, UNKNOWN -> false;
+                 GET_GAME_STATE, GET_ROUND_END, GET_GAME_END, PING, PONG, CHEATWIN, HIGHSCORES, GET_HIGHSCORES, UNKNOWN -> false;
         };
     }
 
@@ -305,7 +315,7 @@ public record Message(Type type, String content) {
             case NAME, GLOBALCHAT, LOBBYCHAT, WHISPERCHAT, PLAYERS, ALLPLAYERS,
                  INFO, ERROR, GAME, CREATE, LOBBIES, JOIN,
                  PLAY_CARD, EFFECT_RESPONSE, DEV,
-                 GAME_STATE, HAND_UPDATE, EFFECT_REQUEST, ROUND_END, GAME_END,BROADCAST -> true;
+                 GAME_STATE, HAND_UPDATE, EFFECT_REQUEST, ROUND_END, GAME_END, HIGHSCORES, GET_HIGHSCORES,BROADCAST -> true;
             case UNKNOWN -> false;
         };
     }
