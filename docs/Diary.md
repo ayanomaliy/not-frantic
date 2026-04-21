@@ -462,3 +462,11 @@ We figured out that something might be wrong with the /cheatwin command.
 * Connect the score with persistent High Score storing. It should store the High Score in a txt file.
 * Figure out a way to display the resolve effect and the layout of the game.
 * Figure out what is wrong with the /cheatwin command
+
+## Date: April 21, 2026
+### Win Endscreen (Sevval, Aiysha)
+We fixed the /cheatwin command so it works now.
+We created a HighScoreHistory list for the "High Score" achievement.
+
+#### Future Plans
+We have to fix our Unit tests and we also want to have custom sound effects.
