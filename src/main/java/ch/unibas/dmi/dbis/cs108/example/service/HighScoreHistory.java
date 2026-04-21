@@ -28,7 +28,10 @@ public final class HighScoreHistory {
                 .map(entry -> entry.getKey() + ":" + entry.getValue())
                 .collect(Collectors.joining(","));
 
-        String line = timestamp + ";" + lobbyId + ";" + winner + ";" + scoresPart;
+        String line = "timestamp=" + timestamp
+                + ";lobby=" + lobbyId
+                + ";winner=" + winner
+                + ";scores=" + scoresPart;
 
         try {
             Files.writeString(
