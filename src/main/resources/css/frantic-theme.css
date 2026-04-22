@@ -7,67 +7,67 @@
        ========================= */
 
     /* Core palette */
-    bg-color: #bfc5ff;
-    color-deep: #404255;
-    color-mid: #7f83aa;
-    color-warm: #aa7f83;
-    color-warm-dark: #554042;
+    bg-color: #171a20;
+    color-deep: #111319;
+    color-mid: #2a2f39;
+    color-warm: #b57a63;
+    color-warm-dark: #7d5444;
 
     /* Support palette */
-    bg-soft: #d7dbff;
-    bg-soft-2: #e6e8ff;
+    bg-soft: #1e222a;
+    bg-soft-2: #262b34;
 
-    panel-bg: rgba(237, 239, 252, 0.92);
-    panel-border: rgba(127, 131, 170, 0.35);
-    panel-shadow: rgba(64, 66, 85, 0.16);
+    panel-bg: rgba(33, 37, 45, 0.96);
+    panel-border: rgba(255, 245, 235, 0.08);
+    panel-shadow: rgba(0, 0, 0, 0.42);
 
-    text-main: #404255;
-    text-heading: #554042;
-    text-secondary: #6a6d8d;
-    text-muted: #8b8fb2;
-    text-on-accent: #fffdfd;
+    text-main: #e9ddd3;
+    text-heading: #f5e8de;
+    text-secondary: #c8b7ab;
+    text-muted: #91877f;
+    text-on-accent: #fff8f3;
 
-    surface-main: #eef0fb;
-    surface-soft: #e7eaf8;
-    surface-focus: #f7f8ff;
+    surface-main: #20242c;
+    surface-soft: #2a2f38;
+    surface-focus: #323844;
 
-    border-main: #b0b6dc;
-    border-soft: #c8cdef;
-    border-accent: #aa7f83;
+    border-main: #3b4350;
+    border-soft: #2f3641;
+    border-accent: #b57a63;
 
-    primary-top: #aa7f83;
-    primary-bottom: #926b6f;
-    primary-hover-top: #b98d91;
-    primary-hover-bottom: #9d767a;
+    primary-top: #a36e5b;
+    primary-bottom: #855848;
+    primary-hover-top: #b67d69;
+    primary-hover-bottom: #966250;
 
-    secondary-bg: #d7daf1;
-    secondary-hover-bg: #c9cde8;
-    secondary-border: #8f93ba;
+    secondary-bg: #2b313b;
+    secondary-hover-bg: #343b47;
+    secondary-border: #495364;
 
-    danger-top: #7a5b5f;
-    danger-bottom: #554042;
-    danger-hover-top: #8a696d;
-    danger-hover-bottom: #644b4f;
+    danger-top: #8b4c57;
+    danger-bottom: #6e3943;
+    danger-hover-top: #9f5b67;
+    danger-hover-bottom: #82454f;
 
-    selection-bg: #c7b2c8;
-    selection-text: #404255;
-    hover-bg: rgba(127, 131, 170, 0.18);
+    selection-bg: #c4976b;
+    selection-text: #1b1d22;
+    hover-bg: rgba(196, 151, 107, 0.16);
 
-    status-text: #7a6165;
+    status-text: #c9a991;
 
     /* Game color tokens */
-    game-red: #c23b22;
-    game-yellow: #e9c84f;
-    game-green: #96b83d;
-    game-blue: #3f69b1;
-    game-black: #2b2b2b;
-    game-neutral: #554042;
-    game-fallback: #444444;
+    game-red: #d1625f;
+    game-yellow: #d9bc5a;
+    game-green: #66b67d;
+    game-blue: #5d8fd6;
+    game-black: #1b1d20;
+    game-neutral: #72505b;
+    game-fallback: #4d525c;
 
     /* Sizing tokens */
-    radius-panel: 18;
-    radius-input: 12;
-    radius-card: 16;
+    radius-panel: 22;
+    radius-input: 14;
+    radius-card: 18;
     radius-pill: 999;
 }
 
@@ -76,7 +76,7 @@
    ========================= */
 
 .screen {
-    -fx-background-color: transparent;
+    -fx-background-color: bg-color;
 }
 
 .connect-screen {
@@ -112,7 +112,7 @@
     -fx-border-color: panel-border;
     -fx-border-width: 1;
     -fx-padding: 18;
-    -fx-effect: dropshadow(gaussian, panel-shadow, 20, 0.2, 0, 6);
+    -fx-effect: dropshadow(gaussian, panel-shadow, 28, 0.22, 0, 10);
 }
 
 .screen-title {
@@ -146,11 +146,12 @@
 .title-label {
     -fx-font-size: 28px;
     -fx-font-weight: bold;
+    -fx-text-fill: text-heading;
 }
 
 .winner-label {
     -fx-font-size: 20px;
-    -fx-text-fill: gold;
+    -fx-text-fill: #f0c77b;
     -fx-font-weight: bold;
 }
 
@@ -178,7 +179,7 @@
     -fx-background-radius: radius-input;
     -fx-border-radius: radius-input;
     -fx-padding: 10 14 10 14;
-    -fx-font-weight: 600;
+    -fx-font-weight: 700;
     -fx-cursor: hand;
 }
 
@@ -217,8 +218,8 @@
 
 .list-view.frantic-list-view {
     -fx-background-color: surface-main;
-    -fx-background-radius: 14;
-    -fx-border-radius: 14;
+    -fx-background-radius: 18;
+    -fx-border-radius: 18;
     -fx-border-color: border-soft;
     -fx-padding: 4;
 }
@@ -227,7 +228,7 @@
     -fx-background-color: transparent;
     -fx-text-fill: text-main;
     -fx-padding: 10 10 10 10;
-    -fx-background-radius: 10;
+    -fx-background-radius: 12;
 }
 
 .list-view.frantic-list-view .list-cell:filled:selected {
@@ -246,7 +247,7 @@
 
 .list-view.frantic-list-view .list-cell.self-player-cell,
 .list-view.frantic-list-view .list-cell.current-lobby-cell {
-    -fx-background-color: hover-bg;
+    -fx-background-color: rgba(181, 122, 99, 0.14);
     -fx-font-weight: 700;
 }
 
@@ -257,8 +258,8 @@
 }
 
 .winner-cell {
-    -fx-background-color: linear-gradient(to right, gold, orange);
-    -fx-text-fill: black;
+    -fx-background-color: linear-gradient(to right, #f0c77b, #d79b54);
+    -fx-text-fill: #1d1b18;
     -fx-font-weight: bold;
 }
 
@@ -285,6 +286,11 @@
     -fx-background-color: transparent;
 }
 
+.scroll-pane .thumb {
+    -fx-background-color: rgba(255,255,255,0.10);
+    -fx-background-radius: 999;
+}
+
 /* =========================
    Game table + cards
    ========================= */
@@ -304,7 +310,7 @@
 .game-card-button {
     -fx-background-radius: radius-card;
     -fx-border-radius: radius-card;
-    -fx-border-color: border-main;
+    -fx-border-color: rgba(255,255,255,0.08);
     -fx-border-width: 1;
     -fx-padding: 10 10 10 10;
     -fx-font-weight: 700;
@@ -312,8 +318,9 @@
 }
 
 .game-card-button:hover {
-    -fx-background-color: bg-soft;
     -fx-border-color: border-accent;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.28), 16, 0.18, 0, 4);
+    -fx-translate-y: -1;
 }
 
 .game-card-button:pressed {
@@ -366,11 +373,11 @@
 }
 
 .card-text-light {
-    -fx-text-fill: #ffffff;
+    -fx-text-fill: #fffaf5;
 }
 
 .card-text-dark {
-    -fx-text-fill: #1f2230;
+    -fx-text-fill: #181b20;
 }
 
 .draw-pile-clickable {
@@ -396,7 +403,7 @@
 }
 
 .wish-card-color {
-    -fx-border-color: border-main;
+    -fx-border-color: rgba(255,255,255,0.08);
     -fx-border-width: 1;
 }
 
@@ -405,17 +412,18 @@
    ========================= */
 
 .turn-overlay {
-    -fx-background-color: rgba(0, 0, 0, 0.20);
+    -fx-background-color: rgba(0, 0, 0, 0.24);
     -fx-padding: 40;
 }
 
 .turn-overlay-label {
     -fx-font-size: 34px;
     -fx-font-weight: bold;
-    -fx-text-fill: #000000;
-    -fx-background-color: rgba(0, 0, 0, 0.45);
+    -fx-text-fill: #fff8f3;
+    -fx-background-color: rgba(20, 22, 28, 0.78);
     -fx-background-radius: radius-panel;
     -fx-padding: 18 32 18 32;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.35), 18, 0.2, 0, 4);
 }
 
 /* =========================
@@ -423,7 +431,7 @@
    ========================= */
 
 .effect-response-overlay {
-    -fx-background-color: rgba(0, 0, 0, 0.28);
+    -fx-background-color: rgba(0, 0, 0, 0.38);
     -fx-alignment: center;
     -fx-padding: 40;
 }
@@ -470,9 +478,11 @@
 }
 
 .effect-response-choice-button:selected,
-.effect-response-choice-button-active {
-    -fx-border-color: color-warm-dark;
+.effect-response-choice-button-active,
+.effect-response-selected-card {
+    -fx-border-color: selection-bg;
     -fx-border-width: 3;
+    -fx-effect: dropshadow(gaussian, rgba(196,151,107,0.28), 14, 0.18, 0, 0);
 }
 
 .effect-response-color-red {
@@ -508,36 +518,31 @@
     -fx-alignment: center;
 }
 
-.effect-response-selected-card {
-    -fx-border-color: color-warm-dark;
-    -fx-border-width: 3;
-}
-
 /* =========================
    Event overlay
    ========================= */
 
 .event-overlay {
-    -fx-background-color: rgba(0, 0, 0, 0.08);
+    -fx-background-color: rgba(0, 0, 0, 0.10);
     -fx-padding: 0;
 }
 
 .event-panel {
-    -fx-background-color: rgba(0, 0, 0, 0.82);
+    -fx-background-color: rgba(8, 9, 12, 0.86);
     -fx-padding: 110 90 110 90;
     -fx-shape: "M 0 70 L 1600 0 L 1600 420 L 0 350 Z";
     -fx-scale-shape: false;
     -fx-background-insets: 0;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.35), 24, 0.25, 0, 6);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.42), 28, 0.24, 0, 8);
 }
 
 .event-title {
     -fx-font-size: 30px;
     -fx-font-weight: bold;
-    -fx-text-fill: white;
+    -fx-text-fill: #fff8f3;
 }
 
 .event-description {
     -fx-font-size: 16px;
-    -fx-text-fill: white;
+    -fx-text-fill: #ead6c6;
 }

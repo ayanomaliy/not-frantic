@@ -14,6 +14,9 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextInputDialog;
 import javafx.stage.Stage;
+import javafx.scene.layout.Region;
+import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
 
 
 /**
@@ -589,14 +592,28 @@ public class MainController {
     private Scene createStyledScene(Parent root, double width, double height) {
         Scene scene = new Scene(root, width, height);
 
-        scene.setFill(javafx.scene.paint.Paint.valueOf("#bfc5ff"));
-
         var stylesheet = getClass().getResource(THEME_STYLESHEET);
         if (stylesheet != null) {
             scene.getStylesheets().add(stylesheet.toExternalForm());
         }
 
+        applySceneFillFromRootBackground(scene, root);
+
         return scene;
+    }
+
+    private void applySceneFillFromRootBackground(Scene scene, Parent root) {
+        root.applyCss();
+        root.layout();
+
+        if (root instanceof Region region
+                && region.getBackground() != null
+                && !region.getBackground().getFills().isEmpty()
+                && region.getBackground().getFills().get(0).getFill() instanceof Color color) {
+            scene.setFill(color);
+        } else {
+            scene.setFill(Paint.valueOf("#26201e"));
+        }
     }
 
     /**
