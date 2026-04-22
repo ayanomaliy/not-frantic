@@ -319,6 +319,11 @@ public class MainController {
             if (isEffectRequestForMe(payload, "SKIP")) {
                 showSkipEffectDialog(view);
             }
+
+            if (isEffectRequestForMe(payload, "NICE_TRY")) {
+                showNiceTryEffectDialog(view);
+                return;
+            }
         });
 
         Scene scene = createStyledScene(view, 1280, 800);
@@ -910,4 +915,28 @@ public class MainController {
         view.getRootStack().getChildren().add(effectView);
     }
 
+    private void showNiceTryEffectDialog(GameView view) {
+        boolean alreadyOpen = view.getRootStack().getChildren().stream()
+                .anyMatch(node -> node instanceof NiceTryView);
+
+        if (alreadyOpen) {
+            return;
+        }
+
+        String username = state.getUsername();
+
+        java.util.List<String> selectablePlayers = state.getPlayers().stream()
+                .filter(name -> name != null && !name.isBlank())
+                .filter(name -> !name.equals(username))
+                .toList();
+
+        NiceTryView effectView = new NiceTryView(selectablePlayers);
+
+        effectView.setOnFinish(targetPlayer -> {
+            networkClient.resolveNiceTry(targetPlayer);
+            view.getRootStack().getChildren().remove(effectView);
+        });
+
+        view.getRootStack().getChildren().add(effectView);
+    }
 }

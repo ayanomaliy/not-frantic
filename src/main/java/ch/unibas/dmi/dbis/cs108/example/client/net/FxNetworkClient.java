@@ -311,6 +311,15 @@ public class FxNetworkClient implements ClientMessageHandler {
         protocolClient.resolveSkip(targetPlayer);
     }
 
+    /**
+     * Sends a NICE_TRY effect response.
+     *
+     * @param targetPlayer the player who should receive the penalty
+     */
+    public void resolveNiceTry(String targetPlayer) {
+        protocolClient.resolveNiceTry(targetPlayer);
+    }
+
     // --------------------------------------------------------------------------------
 
     /**
