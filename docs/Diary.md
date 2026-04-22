@@ -470,3 +470,23 @@ We created a HighScoreHistory list for the "High Score" achievement.
 
 #### Future Plans
 We have to fix our Unit tests and we also want to have custom sound effects.
+
+## Date: April 22, 2026 (Senanur)
+
+### Test Fixing and UI Adaptation
+
+#### What did we do today?
+Updated failing tests after UI refactor from draw button to draw pile.
+
+#### Work Summary
+- Fixed build failure caused by removed `getDrawButton()`.
+- Updated **GameViewTest** to use `getDrawPilePane()`.
+- Replaced button checks with pane style checks.
+- Updated **MainControllerTest** to simulate mouse click on draw pile.
+- Ensured draw action still triggers `drawCard()` correctly.
+- Build now passes successfully.
+
+#### Future Plans
+- Review remaining tests for UI consistency.
+- Improve test robustness for UI changes.
+- Increase coverage for user interactions.
