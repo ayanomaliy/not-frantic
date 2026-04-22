@@ -244,6 +244,16 @@ public class FxNetworkClient implements ClientMessageHandler {
         protocolClient.resolveFantastic(color, number);
     }
 
+    /**
+     * Sends an EQUALITY effect response.
+     *
+     * @param targetPlayer the player who should draw up
+     * @param color the requested color
+     */
+    public void resolveEquality(String targetPlayer, CardColor color) {
+        protocolClient.resolveEquality(targetPlayer, color);
+    }
+
 
     // --------------------------------------------------------------------------------
 

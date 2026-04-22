@@ -271,7 +271,7 @@ public class MainController {
         view.getLeaveButton().setOnAction(e -> leaveCurrentLobbyAndShowLobbyView());
 
         //EFFECTS:
-
+        // Fantastic:
         networkClient.setEffectRequestListener(effectPayload -> {
             if (effectPayload == null || effectPayload.isBlank()) {
                 return;
@@ -296,6 +296,43 @@ public class MainController {
                 }
             }
         });
+
+        // Equality:
+        networkClient.setEffectRequestListener(effectPayload -> {
+            if (effectPayload == null || effectPayload.isBlank()) {
+                return;
+            }
+
+            String payload = effectPayload.trim();
+            String upper = payload.toUpperCase();
+
+            String username = state.getUsername();
+            if (username == null || username.isBlank()) {
+                return;
+            }
+
+            if (upper.startsWith("FANTASTIC:")) {
+                String targetPlayer = payload.substring("FANTASTIC:".length()).trim();
+                boolean isForMe = targetPlayer.equals(username)
+                        || targetPlayer.startsWith(username + "(");
+
+                if (isForMe) {
+                    showFantasticEffectDialog(view);
+                }
+                return;
+            }
+
+            if (upper.startsWith("EQUALITY:")) {
+                String targetPlayer = payload.substring("EQUALITY:".length()).trim();
+                boolean isForMe = targetPlayer.equals(username)
+                        || targetPlayer.startsWith(username + "(");
+
+                if (isForMe) {
+                    showEqualityEffectDialog(view);
+                }
+            }
+        });
+
 
         Scene scene = createStyledScene(view, 1280, 800);
         stage.setScene(scene);
@@ -685,6 +722,30 @@ public class MainController {
 
         effectView.setOnFinish((color, number) -> {
             networkClient.resolveFantastic(color, number);
+            view.getRootStack().getChildren().remove(effectView);
+        });
+
+        view.getRootStack().getChildren().add(effectView);
+    }
+
+    private void showEqualityEffectDialog(GameView view) {
+        boolean alreadyOpen = view.getRootStack().getChildren().stream()
+                .anyMatch(node -> node instanceof EqualityView);
+
+        if (alreadyOpen) {
+            return;
+        }
+
+        String username = state.getUsername();
+
+        java.util.List<String> selectablePlayers = state.getPlayers().stream()
+                .filter(name -> !name.equals(username))
+                .toList();
+
+        EqualityView effectView = new EqualityView(selectablePlayers);
+
+        effectView.setOnFinish((targetPlayer, color) -> {
+            networkClient.resolveEquality(targetPlayer, color);
             view.getRootStack().getChildren().remove(effectView);
         });
 
