@@ -4,7 +4,6 @@ import ch.unibas.dmi.dbis.cs108.example.client.ClientState;
 import ch.unibas.dmi.dbis.cs108.example.client.net.FxNetworkClient;
 import javafx.application.Platform;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
@@ -42,8 +41,6 @@ class MainControllerTest {
             // JavaFX toolkit already started.
         }
     }
-
-
 
     /**
      * Runs code on the JavaFX thread and waits for completion.
@@ -238,7 +235,7 @@ class MainControllerTest {
         Stage stage = createStageOnFxThread();
         MainController controller = new MainController(stage, state, network);
 
-        runOnFxAndWait(() -> controller.showConnectView());
+        runOnFxAndWait(controller::showConnectView);
 
         Scene scene = stage.getScene();
         assertNotNull(scene);
@@ -315,7 +312,7 @@ class MainControllerTest {
         Stage stage = createStageOnFxThread();
         MainController controller = new MainController(stage, state, network);
 
-        runOnFxAndWait(() -> controller.showLobbyView());
+        runOnFxAndWait(controller::showLobbyView);
 
         LobbyView view = (LobbyView) stage.getScene().getRoot();
 
@@ -339,7 +336,7 @@ class MainControllerTest {
         Stage stage = createStageOnFxThread();
         MainController controller = new MainController(stage, state, network);
 
-        runOnFxAndWait(() -> controller.showLobbyView());
+        runOnFxAndWait(controller::showLobbyView);
         LobbyView view = (LobbyView) stage.getScene().getRoot();
 
         runOnFxAndWait(view.getChatModeButton()::fire);
@@ -611,7 +608,7 @@ class MainControllerTest {
         Stage stage = createStageOnFxThread();
         MainController controller = new MainController(stage, state, network);
 
-        runOnFxAndWait(() -> controller.showGameView());
+        runOnFxAndWait(controller::showGameView);
 
         GameView view = (GameView) stage.getScene().getRoot();
 
@@ -641,10 +638,14 @@ class MainControllerTest {
             GameView view = (GameView) stage.getScene().getRoot();
             CardView cardView = (CardView) view.getPlayerHandPane().getChildren().get(0);
             cardView.fireEvent(new MouseEvent(
-                    MouseEvent.MOUSE_CLICKED, 0, 0, 0, 0,
-                    MouseButton.PRIMARY, 1,
+                    MouseEvent.MOUSE_CLICKED,
+                    0, 0, 0, 0,
+                    MouseButton.PRIMARY,
+                    1,
                     false, false, false, false,
-                    false, false, false, false, false, false, null));
+                    false, false, false, false, false, false,
+                    null
+            ));
         });
 
         assertEquals(List.of(42), network.playedCards);
@@ -674,7 +675,8 @@ class MainControllerTest {
     }
 
     /**
-     * Verifies game-view draw and end-turn buttons forward to the network client.
+     * Verifies game-view draw-pile clicks, end-turn, and leave actions forward
+     * to the network client.
      *
      * @throws Exception if the test fails
      */
@@ -688,7 +690,17 @@ class MainControllerTest {
         runOnFxAndWait(() -> {
             controller.showGameView();
             GameView view = (GameView) stage.getScene().getRoot();
-            view.getDrawButton().fire();
+
+            view.getDrawPilePane().fireEvent(new MouseEvent(
+                    MouseEvent.MOUSE_CLICKED,
+                    0, 0, 0, 0,
+                    MouseButton.PRIMARY,
+                    1,
+                    false, false, false, false,
+                    false, false, false, false, false, false,
+                    null
+            ));
+
             view.getEndTurnButton().fire();
             view.getLeaveButton().fire();
         });
@@ -712,7 +724,7 @@ class MainControllerTest {
         Stage stage = createStageOnFxThread();
         MainController controller = new MainController(stage, state, network);
 
-        runOnFxAndWait(() -> controller.showLobbyView());
+        runOnFxAndWait(controller::showLobbyView);
         assertTrue(stage.getScene().getRoot() instanceof LobbyView);
 
         runOnFxAndWait(network::triggerGameStartListener);
@@ -732,7 +744,7 @@ class MainControllerTest {
         Stage stage = createStageOnFxThread();
         MainController controller = new MainController(stage, state, network);
 
-        runOnFxAndWait(() -> controller.showGameView());
+        runOnFxAndWait(controller::showGameView);
         Scene before = stage.getScene();
         assertTrue(before.getRoot() instanceof GameView);
 
@@ -742,6 +754,12 @@ class MainControllerTest {
         assertTrue(stage.getScene().getRoot() instanceof GameView);
     }
 
+    /**
+     * Creates a JavaFX stage on the JavaFX Application Thread.
+     *
+     * @return the created stage
+     * @throws Exception if stage creation fails
+     */
     private static Stage createStageOnFxThread() throws Exception {
         final Stage[] stageRef = new Stage[1];
         runOnFxAndWait(() -> stageRef[0] = new Stage());
