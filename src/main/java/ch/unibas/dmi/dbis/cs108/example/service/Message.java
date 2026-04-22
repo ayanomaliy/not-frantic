@@ -451,8 +451,8 @@ public record Message(Type type, String content) {
             return new Message(Type.EFFECT_RESPONSE, effectName + "|" + upper);
         }
 
-        if (isInteger(token)) {
-            return new Message(Type.EFFECT_RESPONSE, effectName + "||" + token);
+        if (isPlayableNumber(token)) {
+            return new Message(Type.EFFECT_RESPONSE, effectName + "||" + token.trim());
         }
 
         return new Message(Type.UNKNOWN, "/" + effectName.toLowerCase() + " " + payload);
@@ -627,10 +627,19 @@ public record Message(Type type, String content) {
             return new Message(Type.EFFECT_RESPONSE, "FANTASTIC_FOUR|" + upper + "||" + targets);
         }
 
-        if (isInteger(first)) {
+        if (isPlayableNumber(first)) {
             return new Message(Type.EFFECT_RESPONSE, "FANTASTIC_FOUR||" + first.trim() + "|" + targets);
         }
 
         return new Message(Type.UNKNOWN, "/fantasticfour " + payload);
+    }
+
+    private static boolean isPlayableNumber(String text) {
+        try {
+            int number = Integer.parseInt(text.trim());
+            return number >= 1 && number <= 9;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 }

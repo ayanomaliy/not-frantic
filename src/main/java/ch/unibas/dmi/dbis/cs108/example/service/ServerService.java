@@ -1751,4 +1751,14 @@ public class ServerService {
                         + ":" + row.totalPenaltyPoints())
                 .collect(Collectors.joining(","));
     }
+
+
+    private static Integer parseNumber(String text) {
+        try {
+            int number = Integer.parseInt(text.trim());
+            return number >= 1 && number <= 9 ? number : null;
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
 }
