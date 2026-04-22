@@ -1339,6 +1339,7 @@ public class ServerService {
                 // Event card from a BLACK play — resolve immediately, no client input needed
                 List<GameEvent> eventEvents = EventResolver.resolve(eventCard, state);
                 broadcastEvents(lobby, eventEvents);
+                broadcastAllHands(lobby);
                 broadcastGameState(lobby);
 
                 // Re-check phase after event resolution
