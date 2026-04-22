@@ -6,6 +6,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.StackPane;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -57,7 +58,7 @@ class GameViewTest {
         Label phaseLabel = view.getPhaseLabel();
         Label discardTopLabel = view.getDiscardTopLabel();
 
-        Button drawButton = view.getDrawButton();
+        StackPane drawPilePane = view.getDrawPilePane();
         Button endTurnButton = view.getEndTurnButton();
         FlowPane playerHandPane = view.getPlayerHandPane();
         ListView<String> playersList = view.getPlayersList();
@@ -74,7 +75,7 @@ class GameViewTest {
         assertNotNull(currentPlayerLabel);
         assertNotNull(phaseLabel);
         assertNotNull(discardTopLabel);
-        assertNotNull(drawButton);
+        assertNotNull(drawPilePane);
         assertNotNull(endTurnButton);
         assertNotNull(playerHandPane);
         assertNotNull(playersList);
@@ -117,7 +118,6 @@ class GameViewTest {
         assertEquals("Phase: -", view.getPhaseLabel().getText());
         assertEquals("Top Card: -", view.getDiscardTopLabel().getText());
 
-        assertEquals("Draw Card", view.getDrawButton().getText());
         assertEquals("End Turn", view.getEndTurnButton().getText());
         assertEquals("Leave Lobby", view.getLeaveButton().getText());
         assertEquals("Send", view.getSendButton().getText());
@@ -133,7 +133,8 @@ class GameViewTest {
     void constructorAppliesExpectedStyleClasses() {
         GameView view = new GameView();
 
-        assertTrue(view.getDrawButton().getStyleClass().contains("primary-button"));
+        assertTrue(view.getDrawPilePane().getStyleClass().contains("pile-placeholder"));
+        assertTrue(view.getDrawPilePane().getStyleClass().contains("draw-pile-clickable"));
         assertTrue(view.getEndTurnButton().getStyleClass().contains("secondary-button"));
         assertTrue(view.getLeaveButton().getStyleClass().contains("danger-button"));
         assertTrue(view.getSendButton().getStyleClass().contains("primary-button"));
