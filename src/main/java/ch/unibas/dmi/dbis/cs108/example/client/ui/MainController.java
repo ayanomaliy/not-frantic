@@ -273,6 +273,27 @@ public class MainController {
         stage.setScene(scene);
         new FadeIn(view).play();
 
+
+        final String[] previousCurrentPlayer = {state.getCurrentPlayer()};
+
+        state.currentPlayerProperty().addListener((obs, oldValue, newValue) -> {
+            String username = state.getUsername();
+            if (username == null || username.isBlank() || newValue == null) {
+                previousCurrentPlayer[0] = newValue;
+                return;
+            }
+
+            boolean isNowMyTurn = newValue.equals(username) || newValue.startsWith(username + "(");
+            boolean wasMyTurnBefore = oldValue != null
+                    && (oldValue.equals(username) || oldValue.startsWith(username + "("));
+
+            if (isNowMyTurn && !wasMyTurnBefore) {
+                view.playTurnOverlay();
+            }
+
+            previousCurrentPlayer[0] = newValue;
+        });
+
         networkClient.requestHand();
     }
 

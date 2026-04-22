@@ -7,6 +7,9 @@ import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.PauseTransition;
 import javafx.animation.Timeline;
+import javafx.animation.FadeTransition;
+import javafx.animation.SequentialTransition;
+import javafx.scene.effect.GaussianBlur;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -92,6 +95,13 @@ public class GameView extends BorderPane {
     private VBox chatContentBox;
     private HBox chatInputRow;
 
+    // Fade in animation
+    private final StackPane rootStack = new StackPane();
+    private final ScrollPane outerScrollPane = new ScrollPane();
+    private final StackPane turnOverlay = new StackPane();
+    private final Label turnOverlayLabel = new Label();
+    private final GaussianBlur turnBlur = new GaussianBlur(0);
+
     /**
      * Creates the game view.
      */
@@ -155,14 +165,19 @@ public class GameView extends BorderPane {
 
         BorderPane.setMargin(gameArea, new Insets(0, 12, 0, 0));
 
-        ScrollPane outerScrollPane = new ScrollPane(content);
+        outerScrollPane.setContent(content);
         outerScrollPane.setFitToWidth(true);
         outerScrollPane.setFitToHeight(true);
         outerScrollPane.setPannable(true);
         outerScrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         outerScrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
 
-        setCenter(outerScrollPane);
+        configureTurnOverlay();
+
+        rootStack.getChildren().addAll(outerScrollPane, turnOverlay);
+        StackPane.setAlignment(turnOverlay, Pos.CENTER);
+
+        setCenter(rootStack);
     }
 
     /**
@@ -608,4 +623,69 @@ public class GameView extends BorderPane {
     public StackPane getDiscardPilePane() {
         return discardPilePane;
     }
+
+    private void configureTurnOverlay() {
+        turnOverlay.getStyleClass().add("turn-overlay");
+        turnOverlay.setAlignment(Pos.CENTER);
+
+        turnOverlay.setVisible(false);
+        turnOverlay.setOpacity(0.0);
+        turnOverlay.setMouseTransparent(true);
+
+        turnOverlay.prefWidthProperty().bind(rootStack.widthProperty());
+        turnOverlay.prefHeightProperty().bind(rootStack.heightProperty());
+        turnOverlay.maxWidthProperty().bind(rootStack.widthProperty());
+        turnOverlay.maxHeightProperty().bind(rootStack.heightProperty());
+
+        turnOverlayLabel.setText("It's your turn");
+        turnOverlayLabel.getStyleClass().add("turn-overlay-label");
+
+        turnOverlay.getChildren().setAll(turnOverlayLabel);
+    }
+
+    public void playTurnOverlay() {
+        if (getCenter() == null) {
+            return;
+        }
+
+        turnOverlay.setVisible(true);
+        turnOverlay.setOpacity(0.0);
+
+        outerScrollPane.setEffect(turnBlur);
+
+        FadeTransition fadeIn = new FadeTransition(Duration.millis(250), turnOverlay);
+        fadeIn.setFromValue(0.0);
+        fadeIn.setToValue(1.0);
+
+        PauseTransition hold = new PauseTransition(Duration.millis(1500));
+
+        FadeTransition fadeOut = new FadeTransition(Duration.millis(250), turnOverlay);
+        fadeOut.setFromValue(1.0);
+        fadeOut.setToValue(0.0);
+
+        Timeline blurIn = new Timeline(
+                new KeyFrame(Duration.ZERO, new KeyValue(turnBlur.radiusProperty(), 0)),
+                new KeyFrame(Duration.millis(250), new KeyValue(turnBlur.radiusProperty(), 12))
+        );
+
+        Timeline blurOut = new Timeline(
+                new KeyFrame(Duration.ZERO, new KeyValue(turnBlur.radiusProperty(), 12)),
+                new KeyFrame(Duration.millis(250), new KeyValue(turnBlur.radiusProperty(), 0))
+        );
+
+        fadeOut.setOnFinished(e -> {
+            turnOverlay.setVisible(false);
+            outerScrollPane.setEffect(turnBlur);
+        });
+
+        fadeIn.setOnFinished(e -> blurIn.play());
+        hold.setOnFinished(e -> {
+            blurOut.play();
+            fadeOut.play();
+        });
+
+        SequentialTransition sequence = new SequentialTransition(fadeIn, hold, fadeOut);
+        sequence.play();
+    }
+
 }
