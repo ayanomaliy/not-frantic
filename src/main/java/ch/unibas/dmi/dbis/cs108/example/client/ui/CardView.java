@@ -3,7 +3,10 @@ package ch.unibas.dmi.dbis.cs108.example.client.ui;
 import ch.unibas.dmi.dbis.cs108.example.client.CardTextFormatter;
 import ch.unibas.dmi.dbis.cs108.example.client.assets.AssetRegistry;
 import ch.unibas.dmi.dbis.cs108.example.model.game.Card;
+import ch.unibas.dmi.dbis.cs108.example.model.game.CardColor;
+import ch.unibas.dmi.dbis.cs108.example.model.game.CardType;
 import ch.unibas.dmi.dbis.cs108.example.model.game.DeckFactory;
+import com.fluxvend.svgfx.SvgImageView;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.input.MouseButton;
@@ -15,12 +18,16 @@ import java.util.Map;
 /**
  * Visual representation of a playable card in the player's hand.
  *
- * <p>A card view uses the configured asset registry to resolve background colors, text colors,
- * and optional SVG icons. If an icon is available, the label is shown below it; otherwise the
- * label is centered. A primary-button click invokes the provided {@code onPlay} callback.</p>
+ * <p>This version keeps visual styling in CSS as much as possible. The card view
+ * adds semantic style classes such as {@code card-red}, {@code card-black},
+ * {@code card-neutral}, {@code card-text-light}, and {@code card-text-dark}
+ * so the theme can control the appearance centrally.</p>
  *
- * <p>This control must be created on the JavaFX Application Thread because it may construct
- * {@link com.fluxvend.svgfx.SvgImageView} instances.</p>
+ * <p>If an icon is available, the label is placed near the bottom of the card.
+ * Otherwise the label is centered.</p>
+ *
+ * <p>This control must be created on the JavaFX Application Thread because it may
+ * construct {@link SvgImageView} instances.</p>
  */
 public class CardView extends StackPane {
 
@@ -33,29 +40,22 @@ public class CardView extends StackPane {
     /**
      * Creates a card view for the given card ID.
      *
-     * @param cardId   the card's numeric ID as used by the server
-     * @param registry the asset registry used to resolve colors and icons
-     * @param onPlay   called when the user clicks the card; may be {@code null}
+     * @param cardId the card's numeric ID as used by the server
+     * @param registry the asset registry used to resolve icons
+     * @param onPlay called when the user clicks the card; may be {@code null}
      */
     public CardView(int cardId, AssetRegistry registry, Runnable onPlay) {
-        getStyleClass().add("game-card-button");
+        getStyleClass().addAll("game-card-button", "card-view");
         setPrefSize(CARD_WIDTH, CARD_HEIGHT);
         setMinSize(CARD_WIDTH, CARD_HEIGHT);
         setMaxSize(CARD_WIDTH, CARD_HEIGHT);
         setFocusTraversable(false);
 
         Card card = lookupCard(cardId);
-
-        String bg = card != null
-                ? registry.getBackgroundColor(card.color()).orElseGet(() -> fallbackBg(registry))
-                : fallbackBg(registry);
-        String textColor = card != null
-                ? registry.getTextColor(card.color()).orElse("#ffffff")
-                : "#ffffff";
-
-        setStyle("-fx-background-color: " + bg + "; -fx-background-radius: 16; -fx-border-radius: 16;");
+        applyCardSurfaceClass(card);
 
         Label label = new Label(CardTextFormatter.formatCardLabel(cardId));
+        label.getStyleClass().addAll("card-label", resolveCardTextClass(card));
         label.setWrapText(true);
         label.setAlignment(Pos.CENTER);
         label.setMaxWidth(CARD_WIDTH - 8);
@@ -65,40 +65,77 @@ public class CardView extends StackPane {
             registry.getIconView(card, ICON_SIZE).ifPresentOrElse(
                     icon -> {
                         icon.setMouseTransparent(true);
-                        label.setStyle("-fx-text-fill: " + textColor + "; -fx-font-size: 10px;");
+                        label.getStyleClass().add("card-label-with-icon");
                         StackPane.setAlignment(icon, Pos.CENTER);
                         StackPane.setAlignment(label, Pos.BOTTOM_CENTER);
                         getChildren().addAll(icon, label);
                     },
                     () -> {
-                        label.setStyle("-fx-text-fill: " + textColor + "; -fx-font-size: 12px;");
+                        label.getStyleClass().add("card-label-centered");
                         StackPane.setAlignment(label, Pos.CENTER);
                         getChildren().add(label);
                     }
             );
         } else {
-            label.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 12px;");
+            label.getStyleClass().addAll("card-text-light", "card-label-centered");
             StackPane.setAlignment(label, Pos.CENTER);
             getChildren().add(label);
         }
 
         if (onPlay != null) {
             setOnMouseClicked(e -> {
-                if (e.getButton() == MouseButton.PRIMARY) onPlay.run();
+                if (e.getButton() == MouseButton.PRIMARY) {
+                    onPlay.run();
+                }
             });
         }
     }
 
-    private static String fallbackBg(AssetRegistry registry) {
-        var fb = registry.getFallback();
-        return fb != null && fb.background() != null ? fb.background() : "#444444";
+    private void applyCardSurfaceClass(Card card) {
+        getStyleClass().add(resolveCardSurfaceClass(card));
+    }
+
+    private static String resolveCardSurfaceClass(Card card) {
+        if (card == null) {
+            return "card-fallback";
+        }
+
+        CardColor color = card.color();
+        if (color != null) {
+            return switch (color) {
+                case RED -> "card-red";
+                case YELLOW -> "card-yellow";
+                case GREEN -> "card-green";
+                case BLUE -> "card-blue";
+                case BLACK -> "card-black";
+            };
+        }
+
+        if (card.type() == CardType.BLACK) {
+            return "card-black";
+        }
+
+        return "card-neutral";
+    }
+
+    private static String resolveCardTextClass(Card card) {
+        if (card == null) {
+            return "card-text-light";
+        }
+
+        CardColor color = card.color();
+        if (color == CardColor.YELLOW || color == CardColor.GREEN) {
+            return "card-text-dark";
+        }
+
+        return "card-text-light";
     }
 
     /**
      * Resolves a card by its numeric identifier.
      *
-     * <p>The lookup table is built lazily from {@link DeckFactory#buildMainDeck()} and reused
-     * for subsequent calls.</p>
+     * <p>The lookup table is built lazily from {@link DeckFactory#buildMainDeck()}
+     * and reused for subsequent calls.</p>
      *
      * @param id the numeric card identifier
      * @return the matching card, or {@code null} if the id is not present in the deck
