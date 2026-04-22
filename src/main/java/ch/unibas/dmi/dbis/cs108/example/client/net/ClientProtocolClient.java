@@ -11,12 +11,9 @@ import java.util.stream.Collectors;
 /**
  * High-level protocol client built on top of {@link NetworkClientCore}.
  *
- * <p>This class exposes uniform typed methods for sending protocol messages,
- * so both CLI and GUI can use the same message-sending API without relying on
- * raw protocol strings internally.</p>
- *
- * <p>All effect-response protocol formatting is centralized in this class so
- * future protocol changes only have to be implemented in one place.</p>
+ * <p>This class centralizes all client-side message formatting so GUI and CLI
+ * code can use typed helper methods instead of manually constructing protocol
+ * strings.</p>
  */
 public class ClientProtocolClient {
 
@@ -25,7 +22,7 @@ public class ClientProtocolClient {
     /**
      * Creates a new protocol client.
      *
-     * @param handler the message handler used by the active front end
+     * @param handler the active message handler
      */
     public ClientProtocolClient(ClientMessageHandler handler) {
         this.core = new NetworkClientCore(handler);
@@ -52,14 +49,14 @@ public class ClientProtocolClient {
     /**
      * Disconnects from the server and optionally skips sending {@code QUIT}.
      *
-     * @param notifyServer whether {@code QUIT} should be sent first
+     * @param notifyServer whether the server should be notified first
      */
     public void disconnect(boolean notifyServer) {
         core.disconnect(notifyServer);
     }
 
     /**
-     * Returns whether the connection is active.
+     * Returns whether the client is currently connected.
      *
      * @return {@code true} if connected, otherwise {@code false}
      */
@@ -77,9 +74,9 @@ public class ClientProtocolClient {
     }
 
     /**
-     * Sends a request to set or change the player name.
+     * Sends a name request.
      *
-     * @param username the desired player name
+     * @param username the desired username
      */
     public void setName(String username) {
         send(new Message(Message.Type.NAME, username));
@@ -88,7 +85,7 @@ public class ClientProtocolClient {
     /**
      * Sends a global chat message.
      *
-     * @param text the chat text
+     * @param text the message text
      */
     public void sendGlobalChat(String text) {
         send(new Message(Message.Type.GLOBALCHAT, text));
@@ -97,17 +94,17 @@ public class ClientProtocolClient {
     /**
      * Sends a lobby chat message.
      *
-     * @param text the chat text
+     * @param text the message text
      */
     public void sendLobbyChat(String text) {
         send(new Message(Message.Type.LOBBYCHAT, text));
     }
 
     /**
-     * Sends a whisper message payload.
+     * Sends a whisper chat message.
      *
      * @param targetPlayer the whisper target
-     * @param text the whisper text
+     * @param text the message text
      */
     public void sendWhisperChat(String targetPlayer, String text) {
         send(new Message(Message.Type.WHISPERCHAT, targetPlayer + "|" + text));
@@ -137,7 +134,7 @@ public class ClientProtocolClient {
     /**
      * Creates a new lobby.
      *
-     * @param lobbyId the desired lobby id
+     * @param lobbyId the new lobby id
      */
     public void createLobby(String lobbyId) {
         send(new Message(Message.Type.CREATE, lobbyId));
@@ -146,7 +143,7 @@ public class ClientProtocolClient {
     /**
      * Joins an existing lobby.
      *
-     * @param lobbyId the lobby id to join
+     * @param lobbyId the target lobby id
      */
     public void joinLobby(String lobbyId) {
         send(new Message(Message.Type.JOIN, lobbyId));
@@ -174,7 +171,7 @@ public class ClientProtocolClient {
     }
 
     /**
-     * Requests the current hand.
+     * Requests the current private hand.
      */
     public void requestHand() {
         send(new Message(Message.Type.GET_HAND, ""));
@@ -216,7 +213,7 @@ public class ClientProtocolClient {
     }
 
     /**
-     * Requests to play a card.
+     * Requests to play the given card.
      *
      * @param cardId the id of the card to play
      */
@@ -225,10 +222,9 @@ public class ClientProtocolClient {
     }
 
     /**
-     * Sends an effect response with a target player for effects such as
-     * {@code SKIP}, {@code COUNTERATTACK}, or {@code NICE_TRY}.
+     * Sends a generic target-only effect response.
      *
-     * @param effectName the effect name as expected by the server
+     * @param effectName the effect name
      * @param targetPlayer the selected target player
      */
     public void sendEffectTargetResponse(String effectName, String targetPlayer) {
@@ -236,16 +232,16 @@ public class ClientProtocolClient {
     }
 
     /**
-     * Sends a {@code SKIP} effect response.
+     * Sends a SKIP effect response.
      *
-     * @param targetPlayer the player whose next turn should be skipped
+     * @param targetPlayer the player to skip
      */
     public void resolveSkip(String targetPlayer) {
         sendEffectTargetResponse("SKIP", targetPlayer);
     }
 
     /**
-     * Sends a {@code COUNTERATTACK} effect response that only requests a color.
+     * Sends a COUNTERATTACK response that only sets a color.
      *
      * @param color the requested color
      */
@@ -255,10 +251,9 @@ public class ClientProtocolClient {
     }
 
     /**
-     * Sends a {@code COUNTERATTACK} effect response that redirects a pending
-     * effect to a target and also requests a color.
+     * Sends a COUNTERATTACK response that redirects a target and sets a color.
      *
-     * @param targetPlayer the redirected target player
+     * @param targetPlayer the redirected target
      * @param color the requested color
      */
     public void resolveCounterattack(String targetPlayer, CardColor color) {
@@ -267,40 +262,41 @@ public class ClientProtocolClient {
     }
 
     /**
-     * Sends a {@code NICE_TRY} effect response.
+     * Sends a NICE_TRY effect response.
      *
-     * @param targetPlayer the player who must draw after attempting to end the round
+     * @param targetPlayer the affected target player
      */
     public void resolveNiceTry(String targetPlayer) {
         sendEffectTargetResponse("NICE_TRY", targetPlayer);
     }
 
     /**
-     * Sends a {@code GIFT} effect response.
+     * Sends a GIFT effect response.
      *
-     * @param targetPlayer the receiving player
-     * @param cardIds the ids of the cards to transfer
+     * @param targetPlayer the receiver
+     * @param cardIds the selected card ids
      */
     public void resolveGift(String targetPlayer, List<Integer> cardIds) {
         sendEffectResponse("GIFT", targetPlayer, joinCardIds(cardIds));
     }
 
     /**
-     * Sends an {@code EXCHANGE} effect response.
+     * Sends an EXCHANGE effect response.
      *
      * @param targetPlayer the exchange partner
-     * @param cardIds the ids of the selected cards to exchange
+     * @param cardIds the selected card ids
      */
     public void resolveExchange(String targetPlayer, List<Integer> cardIds) {
         sendEffectResponse("EXCHANGE", targetPlayer, joinCardIds(cardIds));
     }
 
     /**
-     * Sends a {@code FANTASTIC} effect response.
+     * Sends a FANTASTIC effect response.
      *
-     * <p>The number may be {@code null} if only a color should be requested.</p>
+     * <p>Exactly one of color or number must be set. The protocol payload always
+     * uses three parts: effect name, color slot, and number slot.</p>
      *
-     * @param color the selected color
+     * @param color the selected color, or {@code null}
      * @param number the selected number, or {@code null}
      */
     public void resolveFantastic(CardColor color, Integer number) {
@@ -308,15 +304,14 @@ public class ClientProtocolClient {
     }
 
     /**
-     * Sends a {@code FANTASTIC_FOUR} effect response.
+     * Sends a FANTASTIC_FOUR effect response.
      *
-     * <p>Exactly one of {@code color} or {@code number} must be set. The
-     * {@code targetPlayers} list must contain exactly four recipient names.
-     * Repeated names are allowed.</p>
+     * <p>Exactly one of color or number must be set, and exactly four target
+     * recipients must be supplied.</p>
      *
      * @param color the selected color, or {@code null}
      * @param number the selected number, or {@code null}
-     * @param targetPlayers the four recipient slots for the distributed cards
+     * @param targetPlayers the four target recipients
      */
     public void resolveFantasticFour(CardColor color,
                                      Integer number,
@@ -344,10 +339,10 @@ public class ClientProtocolClient {
     }
 
     /**
-     * Sends an {@code EQUALITY} effect response.
+     * Sends an EQUALITY effect response.
      *
      * @param targetPlayer the player who should draw up
-     * @param color the requested color for the next play
+     * @param color the requested next color
      */
     public void resolveEquality(String targetPlayer, CardColor color) {
         Objects.requireNonNull(color, "color must not be null");
@@ -355,30 +350,29 @@ public class ClientProtocolClient {
     }
 
     /**
-     * Sends a {@code SECOND_CHANCE} effect response for playing another card.
+     * Sends a SECOND_CHANCE effect response for playing another card.
      *
-     * @param cardId the id of the card to play next
+     * @param cardId the id of the card to play
      */
     public void resolveSecondChance(int cardId) {
         sendEffectResponse("SECOND_CHANCE", String.valueOf(cardId));
     }
 
     /**
-     * Sends a {@code SECOND_CHANCE} effect response indicating that no card
-     * is played and the draw penalty should be applied.
+     * Sends a SECOND_CHANCE effect response indicating that no follow-up card is
+     * played and the draw branch should be used.
      */
     public void resolveSecondChanceDrawPenalty() {
         send(new Message(Message.Type.EFFECT_RESPONSE, "SECOND_CHANCE|"));
     }
 
-
     /**
-     * Sends a raw effect response using the unified protocol type.
+     * Builds and sends a raw unified effect response.
      *
-     * <p>All given parts are joined using {@code |}. Null parts are converted
-     * to empty strings.</p>
+     * <p>All parts are joined using {@code |}. Null values are converted to
+     * empty strings.</p>
      *
-     * @param parts the payload parts starting with the effect name
+     * @param parts the response parts
      */
     private void sendEffectResponse(String... parts) {
         String payload = String.join("|",
@@ -391,7 +385,15 @@ public class ClientProtocolClient {
     }
 
     /**
-     * Sends an effect response that requests either one color or one number.
+     * Sends an effect response that encodes either a color or a number.
+     *
+     * <p>The payload always reserves both slots so the server can parse color
+     * and number consistently:</p>
+     *
+     * <pre>
+     * EFFECT_NAME|COLOR|
+     * EFFECT_NAME||NUMBER
+     * </pre>
      *
      * @param effectName the effect name
      * @param color the selected color, or {@code null}
@@ -406,17 +408,17 @@ public class ClientProtocolClient {
         }
 
         if (hasColor) {
-            sendEffectResponse(effectName, color.name());
+            sendEffectResponse(effectName, color.name(), "");
         } else {
             sendEffectResponse(effectName, "", String.valueOf(number));
         }
     }
 
     /**
-     * Joins card ids into the comma-separated format expected by the server.
+     * Joins card ids into the comma-separated protocol format.
      *
      * @param cardIds the card ids to join
-     * @return a comma-separated card id list
+     * @return a comma-separated list of ids
      */
     private String joinCardIds(List<Integer> cardIds) {
         Objects.requireNonNull(cardIds, "cardIds must not be null");
@@ -426,19 +428,10 @@ public class ClientProtocolClient {
                 .collect(Collectors.joining(","));
     }
 
-
-
-
-
-
-
     /**
-     * Sends a raw terminal-style command by parsing it into a structured message.
+     * Parses a raw terminal-style command into a structured message.
      *
-     * <p>This exists for the manual command field and terminal input. Internal
-     * GUI logic should prefer the typed methods above.</p>
-     *
-     * @param rawInput the raw user-entered command
+     * @param rawInput the raw input string
      * @return the parsed message, or {@code null} if invalid
      */
     public Message parseRawCommand(String rawInput) {

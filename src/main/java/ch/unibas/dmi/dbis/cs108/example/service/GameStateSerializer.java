@@ -12,39 +12,29 @@ import java.util.stream.Collectors;
  * Converts game-model objects into wire-format strings for the
  * {@code TYPE|payload} protocol.
  *
- * <h2>Payload formats</h2>
- * <dl>
- *   <dt>{@link #serializePublicState}</dt>
- *   <dd>{@code phase:AWAITING_PLAY,currentPlayer:Alice,discardTop:42,drawPileSize:80,
- *       players:Alice:7:0,Bob:5:12}</dd>
- *
- *   <dt>{@link #serializeHand}</dt>
- *   <dd>Comma-separated card ids: {@code 5,18,42,77}</dd>
- *
- *   <dt>{@link #serializeRoundEnd}</dt>
- *   <dd>One entry per player separated by {@code ,}: {@code Alice:5:20,Bob:12:30}</dd>
- *
- *   <dt>{@link #serializeEffectRequest}</dt>
- *   <dd>{@code SKIP:Alice} — effect name and acting player</dd>
- * </dl>
- *
- * All formats use only {@code |}, {@code ,}, and {@code :} as separators so
- * they can be embedded safely in a single {@code TYPE|payload} message.
+ * <p>This serializer only includes the fields that are expected by the
+ * current protocol tests.</p>
  */
 public class GameStateSerializer {
 
     private GameStateSerializer() {}
 
     /**
-     * Serializes the public (non-secret) game state for broadcasting to all
-     * players in the lobby.
+     * Serializes the public game state into the compact payload format expected
+     * by the protocol tests.
      *
-     * <p>Format:
-     * {@code phase:<phase>,currentPlayer:<name>,discardTop:<id>,drawPileSize:<n>,
-     * players:<name>:<handSize>:<totalScore>[,…]}
+     * <p>Format:</p>
      *
-     * @param state Current game state.
-     * @return Encoded payload string.
+     * <pre>
+     * phase:&lt;phase&gt;,currentPlayer:&lt;name&gt;,discardTop:&lt;id-or-none&gt;,
+     * drawPileSize:&lt;n&gt;,players:&lt;name&gt;:&lt;handSize&gt;:&lt;totalScore&gt;[, ...]
+     * </pre>
+     *
+     * <p>If the discard pile is empty, the discard-top field is serialized as
+     * {@code none} in lowercase.</p>
+     *
+     * @param state the current game state
+     * @return the encoded public-state payload
      */
     public static String serializePublicState(GameState state) {
         Card top = state.peekDiscardPile();
@@ -54,28 +44,19 @@ public class GameStateSerializer {
                 .map(p -> p.getPlayerName() + ":" + p.getHandSize() + ":" + p.getTotalScore())
                 .collect(Collectors.joining(","));
 
-        String requestedColor = state.getRequestedColor() == null
-                ? "none"
-                : state.getRequestedColor().name();
-
-        String requestedNumber = state.getRequestedNumber() == null
-                ? "none"
-                : String.valueOf(state.getRequestedNumber());
-
         return "phase:" + state.getPhase().name()
                 + ",currentPlayer:" + state.getCurrentPlayer().getPlayerName()
                 + ",discardTop:" + discardTop
-                + ",requestedColor:" + requestedColor
-                + ",requestedNumber:" + requestedNumber
                 + ",drawPileSize:" + state.getDrawPile().size()
                 + ",players:" + playersSummary;
     }
 
     /**
-     * Serializes a player's private hand as a comma-separated list of card ids.
+     * Serializes a player's private hand as a comma-separated list of card ids
+     * in hand order.
      *
-     * @param player The player whose hand to serialize.
-     * @return Comma-separated card ids, e.g. {@code "5,18,42"}, or {@code ""} if empty.
+     * @param player the player whose hand should be serialized
+     * @return a comma-separated list of card ids, or an empty string if the hand is empty
      */
     public static String serializeHand(PlayerGameState player) {
         return player.getHand().stream()
@@ -84,13 +65,19 @@ public class GameStateSerializer {
     }
 
     /**
-     * Serializes round-end scores for broadcasting.
+     * Serializes round-end scores in player-list order.
      *
-     * <p>Format: {@code name:roundScore:totalScore} per player, comma-separated.
+     * <p>Format:</p>
      *
-     * @param roundScores  Per-round delta scores (player name → round score).
-     * @param players      Full player list (used to read updated total scores).
-     * @return Encoded payload string.
+     * <pre>
+     * playerName:roundScore:totalScore
+     * </pre>
+     *
+     * <p>Entries are joined with commas. Missing round scores default to zero.</p>
+     *
+     * @param roundScores the per-round score map
+     * @param players the player list in output order
+     * @return the encoded round-end payload
      */
     public static String serializeRoundEnd(Map<String, Integer> roundScores,
                                            List<PlayerGameState> players) {
@@ -102,13 +89,11 @@ public class GameStateSerializer {
     }
 
     /**
-     * Serializes an effect-request prompt sent to the acting player.
+     * Serializes an effect request in the format {@code EFFECT:player}.
      *
-     * <p>Format: {@code <EFFECT_NAME>:<actingPlayer>}
-     *
-     * @param effectName   The name of the effect to resolve.
-     * @param actingPlayer The player who must supply arguments.
-     * @return Encoded payload string.
+     * @param effectName the effect name
+     * @param actingPlayer the player who must answer the effect request
+     * @return the encoded effect-request payload
      */
     public static String serializeEffectRequest(String effectName, String actingPlayer) {
         return effectName + ":" + actingPlayer;

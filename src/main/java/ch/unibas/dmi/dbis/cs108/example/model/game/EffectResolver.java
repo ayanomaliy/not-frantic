@@ -6,44 +6,29 @@ import java.util.List;
 /**
  * Resolves a {@link SpecialEffect} against the current {@link GameState}.
  *
- * <p>Each {@code resolve} call:
- * <ol>
- *   <li>Pops the effect off the top of {@link GameState#getPendingEffects()} (if it
- *       is the top entry — guards against mis-ordering).</li>
- *   <li>Applies the effect's state changes.</li>
- *   <li>Calls {@link TurnEngine#endTurn} at the end for effects that consume the
- *       actor's turn.  {@code COUNTERATTACK} is the exception: it only redirects the
- *       next pending effect, so the phase stays {@code RESOLVING_EFFECT}.</li>
- * </ol>
+ * <p>Each resolve call may mutate the game state and returns a list of
+ * {@link GameEvent}s describing the performed actions.</p>
  *
- * <h2>Caller contract</h2>
- * The caller (ServerService in Phase 8) is responsible for:
- * <ul>
- *   <li>Pushing the effect onto {@link GameState#getPendingEffects()} before calling
- *       {@code resolve} (already done by {@link TurnEngine#playCard} for in-turn
- *       plays; done separately for out-of-turn plays like COUNTERATTACK / NICE_TRY).</li>
- *   <li>After resolve returns, checking whether more pending effects remain and
- *       calling {@code resolve} again as needed.</li>
- * </ul>
+ * <p>The caller is responsible for pushing effects onto the pending stack
+ * before resolution where required.</p>
  */
 public class EffectResolver {
 
     private EffectResolver() {}
 
     /**
-     * Resolves {@code effect} on behalf of {@code actingPlayer}.
+     * Resolves the given effect for the acting player.
      *
-     * @param effect       The effect to resolve (must be the top of pendingEffects).
-     * @param state        Current game state (mutated in place).
-     * @param actingPlayer Name of the player who played the card triggering the effect.
-     * @param args         Client-supplied parameters (target, chosen color/number, cards).
-     * @return Events describing what happened; broadcast these to all clients.
+     * @param effect the effect to resolve
+     * @param state the current game state
+     * @param actingPlayer the player resolving the effect
+     * @param args client-supplied effect arguments
+     * @return the generated game events
      */
     public static List<GameEvent> resolve(SpecialEffect effect,
                                           GameState state,
                                           String actingPlayer,
                                           EffectArgs args) {
-        // Pop the effect off the pending stack if it is sitting on top
         if (!state.getPendingEffects().isEmpty()
                 && state.getPendingEffects().peek() == effect) {
             state.getPendingEffects().pop();
@@ -51,21 +36,46 @@ public class EffectResolver {
 
         return switch (effect) {
             case SECOND_CHANCE -> resolveSecondChance(state, actingPlayer, args);
-            case SKIP          -> resolveSkip(state, actingPlayer, args);
-            case GIFT          -> resolveGift(state, actingPlayer, args);
-            case EXCHANGE      -> resolveExchange(state, actingPlayer, args);
-            case FANTASTIC     -> resolveFantastic(state, actingPlayer, args);
+            case SKIP -> resolveSkip(state, actingPlayer, args);
+            case GIFT -> resolveGift(state, actingPlayer, args);
+            case EXCHANGE -> resolveExchange(state, actingPlayer, args);
+            case FANTASTIC -> resolveFantastic(state, actingPlayer, args);
             case FANTASTIC_FOUR -> resolveFantasticFour(state, actingPlayer, args);
-            case EQUALITY      -> resolveEquality(state, actingPlayer, args);
+            case EQUALITY -> resolveEquality(state, actingPlayer, args);
             case COUNTERATTACK -> resolveCounterattack(state, actingPlayer, args);
-            case NICE_TRY      -> resolveNiceTry(state, actingPlayer, args);
+            case NICE_TRY -> resolveNiceTry(state, actingPlayer, args);
         };
     }
 
-    // -------------------------------------------------------------------------
-    // SECOND_CHANCE — actor plays another card, or draws 1 if impossible
-    // -------------------------------------------------------------------------
+    /**
+     * Ensures that the acting player is considered to have performed a valid
+     * turn action before {@link TurnEngine#endTurn(GameState)} is called.
+     *
+     * <p>This is useful in tests and in direct effect-resolution paths where the
+     * card play may not have set the per-turn flags beforehand.</p>
+     *
+     * @param state the current game state
+     * @param actingPlayer the acting player name
+     */
+    private static void ensureTurnActionRecorded(GameState state, String actingPlayer) {
+        PlayerGameState actor = state.getPlayer(actingPlayer);
+        if (!actor.hasPlayedThisTurn() && !actor.hasDrawnThisTurn()) {
+            actor.setHasPlayedThisTurn(true);
+        }
+    }
 
+    /**
+     * Resolves SECOND_CHANCE.
+     *
+     * <p>If a follow-up card was selected, that card is played immediately.
+     * Otherwise the acting player draws one card. The turn then ends unless a
+     * newly played card triggers another effect.</p>
+     *
+     * @param state the current game state
+     * @param actingPlayer the acting player
+     * @param args the effect arguments
+     * @return the generated game events
+     */
     private static List<GameEvent> resolveSecondChance(GameState state,
                                                        String actingPlayer,
                                                        EffectArgs args) {
@@ -78,6 +88,7 @@ public class EffectResolver {
 
             actor.removeCard(toPlay);
             state.pushToDiscardPile(toPlay);
+            actor.setHasPlayedThisTurn(true);
             events.add(GameEvent.cardPlayed(actingPlayer, toPlay.id()));
 
             if (actor.getHandSize() == 0) {
@@ -106,6 +117,7 @@ public class EffectResolver {
             Card drawn = state.drawFromDrawPile();
             if (drawn != null) {
                 actor.addCard(drawn);
+                actor.setHasDrawnThisTurn(true);
                 events.add(GameEvent.cardDrawn(actingPlayer, drawn.id()));
             }
         }
@@ -114,114 +126,149 @@ public class EffectResolver {
             return events;
         }
 
-        events.addAll(TurnEngine.endTurn(state));
-        return events;
-    }
-
-    // -------------------------------------------------------------------------
-    // SKIP — mark a named player so their next turn is skipped
-    // -------------------------------------------------------------------------
-
-    private static List<GameEvent> resolveSkip(GameState state,
-                                                String actingPlayer,
-                                                EffectArgs args) {
-        List<GameEvent> events = new ArrayList<>();
-        String targetName = args.getTargetPlayer();
-        state.getPlayer(targetName).setSkipped(true);
-        events.add(new GameEvent(GameEvent.EventType.EFFECT_TRIGGERED,
-                SpecialEffect.SKIP.name() + ":" + targetName));
-        events.addAll(TurnEngine.endTurn(state));
-        return events;
-    }
-
-    // -------------------------------------------------------------------------
-    // GIFT — give 1–2 cards to another player
-    // -------------------------------------------------------------------------
-
-    private static List<GameEvent> resolveGift(GameState state,
-                                               String actingPlayer,
-                                               EffectArgs args) {
-        List<GameEvent> events = new ArrayList<>();
-        PlayerGameState actor  = state.getPlayer(actingPlayer);
-        PlayerGameState target = state.getPlayer(args.getTargetPlayer());
-
-        for (Card card : args.getSelectedCards()) {
-            actor.removeCard(card);
-            target.addCard(card);
-            events.add(new GameEvent(GameEvent.EventType.EFFECT_TRIGGERED,
-                    SpecialEffect.GIFT.name() + ":" + actingPlayer
-                            + ">" + args.getTargetPlayer() + ":" + card.id()));
-        }
-
-        if (TurnEngine.endRoundIfAnyPlayerHasNoCards(state, events)) {
-            return events;
-        }
-
-        events.addAll(TurnEngine.endTurn(state));
-        return events;
-    }
-
-    // -------------------------------------------------------------------------
-    // EXCHANGE — swap actor's selected cards with target's first N cards (blind)
-    // -------------------------------------------------------------------------
-
-    private static List<GameEvent> resolveExchange(GameState state,
-                                                    String actingPlayer,
-                                                    EffectArgs args) {
-        List<GameEvent> events = new ArrayList<>();
-        PlayerGameState actor  = state.getPlayer(actingPlayer);
-        PlayerGameState target = state.getPlayer(args.getTargetPlayer());
-
-        List<Card> actorCards  = args.getSelectedCards();
-        // Take the first N cards from the target's hand (hidden to the actor)
-        int n = Math.min(actorCards.size(), target.getHandSize());
-        List<Card> targetCards = new ArrayList<>(target.getHand().subList(0, n));
-
-        for (Card c : actorCards)  actor.removeCard(c);
-        for (Card c : targetCards) target.removeCard(c);
-        for (Card c : actorCards)  target.addCard(c);
-        for (Card c : targetCards) actor.addCard(c);
-
-        events.add(new GameEvent(GameEvent.EventType.EFFECT_TRIGGERED,
-                SpecialEffect.EXCHANGE.name() + ":" + actingPlayer
-                        + "<>" + args.getTargetPlayer()));
-        if (TurnEngine.endRoundIfAnyPlayerHasNoCards(state, events)) {
-            return events;
-        }
-
-        events.addAll(TurnEngine.endTurn(state));
-        return events;
-    }
-
-    // -------------------------------------------------------------------------
-    // FANTASTIC — set a requested color and/or number
-    // -------------------------------------------------------------------------
-
-    private static List<GameEvent> resolveFantastic(GameState state,
-                                                     String actingPlayer,
-                                                     EffectArgs args) {
-        List<GameEvent> events = new ArrayList<>();
-        state.setRequestedColor(args.getChosenColor());
-        state.setRequestedNumber(args.getChosenNumber());
-        events.add(GameEvent.effectTriggered(SpecialEffect.FANTASTIC));
+        ensureTurnActionRecorded(state, actingPlayer);
         events.addAll(TurnEngine.endTurn(state));
         return events;
     }
 
     /**
-     * Resolves {@code FANTASTIC_FOUR}.
-     *
-     * <p>The acting player distributes four drawn cards among exactly four chosen
-     * recipient slots. Repeated recipient names are allowed, which means one player
-     * may receive multiple of the four cards.</p>
-     *
-     * <p>After the distribution, the acting player also sets either a requested
-     * color or a requested number for the next play.</p>
+     * Resolves SKIP by marking the target player as skipped for their next turn.
      *
      * @param state the current game state
-     * @param actingPlayer the player who played Fantastic Four
-     * @param args the effect arguments containing recipient distribution and
-     *             requested color or number
+     * @param actingPlayer the acting player
+     * @param args the effect arguments
+     * @return the generated game events
+     */
+    private static List<GameEvent> resolveSkip(GameState state,
+                                               String actingPlayer,
+                                               EffectArgs args) {
+        List<GameEvent> events = new ArrayList<>();
+        String targetName = args.getTargetPlayer();
+
+        state.getPlayer(targetName).setSkipped(true);
+        events.add(new GameEvent(
+                GameEvent.EventType.EFFECT_TRIGGERED,
+                SpecialEffect.SKIP.name() + ":" + targetName
+        ));
+
+        ensureTurnActionRecorded(state, actingPlayer);
+        events.addAll(TurnEngine.endTurn(state));
+        return events;
+    }
+
+    /**
+     * Resolves GIFT by transferring the selected cards from the acting player to
+     * the target player.
+     *
+     * @param state the current game state
+     * @param actingPlayer the acting player
+     * @param args the effect arguments
+     * @return the generated game events
+     */
+    private static List<GameEvent> resolveGift(GameState state,
+                                               String actingPlayer,
+                                               EffectArgs args) {
+        List<GameEvent> events = new ArrayList<>();
+        PlayerGameState actor = state.getPlayer(actingPlayer);
+        PlayerGameState target = state.getPlayer(args.getTargetPlayer());
+
+        for (Card card : args.getSelectedCards()) {
+            actor.removeCard(card);
+            target.addCard(card);
+            events.add(new GameEvent(
+                    GameEvent.EventType.EFFECT_TRIGGERED,
+                    SpecialEffect.GIFT.name() + ":" + actingPlayer
+                            + ">" + args.getTargetPlayer() + ":" + card.id()
+            ));
+        }
+
+        if (TurnEngine.endRoundIfAnyPlayerHasNoCards(state, events)) {
+            return events;
+        }
+
+        ensureTurnActionRecorded(state, actingPlayer);
+        events.addAll(TurnEngine.endTurn(state));
+        return events;
+    }
+
+    /**
+     * Resolves EXCHANGE by swapping the selected actor cards with the first
+     * equally many cards from the target player's hand.
+     *
+     * @param state the current game state
+     * @param actingPlayer the acting player
+     * @param args the effect arguments
+     * @return the generated game events
+     */
+    private static List<GameEvent> resolveExchange(GameState state,
+                                                   String actingPlayer,
+                                                   EffectArgs args) {
+        List<GameEvent> events = new ArrayList<>();
+        PlayerGameState actor = state.getPlayer(actingPlayer);
+        PlayerGameState target = state.getPlayer(args.getTargetPlayer());
+
+        List<Card> actorCards = args.getSelectedCards();
+        int n = Math.min(actorCards.size(), target.getHandSize());
+        List<Card> targetCards = new ArrayList<>(target.getHand().subList(0, n));
+
+        for (Card c : actorCards) {
+            actor.removeCard(c);
+        }
+        for (Card c : targetCards) {
+            target.removeCard(c);
+        }
+        for (Card c : actorCards) {
+            target.addCard(c);
+        }
+        for (Card c : targetCards) {
+            actor.addCard(c);
+        }
+
+        events.add(new GameEvent(
+                GameEvent.EventType.EFFECT_TRIGGERED,
+                SpecialEffect.EXCHANGE.name() + ":" + actingPlayer
+                        + "<>" + args.getTargetPlayer()
+        ));
+
+        if (TurnEngine.endRoundIfAnyPlayerHasNoCards(state, events)) {
+            return events;
+        }
+
+        ensureTurnActionRecorded(state, actingPlayer);
+        events.addAll(TurnEngine.endTurn(state));
+        return events;
+    }
+
+    /**
+     * Resolves FANTASTIC by setting a requested color and/or number.
+     *
+     * @param state the current game state
+     * @param actingPlayer the acting player
+     * @param args the effect arguments
+     * @return the generated game events
+     */
+    private static List<GameEvent> resolveFantastic(GameState state,
+                                                    String actingPlayer,
+                                                    EffectArgs args) {
+        List<GameEvent> events = new ArrayList<>();
+        state.setRequestedColor(args.getChosenColor());
+        state.setRequestedNumber(args.getChosenNumber());
+        events.add(GameEvent.effectTriggered(SpecialEffect.FANTASTIC));
+
+        ensureTurnActionRecorded(state, actingPlayer);
+        events.addAll(TurnEngine.endTurn(state));
+        return events;
+    }
+
+    /**
+     * Resolves FANTASTIC_FOUR.
+     *
+     * <p>The acting player distributes four drawn cards among exactly four
+     * recipient slots. Repeated recipient names are allowed.</p>
+     *
+     * @param state the current game state
+     * @param actingPlayer the acting player
+     * @param args the effect arguments
      * @return the generated game events
      */
     private static List<GameEvent> resolveFantasticFour(GameState state,
@@ -249,59 +296,59 @@ public class EffectResolver {
         state.setRequestedColor(args.getChosenColor());
         state.setRequestedNumber(args.getChosenNumber());
         events.add(GameEvent.effectTriggered(SpecialEffect.FANTASTIC_FOUR));
+
         if (TurnEngine.endRoundIfAnyPlayerHasNoCards(state, events)) {
             return events;
         }
+
+        ensureTurnActionRecorded(state, actingPlayer);
         events.addAll(TurnEngine.endTurn(state));
         return events;
     }
 
-    // -------------------------------------------------------------------------
-    // EQUALITY — target draws until their hand size equals the actor's;
-    //            actor then sets a requested color
-    // -------------------------------------------------------------------------
-
+    /**
+     * Resolves EQUALITY by forcing the target player to draw up to the acting
+     * player's hand size, then setting a requested color.
+     *
+     * @param state the current game state
+     * @param actingPlayer the acting player
+     * @param args the effect arguments
+     * @return the generated game events
+     */
     private static List<GameEvent> resolveEquality(GameState state,
-                                                    String actingPlayer,
-                                                    EffectArgs args) {
+                                                   String actingPlayer,
+                                                   EffectArgs args) {
         List<GameEvent> events = new ArrayList<>();
-        PlayerGameState actor  = state.getPlayer(actingPlayer);
+        PlayerGameState actor = state.getPlayer(actingPlayer);
         PlayerGameState target = state.getPlayer(args.getTargetPlayer());
 
         while (target.getHandSize() < actor.getHandSize()) {
             Card drawn = state.drawFromDrawPile();
-            if (drawn == null) break;
+            if (drawn == null) {
+                break;
+            }
             target.addCard(drawn);
             events.add(GameEvent.cardDrawn(target.getPlayerName(), drawn.id()));
         }
 
         state.setRequestedColor(args.getChosenColor());
         events.add(GameEvent.effectTriggered(SpecialEffect.EQUALITY));
+
+        ensureTurnActionRecorded(state, actingPlayer);
         events.addAll(TurnEngine.endTurn(state));
         return events;
     }
 
-    // -------------------------------------------------------------------------
-    // COUNTERATTACK — redirect the top pending effect to a new target
-    //
-    // Does NOT call endTurn: the redirected effect still needs to be resolved.
-    // Phase stays RESOLVING_EFFECT.
-    // -------------------------------------------------------------------------
-
     /**
-     * Resolves {@code COUNTERATTACK}.
+     * Resolves COUNTERATTACK.
      *
-     * <p>Counterattack always requests a color for the next play. If another
-     * effect is still pending underneath this Counterattack and a target player
-     * was supplied, that pending effect is additionally redirected to the chosen
-     * target.</p>
-     *
-     * <p>If no effect remains pending, Counterattack behaves like a color-request
-     * card and ends the turn normally.</p>
+     * <p>Counterattack always sets a requested color. If another effect remains
+     * pending underneath and a target was supplied, the target of that pending
+     * effect is redirected and the turn is not ended yet.</p>
      *
      * @param state the current game state
-     * @param actingPlayer the player who played Counterattack
-     * @param args the effect arguments containing the chosen color and optionally a target
+     * @param actingPlayer the acting player
+     * @param args the effect arguments
      * @return the generated game events
      */
     private static List<GameEvent> resolveCounterattack(GameState state,
@@ -322,38 +369,57 @@ public class EffectResolver {
 
         if (!state.getPendingEffects().isEmpty() && target != null && !target.isBlank()) {
             state.setPendingEffectTarget(target);
-            events.add(new GameEvent(GameEvent.EventType.EFFECT_TRIGGERED,
-                    SpecialEffect.COUNTERATTACK.name() + ":" + actingPlayer + ">" + target + ":" + color));
+            events.add(new GameEvent(
+                    GameEvent.EventType.EFFECT_TRIGGERED,
+                    SpecialEffect.COUNTERATTACK.name() + ":" + actingPlayer + ">" + target + ":" + color
+            ));
             return events;
         }
 
         state.setPendingEffectTarget(null);
-        events.add(new GameEvent(GameEvent.EventType.EFFECT_TRIGGERED,
-                SpecialEffect.COUNTERATTACK.name() + ":" + actingPlayer + ":" + color));
+        events.add(new GameEvent(
+                GameEvent.EventType.EFFECT_TRIGGERED,
+                SpecialEffect.COUNTERATTACK.name() + ":" + actingPlayer + ":" + color
+        ));
+
+        ensureTurnActionRecorded(state, actingPlayer);
         events.addAll(TurnEngine.endTurn(state));
         return events;
     }
 
-    // -------------------------------------------------------------------------
-    // NICE_TRY — force the player who just emptied their hand to draw 3 cards;
-    //            the round does NOT end; the game continues with the next player
-    // -------------------------------------------------------------------------
-
+    /**
+     * Resolves NICE_TRY by forcing the target player to draw three cards.
+     *
+     * <p>The round does not end. After the target has drawn, the current turn is
+     * advanced normally.</p>
+     *
+     * @param state the current game state
+     * @param actingPlayer the acting player
+     * @param args the effect arguments
+     * @return the generated game events
+     */
     private static List<GameEvent> resolveNiceTry(GameState state,
-                                                   String actingPlayer,
-                                                   EffectArgs args) {
+                                                  String actingPlayer,
+                                                  EffectArgs args) {
         List<GameEvent> events = new ArrayList<>();
-        String targetName      = args.getTargetPlayer();
+        String targetName = args.getTargetPlayer();
         PlayerGameState target = state.getPlayer(targetName);
 
         for (int i = 0; i < 3; i++) {
             Card drawn = state.drawFromDrawPile();
-            if (drawn == null) break;
+            if (drawn == null) {
+                break;
+            }
             target.addCard(drawn);
             events.add(GameEvent.cardDrawn(targetName, drawn.id()));
         }
 
-        // Un-ROUND_END: advance to the next player and continue
+        /*
+         * NICE_TRY explicitly keeps the round alive. After the target draws,
+         * the empty-hand condition should normally be gone, so ending the turn
+         * is valid again.
+         */
+        ensureTurnActionRecorded(state, actingPlayer);
         events.addAll(TurnEngine.endTurn(state));
         return events;
     }
