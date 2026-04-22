@@ -237,6 +237,8 @@ public class MainController {
         renderHand(view);
 
         state.topCardIdProperty().addListener((obs, oldValue, newValue) -> renderDiscardPile(view));
+        state.requestedColorProperty().addListener((obs, oldValue, newValue) -> renderDiscardPile(view));
+        state.requestedNumberProperty().addListener((obs, oldValue, newValue) -> renderDiscardPile(view));
         renderDiscardPile(view);
 
         updateDisplayedChat(view);
@@ -595,5 +597,34 @@ public class MainController {
 
         CardView discardCardView = new CardView(cardId, registry, null);
         view.getDiscardPilePane().getChildren().add(discardCardView);
+
+        String requestedColor = state.getRequestedColor();
+        if (requestedColor != null && !requestedColor.isBlank()) {
+            try {
+                WishCardView wishCardView = WishCardView.forColorWish(
+                        ch.unibas.dmi.dbis.cs108.example.model.game.CardColor.valueOf(requestedColor),
+                        registry
+                );
+                wishCardView.setTranslateX(10);
+                wishCardView.setTranslateY(-10);
+                view.getDiscardPilePane().getChildren().add(wishCardView);
+                return;
+            } catch (IllegalArgumentException ignored) {
+                // Ignore invalid color values from forward-incompatible payloads.
+            }
+        }
+
+        String requestedNumber = state.getRequestedNumber();
+        if (requestedNumber != null && !requestedNumber.isBlank()) {
+            try {
+                int number = Integer.parseInt(requestedNumber);
+                WishCardView wishCardView = WishCardView.forNumberWish(number, registry);
+                wishCardView.setTranslateX(10);
+                wishCardView.setTranslateY(-10);
+                view.getDiscardPilePane().getChildren().add(wishCardView);
+            } catch (NumberFormatException ignored) {
+                // Ignore invalid numeric values from forward-incompatible payloads.
+            }
+        }
     }
 }

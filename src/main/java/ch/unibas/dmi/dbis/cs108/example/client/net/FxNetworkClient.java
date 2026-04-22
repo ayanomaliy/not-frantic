@@ -519,6 +519,20 @@ public class FxNetworkClient implements ClientMessageHandler {
             switch (key) {
                 case "phase" -> state.setCurrentPhase(value);
                 case "currentPlayer" -> state.setCurrentPlayer(value);
+                case "requestedColor" -> {
+                    if ("none".equalsIgnoreCase(value)) {
+                        state.setRequestedColor("");
+                    } else {
+                        state.setRequestedColor(value);
+                    }
+                }
+                case "requestedNumber" -> {
+                    if ("none".equalsIgnoreCase(value)) {
+                        state.setRequestedNumber("");
+                    } else {
+                        state.setRequestedNumber(value);
+                    }
+                }
                 case "discardTop" -> {
                     if ("none".equalsIgnoreCase(value)) {
                         state.setTopCardId("");
@@ -533,6 +547,8 @@ public class FxNetworkClient implements ClientMessageHandler {
                             state.setTopCardText("Card #" + value);
                         }
                     }
+
+
                 }
                 default -> {
                     // Ignore unknown fields for forward compatibility.
@@ -552,6 +568,8 @@ public class FxNetworkClient implements ClientMessageHandler {
         state.setTopCardText("-");
         state.getCurrentHandCards().clear();
         state.setTopCardId("");
+        state.setRequestedColor("");
+        state.setRequestedNumber("");
     }
 
     /**
@@ -563,6 +581,8 @@ public class FxNetworkClient implements ClientMessageHandler {
         gameViewShown = false;
         state.setCurrentLobby("");
         state.setTopCardId("");
+        state.setRequestedColor("");
+        state.setRequestedNumber("");
 
         Platform.runLater(() -> {
             state.setConnected(false);
