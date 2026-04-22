@@ -302,6 +302,15 @@ public class FxNetworkClient implements ClientMessageHandler {
         protocolClient.resolveExchange(targetPlayer, cardIds);
     }
 
+    /**
+     * Sends a SKIP effect response.
+     *
+     * @param targetPlayer the player whose next turn should be skipped
+     */
+    public void resolveSkip(String targetPlayer) {
+        protocolClient.resolveSkip(targetPlayer);
+    }
+
     // --------------------------------------------------------------------------------
 
     /**

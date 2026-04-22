@@ -272,18 +272,16 @@ public class MainController {
                 networkClient.drawCard();
             }
         });
-        view.getEndTurnButton().setOnAction(e -> networkClient.endTurn());
 
+        view.getEndTurnButton().setOnAction(e -> networkClient.endTurn());
         view.getLeaveButton().setOnAction(e -> leaveCurrentLobbyAndShowLobbyView());
 
-        //EFFECTS:
         networkClient.setEffectRequestListener(effectPayload -> {
             if (effectPayload == null || effectPayload.isBlank()) {
                 return;
             }
 
             String payload = effectPayload.trim();
-            String upper = payload.toUpperCase();
 
             if (isEffectRequestForMe(payload, "FANTASTIC")) {
                 showFantasticEffectDialog(view);
@@ -310,50 +308,37 @@ public class MainController {
                 state.getGameMessages().add(
                         "[INFO] Second Chance: click a card to play it, or click draw pile to draw."
                 );
+                return;
             }
 
             if (isEffectRequestForMe(payload, "EXCHANGE")) {
                 showExchangeEffectDialog(view);
                 return;
             }
+
+            if (isEffectRequestForMe(payload, "SKIP")) {
+                showSkipEffectDialog(view);
+            }
         });
-
-
 
         Scene scene = createStyledScene(view, 1280, 800);
         stage.setScene(scene);
         new FadeIn(view).play();
 
-
-        final String[] previousCurrentPlayer = {state.getCurrentPlayer()};
-
         state.currentPlayerProperty().addListener((obs, oldValue, newValue) -> {
-            String username = state.getUsername();
-            if (username == null || username.isBlank() || newValue == null) {
-                previousCurrentPlayer[0] = newValue;
+            if (newValue == null) {
                 return;
             }
 
-            boolean isNowMyTurn = newValue.equals(username) || newValue.startsWith(username + "(");
-            boolean wasMyTurnBefore = oldValue != null
-                    && (oldValue.equals(username) || oldValue.startsWith(username + "("));
+            boolean isNowMyTurn = isCurrentTurnForMe(newValue);
+            boolean wasMyTurnBefore = isCurrentTurnForMe(oldValue);
 
             if (isNowMyTurn && !wasMyTurnBefore) {
                 view.playTurnOverlay();
             }
-
-            previousCurrentPlayer[0] = newValue;
         });
 
-        String username = state.getUsername();
-        String currentPlayer = state.getCurrentPlayer();
-
-        boolean isAlreadyMyTurn = username != null
-                && !username.isBlank()
-                && currentPlayer != null
-                && (currentPlayer.equals(username) || currentPlayer.startsWith(username + "("));
-
-        if (isAlreadyMyTurn) {
+        if (isCurrentTurnForMe(state.getCurrentPlayer())) {
             view.playTurnOverlay();
         }
 
@@ -388,6 +373,14 @@ public class MainController {
 
         String targetPlayer = payload.substring(prefix.length()).trim();
         return targetPlayer.equals(username);
+    }
+
+    private boolean isCurrentTurnForMe(String currentPlayerName) {
+        String username = state.getUsername();
+        return username != null
+                && !username.isBlank()
+                && currentPlayerName != null
+                && currentPlayerName.equals(username);
     }
 
     /**
@@ -886,6 +879,31 @@ public class MainController {
 
         effectView.setOnFinish((targetPlayer, cardIds) -> {
             networkClient.resolveExchange(targetPlayer, cardIds);
+            view.getRootStack().getChildren().remove(effectView);
+        });
+
+        view.getRootStack().getChildren().add(effectView);
+    }
+
+    private void showSkipEffectDialog(GameView view) {
+        boolean alreadyOpen = view.getRootStack().getChildren().stream()
+                .anyMatch(node -> node instanceof SkipView);
+
+        if (alreadyOpen) {
+            return;
+        }
+
+        String username = state.getUsername();
+
+        java.util.List<String> selectablePlayers = state.getPlayers().stream()
+                .filter(name -> name != null && !name.isBlank())
+                .filter(name -> !name.equals(username))
+                .toList();
+
+        SkipView effectView = new SkipView(selectablePlayers);
+
+        effectView.setOnFinish(targetPlayer -> {
+            networkClient.resolveSkip(targetPlayer);
             view.getRootStack().getChildren().remove(effectView);
         });
 
