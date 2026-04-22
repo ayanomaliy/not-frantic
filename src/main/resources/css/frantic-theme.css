@@ -330,3 +330,74 @@
     -fx-background-radius: 18;
     -fx-padding: 18 32 18 32;
 }
+
+
+
+.effect-response-overlay {
+    -fx-background-color: rgba(0, 0, 0, 0.28);
+    -fx-alignment: center;
+    -fx-padding: 40;
+}
+
+.effect-response-panel {
+    -fx-spacing: 18;
+    -fx-alignment: center;
+    -fx-max-width: 720;
+    -fx-padding: 24;
+}
+
+.effect-response-title {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-text-fill: text-heading;
+}
+
+.effect-response-subtitle {
+    -fx-font-size: 16px;
+    -fx-text-fill: text-secondary;
+    -fx-font-weight: 600;
+}
+
+.effect-response-choice-row {
+    -fx-alignment: center;
+    -fx-spacing: 18;
+}
+
+.effect-response-number-grid {
+    -fx-hgap: 18;
+    -fx-vgap: 18;
+    -fx-alignment: center;
+}
+
+.effect-response-choice-button {
+    -fx-min-width: 74;
+    -fx-min-height: 74;
+    -fx-max-width: 74;
+    -fx-max-height: 74;
+    -fx-background-radius: 999;
+    -fx-border-radius: 999;
+    -fx-font-size: 24px;
+    -fx-font-weight: 600;
+}
+
+.effect-response-choice-button:selected,
+.effect-response-choice-button-active {
+    -fx-border-color: color-warm-dark;
+    -fx-border-width: 3;
+}
+
+.effect-response-color-red {
+    -fx-background-color: #c23b22;
+}
+
+.effect-response-color-yellow {
+    -fx-background-color: #e9c84f;
+}
+
+.effect-response-color-green {
+    -fx-background-color: #96b83d;
+}
+
+.effect-response-color-blue {
+    -fx-background-color: #3f69b1;
+}

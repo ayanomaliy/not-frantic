@@ -9,6 +9,9 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
+import ch.unibas.dmi.dbis.cs108.example.model.game.CardColor;
+import java.util.function.Consumer;
+
 /**
  * JavaFX adapter around the shared protocol client.
  *
@@ -36,6 +39,8 @@ public class FxNetworkClient implements ClientMessageHandler {
     private boolean gameViewShown = false;
 
     private Runnable gameEndListener;
+
+    private Consumer<String> effectRequestListener;
 
     /**
      * Creates a new GUI network adapter.
@@ -228,6 +233,20 @@ public class FxNetworkClient implements ClientMessageHandler {
         protocolClient.playCard(cardId);
     }
 
+// RESOLVE EFFECTS:
+    /**
+     * Sends a FANTASTIC effect response with either a color or a number.
+     *
+     * @param color the selected color, or null
+     * @param number the selected number, or null
+     */
+    public void resolveFantastic(CardColor color, Integer number) {
+        protocolClient.resolveFantastic(color, number);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
     /**
      * Set Game end Listener
      *
@@ -408,8 +427,14 @@ public class FxNetworkClient implements ClientMessageHandler {
             case GAME -> Platform.runLater(() ->
                     state.getGameMessages().add("[GAME] " + message.content()));
 
-            case EFFECT_REQUEST -> Platform.runLater(() ->
-                    state.getGameMessages().add("[EFFECT_REQUEST] " + message.content()));
+            case EFFECT_REQUEST -> Platform.runLater(() -> {
+                String content = message.content();
+                state.getGameMessages().add("[EFFECT_REQUEST] " + content);
+
+                if (effectRequestListener != null) {
+                    effectRequestListener.accept(content);
+                }
+            });
 
             case ROUND_END -> Platform.runLater(() -> {
                 state.getGameMessages().add("[ROUND_END] Round over! Scores: " + message.content());
@@ -604,5 +629,16 @@ public class FxNetworkClient implements ClientMessageHandler {
 
             state.getGameMessages().clear();
         });
+    }
+
+
+
+    /**
+     * Registers a callback that is invoked when the server sends an EFFECT_REQUEST.
+     *
+     * @param effectRequestListener the callback to invoke with the raw effect payload
+     */
+    public void setEffectRequestListener(Consumer<String> effectRequestListener) {
+        this.effectRequestListener = effectRequestListener;
     }
 }

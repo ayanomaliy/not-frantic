@@ -688,4 +688,9 @@ public class GameView extends BorderPane {
         sequence.play();
     }
 
+
+    public StackPane getRootStack() {
+        return rootStack;
+    }
+
 }

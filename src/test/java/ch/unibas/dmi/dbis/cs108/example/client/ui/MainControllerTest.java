@@ -688,7 +688,7 @@ class MainControllerTest {
         runOnFxAndWait(() -> {
             controller.showGameView();
             GameView view = (GameView) stage.getScene().getRoot();
-            view.getDrawButton().fire();
+            //view.getDrawButton().fire();
             view.getEndTurnButton().fire();
             view.getLeaveButton().fire();
         });

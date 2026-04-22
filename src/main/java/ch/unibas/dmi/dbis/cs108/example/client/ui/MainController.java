@@ -15,6 +15,7 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.TextInputDialog;
 import javafx.stage.Stage;
 
+
 /**
  * Coordinates screen changes and user interaction in the Frantic^-1 JavaFX client.
  *
@@ -268,6 +269,33 @@ public class MainController {
         view.getEndTurnButton().setOnAction(e -> networkClient.endTurn());
 
         view.getLeaveButton().setOnAction(e -> leaveCurrentLobbyAndShowLobbyView());
+
+        //EFFECTS:
+
+        networkClient.setEffectRequestListener(effectPayload -> {
+            if (effectPayload == null || effectPayload.isBlank()) {
+                return;
+            }
+
+            String normalized = effectPayload.trim();
+            String upper = normalized.toUpperCase();
+
+            String username = state.getUsername();
+            if (username == null || username.isBlank()) {
+                return;
+            }
+
+            if (upper.startsWith("FANTASTIC:")) {
+                String targetPlayer = normalized.substring("FANTASTIC:".length()).trim();
+
+                boolean isForMe = targetPlayer.equals(username)
+                        || targetPlayer.startsWith(username + "(");
+
+                if (isForMe) {
+                    showFantasticEffectDialog(view);
+                }
+            }
+        });
 
         Scene scene = createStyledScene(view, 1280, 800);
         stage.setScene(scene);
@@ -645,4 +673,22 @@ public class MainController {
         CardView discardCardView = new CardView(cardId, registry, null);
         view.getDiscardPilePane().getChildren().add(discardCardView);
     }
+    private void showFantasticEffectDialog(GameView view) {
+        boolean alreadyOpen = view.getRootStack().getChildren().stream()
+                .anyMatch(node -> node instanceof FantasticView);
+
+        if (alreadyOpen) {
+            return;
+        }
+
+        FantasticView effectView = new FantasticView();
+
+        effectView.setOnFinish((color, number) -> {
+            networkClient.resolveFantastic(color, number);
+            view.getRootStack().getChildren().remove(effectView);
+        });
+
+        view.getRootStack().getChildren().add(effectView);
+    }
+
 }

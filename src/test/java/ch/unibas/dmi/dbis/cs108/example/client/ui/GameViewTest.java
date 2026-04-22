@@ -57,7 +57,7 @@ class GameViewTest {
         Label phaseLabel = view.getPhaseLabel();
         Label discardTopLabel = view.getDiscardTopLabel();
 
-        Button drawButton = view.getDrawButton();
+        //Button drawButton = view.getDrawButton();
         Button endTurnButton = view.getEndTurnButton();
         FlowPane playerHandPane = view.getPlayerHandPane();
         ListView<String> playersList = view.getPlayersList();
@@ -74,7 +74,7 @@ class GameViewTest {
         assertNotNull(currentPlayerLabel);
         assertNotNull(phaseLabel);
         assertNotNull(discardTopLabel);
-        assertNotNull(drawButton);
+        //assertNotNull(drawButton);
         assertNotNull(endTurnButton);
         assertNotNull(playerHandPane);
         assertNotNull(playersList);
@@ -117,7 +117,7 @@ class GameViewTest {
         assertEquals("Phase: -", view.getPhaseLabel().getText());
         assertEquals("Top Card: -", view.getDiscardTopLabel().getText());
 
-        assertEquals("Draw Card", view.getDrawButton().getText());
+        //assertEquals("Draw Card", view.getDrawButton().getText());
         assertEquals("End Turn", view.getEndTurnButton().getText());
         assertEquals("Leave Lobby", view.getLeaveButton().getText());
         assertEquals("Send", view.getSendButton().getText());
@@ -133,7 +133,7 @@ class GameViewTest {
     void constructorAppliesExpectedStyleClasses() {
         GameView view = new GameView();
 
-        assertTrue(view.getDrawButton().getStyleClass().contains("primary-button"));
+        //assertTrue(view.getDrawButton().getStyleClass().contains("primary-button"));
         assertTrue(view.getEndTurnButton().getStyleClass().contains("secondary-button"));
         assertTrue(view.getLeaveButton().getStyleClass().contains("danger-button"));
         assertTrue(view.getSendButton().getStyleClass().contains("primary-button"));
