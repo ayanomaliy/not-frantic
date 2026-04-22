@@ -54,9 +54,19 @@ public class GameStateSerializer {
                 .map(p -> p.getPlayerName() + ":" + p.getHandSize() + ":" + p.getTotalScore())
                 .collect(Collectors.joining(","));
 
+        String requestedColor = state.getRequestedColor() == null
+                ? "none"
+                : state.getRequestedColor().name();
+
+        String requestedNumber = state.getRequestedNumber() == null
+                ? "none"
+                : String.valueOf(state.getRequestedNumber());
+
         return "phase:" + state.getPhase().name()
                 + ",currentPlayer:" + state.getCurrentPlayer().getPlayerName()
                 + ",discardTop:" + discardTop
+                + ",requestedColor:" + requestedColor
+                + ",requestedNumber:" + requestedNumber
                 + ",drawPileSize:" + state.getDrawPile().size()
                 + ",players:" + playersSummary;
     }
