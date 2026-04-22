@@ -264,7 +264,13 @@ public class MainController {
 
         view.getDrawPilePane().setOnMouseClicked(e -> {
             registry.getSoundId("CARD_DRAWN").ifPresent(soundManager::play);
-            networkClient.drawCard();
+
+            if (isSecondChanceActiveForMe()) {
+                networkClient.resolveSecondChanceDrawPenalty();
+                clearPendingEffectIfSecondChance();
+            } else {
+                networkClient.drawCard();
+            }
         });
         view.getEndTurnButton().setOnAction(e -> networkClient.endTurn());
 
@@ -277,68 +283,6 @@ public class MainController {
                 return;
             }
 
-            String normalized = effectPayload.trim();
-            String upper = normalized.toUpperCase();
-
-            String username = state.getUsername();
-            if (username == null || username.isBlank()) {
-                return;
-            }
-
-            if (upper.startsWith("FANTASTIC:")) {
-                String targetPlayer = normalized.substring("FANTASTIC:".length()).trim();
-
-                boolean isForMe = targetPlayer.equals(username)
-                        || targetPlayer.startsWith(username + "(");
-
-                if (isForMe) {
-                    showFantasticEffectDialog(view);
-                }
-            }
-        });
-
-        // Equality:
-        networkClient.setEffectRequestListener(effectPayload -> {
-            if (effectPayload == null || effectPayload.isBlank()) {
-                return;
-            }
-
-            String payload = effectPayload.trim();
-            String upper = payload.toUpperCase();
-
-            String username = state.getUsername();
-            if (username == null || username.isBlank()) {
-                return;
-            }
-
-            if (upper.startsWith("FANTASTIC:")) {
-                String targetPlayer = payload.substring("FANTASTIC:".length()).trim();
-                boolean isForMe = targetPlayer.equals(username)
-                        || targetPlayer.startsWith(username + "(");
-
-                if (isForMe) {
-                    showFantasticEffectDialog(view);
-                }
-                return;
-            }
-
-            if (upper.startsWith("EQUALITY:")) {
-                String targetPlayer = payload.substring("EQUALITY:".length()).trim();
-                boolean isForMe = targetPlayer.equals(username)
-                        || targetPlayer.startsWith(username + "(");
-
-                if (isForMe) {
-                    showEqualityEffectDialog(view);
-                }
-            }
-        });
-
-        // Fantastic Four:
-        networkClient.setEffectRequestListener(effectPayload -> {
-            if (effectPayload == null || effectPayload.isBlank()) {
-                return;
-            }
-
             String payload = effectPayload.trim();
             String upper = payload.toUpperCase();
 
@@ -351,6 +295,14 @@ public class MainController {
                 String targetPlayer = payload.substring("FANTASTIC:".length()).trim();
                 if (targetPlayer.equals(username) || targetPlayer.startsWith(username + "(")) {
                     showFantasticEffectDialog(view);
+                }
+                return;
+            }
+
+            if (upper.startsWith("EQUALITY:")) {
+                String targetPlayer = payload.substring("EQUALITY:".length()).trim();
+                if (targetPlayer.equals(username) || targetPlayer.startsWith(username + "(")) {
+                    showEqualityEffectDialog(view);
                 }
                 return;
             }
@@ -360,8 +312,18 @@ public class MainController {
                 if (targetPlayer.equals(username) || targetPlayer.startsWith(username + "(")) {
                     showFantasticFourEffectDialog(view);
                 }
+                return;
+            }
+
+            if (upper.startsWith("SECOND_CHANCE:")) {
+                String targetPlayer = payload.substring("SECOND_CHANCE:".length()).trim();
+                if (targetPlayer.equals(username) || targetPlayer.startsWith(username + "(")) {
+                    state.setPendingEffectRequest(payload);
+                    state.getGameMessages().add("[INFO] Second Chance: click a card to play it, or click draw pile to draw.");
+                }
             }
         });
+
 
 
         Scene scene = createStyledScene(view, 1280, 800);
@@ -388,6 +350,18 @@ public class MainController {
 
             previousCurrentPlayer[0] = newValue;
         });
+
+        String username = state.getUsername();
+        String currentPlayer = state.getCurrentPlayer();
+
+        boolean isAlreadyMyTurn = username != null
+                && !username.isBlank()
+                && currentPlayer != null
+                && (currentPlayer.equals(username) || currentPlayer.startsWith(username + "("));
+
+        if (isAlreadyMyTurn) {
+            view.playTurnOverlay();
+        }
 
         networkClient.requestHand();
     }
@@ -421,7 +395,13 @@ public class MainController {
 
             CardView cardView = new CardView(cardId, registry, () -> {
                 registry.getSoundId(CardView.lookupCard(cardId)).ifPresent(soundManager::play);
-                networkClient.playCard(cardId);
+
+                if (isSecondChanceActiveForMe()) {
+                    networkClient.resolveSecondChance(cardId);
+                    clearPendingEffectIfSecondChance();
+                } else {
+                    networkClient.playCard(cardId);
+                }
             });
 
             view.getPlayerHandPane().getChildren().add(cardView);
@@ -809,6 +789,30 @@ public class MainController {
         });
 
         view.getRootStack().getChildren().add(effectView);
+    }
+
+    private boolean isSecondChanceActiveForMe() {
+        String payload = state.getPendingEffectRequest();
+        String username = state.getUsername();
+
+        if (payload == null || payload.isBlank() || username == null || username.isBlank()) {
+            return false;
+        }
+
+        String upper = payload.toUpperCase();
+        if (!upper.startsWith("SECOND_CHANCE:")) {
+            return false;
+        }
+
+        String targetPlayer = payload.substring("SECOND_CHANCE:".length()).trim();
+        return targetPlayer.equals(username) || targetPlayer.startsWith(username + "(");
+    }
+
+    private void clearPendingEffectIfSecondChance() {
+        String payload = state.getPendingEffectRequest();
+        if (payload != null && payload.toUpperCase().startsWith("SECOND_CHANCE:")) {
+            state.setPendingEffectRequest("");
+        }
     }
 
 }

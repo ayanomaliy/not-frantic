@@ -265,6 +265,22 @@ public class FxNetworkClient implements ClientMessageHandler {
         protocolClient.resolveFantasticFour(color, number, targetPlayers);
     }
 
+    /**
+     * Sends a SECOND_CHANCE effect response for playing another card.
+     *
+     * @param cardId the card id to play
+     */
+    public void resolveSecondChance(int cardId) {
+        protocolClient.resolveSecondChance(cardId);
+    }
+
+    /**
+     * Sends a SECOND_CHANCE effect response indicating that the player draws instead.
+     */
+    public void resolveSecondChanceDrawPenalty() {
+        protocolClient.resolveSecondChanceDrawPenalty();
+    }
+
 
     // --------------------------------------------------------------------------------
 
@@ -423,6 +439,9 @@ public class FxNetworkClient implements ClientMessageHandler {
 
             case GAME_STATE -> Platform.runLater(() -> {
                 applyGameStatePayload(message.content());
+                if (!"RESOLVING_EFFECT".equals(state.getCurrentPhase())) {
+                    state.setPendingEffectRequest("");
+                }
                 state.getGameMessages().add("[GAME_STATE] " + message.content());
 
                 if (!gameViewShown) {
@@ -451,6 +470,7 @@ public class FxNetworkClient implements ClientMessageHandler {
             case EFFECT_REQUEST -> Platform.runLater(() -> {
                 String content = message.content();
                 state.getGameMessages().add("[EFFECT_REQUEST] " + content);
+                state.setPendingEffectRequest(content);
 
                 if (effectRequestListener != null) {
                     effectRequestListener.accept(content);
