@@ -236,6 +236,11 @@ public class MainController {
         state.getCurrentHandCards().addListener(handCardsListener);
         renderHand(view);
 
+        state.topCardIdProperty().addListener((obs, oldValue, newValue) -> renderDiscardPile(view));
+        state.requestedColorProperty().addListener((obs, oldValue, newValue) -> renderDiscardPile(view));
+        state.requestedNumberProperty().addListener((obs, oldValue, newValue) -> renderDiscardPile(view));
+        renderDiscardPile(view);
+
         updateDisplayedChat(view);
 
         view.getChatModeButton().textProperty().bind(state.chatModeProperty());
@@ -256,7 +261,7 @@ public class MainController {
         view.getCommandButton().setOnAction(e -> sendCommand(view));
         view.getCommandInput().setOnAction(e -> sendCommand(view));
 
-        view.getDrawButton().setOnAction(e -> {
+        view.getDrawPilePane().setOnMouseClicked(e -> {
             registry.getSoundId("CARD_DRAWN").ifPresent(soundManager::play);
             networkClient.drawCard();
         });
@@ -572,5 +577,51 @@ public class MainController {
         Scene scene = createStyledScene(view, 900, 700);
         stage.setScene(scene);
         new FadeIn(view).play();
+    }
+
+
+    private void renderDiscardPile(GameView view) {
+        view.getDiscardPilePane().getChildren().clear();
+
+        String requestedColor = state.getRequestedColor();
+        if (requestedColor != null && !requestedColor.isBlank()) {
+            try {
+                WishCardView wishCardView = WishCardView.forColorWish(
+                        ch.unibas.dmi.dbis.cs108.example.model.game.CardColor.valueOf(requestedColor),
+                        registry
+                );
+                view.getDiscardPilePane().getChildren().add(wishCardView);
+                return;
+            } catch (IllegalArgumentException ignored) {
+                // Ignore invalid color values.
+            }
+        }
+
+        String requestedNumber = state.getRequestedNumber();
+        if (requestedNumber != null && !requestedNumber.isBlank()) {
+            try {
+                int number = Integer.parseInt(requestedNumber);
+                WishCardView wishCardView = WishCardView.forNumberWish(number, registry);
+                view.getDiscardPilePane().getChildren().add(wishCardView);
+                return;
+            } catch (NumberFormatException ignored) {
+                // Ignore invalid numeric values.
+            }
+        }
+
+        String topCardIdText = state.getTopCardId();
+        if (topCardIdText == null || topCardIdText.isBlank()) {
+            return;
+        }
+
+        int cardId;
+        try {
+            cardId = Integer.parseInt(topCardIdText);
+        } catch (NumberFormatException e) {
+            return;
+        }
+
+        CardView discardCardView = new CardView(cardId, registry, null);
+        view.getDiscardPilePane().getChildren().add(discardCardView);
     }
 }

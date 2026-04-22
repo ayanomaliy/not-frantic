@@ -30,6 +30,11 @@ public class ClientState {
     /** Text representation of the current top discard card. */
     private final StringProperty topCardText = new SimpleStringProperty("-");
 
+    private final StringProperty topCardId = new SimpleStringProperty("");
+
+    private final StringProperty requestedColor = new SimpleStringProperty("");
+    private final StringProperty requestedNumber = new SimpleStringProperty("");
+
     /** Players in the currently joined lobby. */
     private final ObservableList<String> players = FXCollections.observableArrayList();
 
@@ -379,4 +384,40 @@ public class ClientState {
         return finalScoreRows;
     }
 
+    public StringProperty topCardIdProperty() {
+        return topCardId;
+    }
+
+    public String getTopCardId() {
+        return topCardId.get();
+    }
+
+    public void setTopCardId(String value) {
+        topCardId.set(value == null ? "" : value);
+    }
+
+
+    public StringProperty requestedColorProperty() {
+        return requestedColor;
+    }
+
+    public String getRequestedColor() {
+        return requestedColor.get();
+    }
+
+    public void setRequestedColor(String value) {
+        requestedColor.set(value == null ? "" : value);
+    }
+
+    public StringProperty requestedNumberProperty() {
+        return requestedNumber;
+    }
+
+    public String getRequestedNumber() {
+        return requestedNumber.get();
+    }
+
+    public void setRequestedNumber(String value) {
+        requestedNumber.set(value == null ? "" : value);
+    }
 }

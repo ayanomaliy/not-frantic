@@ -110,4 +110,5 @@ public class GameEndView extends BorderPane {
     public HBox getButtonBox() {
         return buttonBox;
     }
+
 }

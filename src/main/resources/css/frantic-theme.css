@@ -297,3 +297,22 @@
 .button-box {
     -fx-alignment: center;
 }
+
+
+.draw-pile-clickable {
+    -fx-cursor: hand;
+}
+
+.draw-pile-clickable:hover {
+    -fx-scale-x: 1.03;
+    -fx-scale-y: 1.03;
+}
+
+.wish-card {
+    -fx-background-radius: 16;
+    -fx-border-radius: 16;
+}
+
+.wish-card-number {
+    -fx-background-color: color-warm-dark;
+}
