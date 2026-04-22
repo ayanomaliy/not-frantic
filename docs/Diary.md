@@ -336,10 +336,37 @@ In addition, I fixed several smaller synchronization issues between GUI and serv
 
 ### QA Concept (Sevval)
 
-#### What did we do today?
+## What did we do today?
 
-The past days, I was working on our QA Concept, started with the "about the project" continued with our Coding Standards and moved on with Code Review and Versions Control.
-The coming days, I will keep working on our QA Concept and add our measurements.
+- During the past few days, I worked on our **QA Concept**.
+- I started with the **About the Project** section.
+- After that, I continued with our **Coding Standards**.
+- I also worked on the **Code Review** and **Version Control** sections.
+- In the coming days, I will continue working on the QA Concept and add the required measurements.
+
+## Work Summary
+
+Over the past few days, I focused on developing and expanding our **QA Concept** for the project. The goal of this document is to define clear quality assurance processes, coding rules, and development standards to ensure that our project is well-structured, maintainable, and professionally organized.
+
+### About the Project
+
+I began by writing the **About the Project** section. This part introduces the project, explains its purpose, and provides a general overview of what we are developing. It serves as the foundation of the QA document and helps readers understand the context of the project.
+
+### Coding Standards
+
+After that, I continued with the **Coding Standards** section. In this part, I documented the rules and conventions we want to follow while writing code. These standards help keep the code consistent, readable, and easier to maintain. They also improve teamwork, since all developers follow the same structure and style.
+
+### Code Review
+
+Another important section I worked on was **Code Review**. This describes how changes in the code should be checked before being merged into the project. Code reviews help identify bugs, improve code quality, and encourage collaboration between team members.
+
+### Version Control
+
+I also added the **Version Control** section. This explains how we use version control tools such as Git to manage project progress, track changes, and collaborate safely. Proper version control is essential for organized teamwork and reliable development workflows.
+
+## Future Plans
+
+In the coming days, I will continue working on the **QA Concept** and complete the remaining sections. The next focus will be adding the required **measurements and metrics**, which are important for evaluating code quality and technical progress.
 
 ## Date: April 6, 2026 
 
