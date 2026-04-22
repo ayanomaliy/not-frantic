@@ -465,8 +465,11 @@ We figured out that something might be wrong with the /cheatwin command.
 
 ## Date: April 21, 2026
 ### Win Endscreen (Sevval, Aiysha)
-We fixed the /cheatwin command so it works now.
-We created a HighScoreHistory list for the "High Score" achievement.
+During this work session, we focused on improving the win endscreen system and adding new achievement-related features to the game. One of the main tasks was fixing the /cheatwin command. Previously, this command did not function correctly or did not trigger the intended result. We reviewed the code, identified the issues, and corrected the logic so that the command now works properly. When used, /cheatwin successfully activates the win condition and allows the game to immediately display the win endscreen. This is especially useful for testing purposes, as it allows us to quickly check whether the endscreen, rewards, and related systems are functioning as expected without needing to finish a full match.
+
+In addition, we worked on the achievement system by creating a HighScoreHistory list for the “High Score” achievement. This list is used to store and track players’ previous scores over time. By saving score history, the system can now compare current results with earlier performances and determine whether a player has reached a new personal best or unlocked the achievement. This creates a stronger sense of progression and gives players an extra motivation to improve their results.
+
+The HighScoreHistory feature also lays the foundation for future expansions, such as detailed statistics, leaderboards, progress tracking, or additional score-based achievements. Overall, this session helped improve both the technical testing tools and the long-term replay value of the game.
 
 #### Future Plans
 We have to fix our Unit tests and we also want to have custom sound effects.
@@ -490,3 +493,16 @@ Updated failing tests after UI refactor from draw button to draw pile.
 - Review remaining tests for UI consistency.
 - Improve test robustness for UI changes.
 - Increase coverage for user interactions.
+
+## Date: April 22, 2026
+### GUI (Sevval, Aiysha)
+During this work phase, we focused intensively on improving the GUI of our game and implemented several important upgrades. One of the main tasks was working on the **draw pile** and the **discard pile**. At the beginning, both piles were only displayed as white placeholders and were not properly integrated into the GUI. This meant that they were neither visually appealing nor functionally connected to the game system.
+As a first step, we redesigned the appearance of both piles. We adjusted their **size, position, and overall layout** so that they fit better into the game board and matched the rest of the interface. After that, we programmed the full functionality of both piles directly into the GUI. The **draw pile** now allows players to draw cards directly by clicking on the pile in the game area, while the **discard pile** correctly displays and updates the played cards. Because of this improvement, we were also able to remove the previous **“Draw Card” button**, since drawing cards now works directly through the GUI. This makes the gameplay more intuitive and realistic.
+Besides working on the card piles, we also focused on visual effects to improve the overall player experience. We implemented a **blur effect** together with the message **“It is your turn.”** Whenever it is a player’s turn, the background becomes slightly blurred and the message is highlighted on the screen. This makes it immediately clear whose turn it is and improves the clarity of the game flow. At the same time, it gives the game a more modern and polished look.
+In addition, we added new **sound effects** for special game actions. For the **“F you” card**, we created and implemented a unique sound effect. Whenever this card is played, the special sound is triggered, giving the card more impact and making the gameplay more dynamic and entertaining.
+Overall, we were able to significantly improve both the **functionality** and the **design** of our game. The draw and discard piles are now fully integrated into the GUI, unnecessary buttons were removed, new visual effects were added, and special sounds make the game feel more immersive and engaging.
+
+
+#### Future Plans
+Our future plans are to continue improving the visual effects and finalizing the GUI of the game. For the effect cards, we want to implement a **blur effect combined with a message display**, similar to the “It is your turn” notification. Whenever a special effect card is played, the background should blur and an appropriate message should appear on the screen to clearly show the card’s action and impact. This will make the gameplay more interactive, easier to understand, and visually more appealing.
+In addition, we plan to fully complete and polish the GUI. This includes refining the layout, improving the design consistency, adjusting remaining elements, and ensuring that all game features are smoothly integrated into the interface. Our goal is to create a clean, user-friendly, and professional-looking game experience.
