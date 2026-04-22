@@ -409,7 +409,6 @@ Since I thought our Java version doesn't work with javacoco, I messaged our tuto
 QA Concept is missing just the javacoco part and I'll revise the project plan soon since we didn't get the points for it on MS1.
 Our QA report is finished and will be uploaded. 
 For our Project plan I decided to redo it tomorrow and finish it.
-Here is the updated diary entry with the work from this chat added:
 
 ## Date: April 12, 2026 (Aiysha)
 
