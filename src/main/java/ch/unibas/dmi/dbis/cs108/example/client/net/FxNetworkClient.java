@@ -254,6 +254,17 @@ public class FxNetworkClient implements ClientMessageHandler {
         protocolClient.resolveEquality(targetPlayer, color);
     }
 
+    /**
+     * Sends a FANTASTIC_FOUR effect response.
+     *
+     * @param color the selected color, or null
+     * @param number the selected number, or null
+     * @param targetPlayers exactly four recipient names
+     */
+    public void resolveFantasticFour(CardColor color, Integer number, java.util.List<String> targetPlayers) {
+        protocolClient.resolveFantasticFour(color, number, targetPlayers);
+    }
+
 
     // --------------------------------------------------------------------------------
 

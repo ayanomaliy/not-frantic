@@ -409,3 +409,12 @@
 .effect-response-player-list .list-cell {
     -fx-alignment: center-left;
 }
+
+.effect-response-player-list {
+    -fx-max-width: 280;
+}
+
+.effect-response-assigned-slot {
+    -fx-min-width: 90;
+    -fx-min-height: 54;
+}

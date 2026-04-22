@@ -333,6 +333,36 @@ public class MainController {
             }
         });
 
+        // Fantastic Four:
+        networkClient.setEffectRequestListener(effectPayload -> {
+            if (effectPayload == null || effectPayload.isBlank()) {
+                return;
+            }
+
+            String payload = effectPayload.trim();
+            String upper = payload.toUpperCase();
+
+            String username = state.getUsername();
+            if (username == null || username.isBlank()) {
+                return;
+            }
+
+            if (upper.startsWith("FANTASTIC:")) {
+                String targetPlayer = payload.substring("FANTASTIC:".length()).trim();
+                if (targetPlayer.equals(username) || targetPlayer.startsWith(username + "(")) {
+                    showFantasticEffectDialog(view);
+                }
+                return;
+            }
+
+            if (upper.startsWith("FANTASTIC_FOUR:")) {
+                String targetPlayer = payload.substring("FANTASTIC_FOUR:".length()).trim();
+                if (targetPlayer.equals(username) || targetPlayer.startsWith(username + "(")) {
+                    showFantasticFourEffectDialog(view);
+                }
+            }
+        });
+
 
         Scene scene = createStyledScene(view, 1280, 800);
         stage.setScene(scene);
@@ -746,6 +776,35 @@ public class MainController {
 
         effectView.setOnFinish((targetPlayer, color) -> {
             networkClient.resolveEquality(targetPlayer, color);
+            view.getRootStack().getChildren().remove(effectView);
+        });
+
+        view.getRootStack().getChildren().add(effectView);
+    }
+
+    private void showFantasticFourEffectDialog(GameView view) {
+        boolean alreadyOpen = view.getRootStack().getChildren().stream()
+                .anyMatch(node -> node instanceof FantasticFourView);
+
+        if (alreadyOpen) {
+            return;
+        }
+
+        String username = state.getUsername();
+
+        java.util.List<String> selectablePlayers = state.getPlayers().stream()
+                .filter(name -> name != null && !name.isBlank())
+                .filter(name -> !name.equals(username))
+                .toList();
+
+        FantasticFourView effectView = new FantasticFourView(selectablePlayers);
+
+        effectView.setOnFinish(result -> {
+            networkClient.resolveFantasticFour(
+                    result.getColor(),
+                    result.getNumber(),
+                    result.getTargetPlayers()
+            );
             view.getRootStack().getChildren().remove(effectView);
         });
 

@@ -235,6 +235,31 @@ public class EffectResolver {
             return events;
         }
 
+        boolean hasColor = args.getChosenColor() != null;
+        boolean hasNumber = args.getChosenNumber() != null;
+        if (hasColor == hasNumber) {
+            events.add(GameEvent.error("FANTASTIC_FOUR requires exactly one of color or number."));
+            return events;
+        }
+
+        for (String targetName : targets) {
+            if (targetName == null || targetName.isBlank()) {
+                events.add(GameEvent.error("FANTASTIC_FOUR contains an empty target."));
+                return events;
+            }
+
+            if (targetName.equals(actingPlayer)) {
+                events.add(GameEvent.error("FANTASTIC_FOUR cannot target yourself."));
+                return events;
+            }
+
+            PlayerGameState recipient = state.getPlayer(targetName);
+            if (recipient == null) {
+                events.add(GameEvent.error("Unknown FANTASTIC_FOUR target: " + targetName));
+                return events;
+            }
+        }
+
         for (String targetName : targets) {
             Card drawn = state.drawFromDrawPile();
             if (drawn == null) {
@@ -249,9 +274,11 @@ public class EffectResolver {
         state.setRequestedColor(args.getChosenColor());
         state.setRequestedNumber(args.getChosenNumber());
         events.add(GameEvent.effectTriggered(SpecialEffect.FANTASTIC_FOUR));
+
         if (TurnEngine.endRoundIfAnyPlayerHasNoCards(state, events)) {
             return events;
         }
+
         events.addAll(TurnEngine.endTurn(state));
         return events;
     }
