@@ -452,9 +452,9 @@ public class GameView extends BorderPane {
         Label title = new Label(titleText);
         title.getStyleClass().add("field-label");
 
-        pilePane.setPrefSize(110, 150);
-        pilePane.setMinSize(110, 150);
-        pilePane.setMaxSize(110, 150);
+        pilePane.setPrefSize(90, 130);
+        pilePane.setMinSize(90, 130);
+        pilePane.setMaxSize(90, 130);
 
         VBox box = new VBox(10, title, pilePane);
         box.setAlignment(Pos.CENTER);
