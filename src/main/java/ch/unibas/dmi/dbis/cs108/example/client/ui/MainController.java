@@ -721,52 +721,45 @@ public class MainController {
         view.getDiscardPilePane().getChildren().clear();
 
         String requestedColor = state.getRequestedColor();
-        String requestedNumber = state.getRequestedNumber();
-        String topCardIdText = state.getTopCardId();
-
-        String cardIdToRender = topCardIdText;
-
-        if (requestedNumber != null && !requestedNumber.isBlank()
-                && topCardIdText != null && !topCardIdText.isBlank()) {
-            try {
-                int topCardId = Integer.parseInt(topCardIdText);
-
-                if (isColorlessSpecialCard(topCardId)) {
-                    String previousRenderable = state.getPreviousRenderableTopCardId();
-                    if (previousRenderable != null && !previousRenderable.isBlank()) {
-                        cardIdToRender = previousRenderable;
-                    }
-                }
-            } catch (NumberFormatException ignored) {
-                // Fall back to the real top card if parsing fails.
-            }
-        }
-
-        if (cardIdToRender == null || cardIdToRender.isBlank()) {
-            return;
-        }
-
-        int cardId;
-        try {
-            cardId = Integer.parseInt(cardIdToRender);
-        } catch (NumberFormatException e) {
-            return;
-        }
-
-        CardView discardCardView = new CardView(cardId, registry, null);
-        view.getDiscardPilePane().getChildren().add(discardCardView);
-
         if (requestedColor != null && !requestedColor.isBlank()) {
             try {
                 WishCardView wishCardView = WishCardView.forColorWish(
                         ch.unibas.dmi.dbis.cs108.example.model.game.CardColor.valueOf(requestedColor),
                         registry
                 );
-                view.getDiscardPilePane().getChildren().setAll(wishCardView);
+                view.getDiscardPilePane().getChildren().add(wishCardView);
+                return;
             } catch (IllegalArgumentException ignored) {
                 // Ignore invalid color values.
             }
         }
+
+        String requestedNumber = state.getRequestedNumber();
+        if (requestedNumber != null && !requestedNumber.isBlank()) {
+            try {
+                int number = Integer.parseInt(requestedNumber);
+                WishCardView wishCardView = WishCardView.forNumberWish(number, registry);
+                view.getDiscardPilePane().getChildren().add(wishCardView);
+                return;
+            } catch (NumberFormatException ignored) {
+                // Ignore invalid numeric values.
+            }
+        }
+
+        String topCardIdText = state.getTopCardId();
+        if (topCardIdText == null || topCardIdText.isBlank()) {
+            return;
+        }
+
+        int cardId;
+        try {
+            cardId = Integer.parseInt(topCardIdText);
+        } catch (NumberFormatException e) {
+            return;
+        }
+
+        CardView discardCardView = new CardView(cardId, registry, null);
+        view.getDiscardPilePane().getChildren().add(discardCardView);
     }
 
 

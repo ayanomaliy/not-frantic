@@ -40,12 +40,22 @@ public class GameStateSerializer {
         Card top = state.peekDiscardPile();
         String discardTop = top == null ? "none" : String.valueOf(top.id());
 
+        String requestedColor = state.getRequestedColor() == null
+                ? "none"
+                : state.getRequestedColor().name();
+
+        String requestedNumber = state.getRequestedNumber() == null
+                ? "none"
+                : String.valueOf(state.getRequestedNumber());
+
         String playersSummary = state.getPlayerOrder().stream()
                 .map(p -> p.getPlayerName() + ":" + p.getHandSize() + ":" + p.getTotalScore())
                 .collect(Collectors.joining(","));
 
         return "phase:" + state.getPhase().name()
                 + ",currentPlayer:" + state.getCurrentPlayer().getPlayerName()
+                + ",requestedColor:" + requestedColor
+                + ",requestedNumber:" + requestedNumber
                 + ",discardTop:" + discardTop
                 + ",drawPileSize:" + state.getDrawPile().size()
                 + ",players:" + playersSummary;
