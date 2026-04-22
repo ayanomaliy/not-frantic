@@ -470,3 +470,16 @@ We created a HighScoreHistory list for the "High Score" achievement.
 
 #### Future Plans
 We have to fix our Unit tests and we also want to have custom sound effects.
+
+## Date: April 22, 2026
+
+### Effect Response GUI for Special Cards (Aiysha)
+
+Today, I worked on expanding the JavaFX GUI so that special card effects no longer have to be resolved only through slash commands. I implemented dedicated effect response views for Fantastic, Equality, and Fantastic Four, all using the same visual theme and overlay style on top of the existing `GameView`. I also added the necessary wiring between `MainController`, `FxNetworkClient`, and `ClientProtocolClient` so that the GUI can send structured effect responses directly instead of relying on manual text input.
+
+In addition, I fixed several issues that came up during testing. I corrected how effect requests are targeted so that only the intended player sees the popup. I also added filtering so that players cannot select themselves in the Fantastic Four and Equality GUIs. On the server side, I tightened validation for Fantastic Four so that illegal self-targeting is rejected even if a client tries to send it anyway. Another bug I fixed was that hand updates were sometimes missing after event resolution, which caused the GUI to show stale cards until another action happened. I also improved the handling of Second Chance so that cards in hand and the draw pile can now be clicked directly during effect resolution instead of forcing command-line input.
+
+#### Future Plans
+
+Next, I want to continue adding GUI support for the remaining special effects such as Gift, Exchange, Skip, Nice Try, and Counterattack, so that all effect resolution can eventually be done fully through the GUI.
+
