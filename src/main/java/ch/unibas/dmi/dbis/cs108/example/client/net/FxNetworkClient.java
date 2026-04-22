@@ -320,6 +320,15 @@ public class FxNetworkClient implements ClientMessageHandler {
         protocolClient.resolveNiceTry(targetPlayer);
     }
 
+    /**
+     * Sends a COUNTERATTACK effect response that requests a color.
+     *
+     * @param color the selected color
+     */
+    public void resolveCounterattack(CardColor color) {
+        protocolClient.resolveCounterattack(color);
+    }
+
     // --------------------------------------------------------------------------------
 
     /**
@@ -622,7 +631,9 @@ public class FxNetworkClient implements ClientMessageHandler {
 
             switch (key) {
                 case "phase" -> state.setCurrentPhase(value);
+
                 case "currentPlayer" -> state.setCurrentPlayer(value);
+
                 case "requestedColor" -> {
                     if ("none".equalsIgnoreCase(value)) {
                         state.setRequestedColor("");
@@ -630,6 +641,7 @@ public class FxNetworkClient implements ClientMessageHandler {
                         state.setRequestedColor(value);
                     }
                 }
+
                 case "requestedNumber" -> {
                     if ("none".equalsIgnoreCase(value)) {
                         state.setRequestedNumber("");
@@ -637,28 +649,42 @@ public class FxNetworkClient implements ClientMessageHandler {
                         state.setRequestedNumber(value);
                     }
                 }
+
                 case "discardTop" -> {
                     if ("none".equalsIgnoreCase(value)) {
                         state.setTopCardId("");
                         state.setTopCardText("-");
+                        state.setPreviousRenderableTopCardId("");
                     } else {
                         try {
                             int cardId = Integer.parseInt(value);
+
                             state.setTopCardId(String.valueOf(cardId));
                             state.setTopCardText(CardTextFormatter.formatCardLabelWithId(cardId));
+
+                            if (isRenderableDiscardCard(cardId)) {
+                                state.setPreviousRenderableTopCardId(String.valueOf(cardId));
+                            }
                         } catch (NumberFormatException e) {
                             state.setTopCardId("");
                             state.setTopCardText("Card #" + value);
                         }
                     }
-
-
                 }
+
                 default -> {
                     // Ignore unknown fields for forward compatibility.
                 }
             }
         }
+    }
+
+    private boolean isRenderableDiscardCard(int cardId) {
+        return !isColorlessSpecialCard(cardId);
+    }
+
+    private boolean isColorlessSpecialCard(int cardId) {
+        return (cardId >= 101 && cardId <= 124);
     }
 
     /**
@@ -672,6 +698,7 @@ public class FxNetworkClient implements ClientMessageHandler {
         state.setTopCardText("-");
         state.getCurrentHandCards().clear();
         state.setTopCardId("");
+        state.setPreviousRenderableTopCardId("");
         state.setRequestedColor("");
         state.setRequestedNumber("");
     }
@@ -685,6 +712,7 @@ public class FxNetworkClient implements ClientMessageHandler {
         gameViewShown = false;
         state.setCurrentLobby("");
         state.setTopCardId("");
+        state.setPreviousRenderableTopCardId("");
         state.setRequestedColor("");
         state.setRequestedNumber("");
 
@@ -720,4 +748,6 @@ public class FxNetworkClient implements ClientMessageHandler {
     public void setEffectRequestListener(Consumer<String> effectRequestListener) {
         this.effectRequestListener = effectRequestListener;
     }
+
+
 }

@@ -72,6 +72,8 @@ public class ClientState {
 
     private final StringProperty pendingEffectRequest = new SimpleStringProperty("");
 
+    private final StringProperty previousRenderableTopCardId = new SimpleStringProperty("");
+
 
     /**
      * Creates a new shared client state object.
@@ -433,5 +435,17 @@ public class ClientState {
 
     public void setPendingEffectRequest(String value) {
         pendingEffectRequest.set(value == null ? "" : value);
+    }
+
+    public StringProperty previousRenderableTopCardIdProperty() {
+        return previousRenderableTopCardId;
+    }
+
+    public String getPreviousRenderableTopCardId() {
+        return previousRenderableTopCardId.get();
+    }
+
+    public void setPreviousRenderableTopCardId(String value) {
+        previousRenderableTopCardId.set(value == null ? "" : value);
     }
 }

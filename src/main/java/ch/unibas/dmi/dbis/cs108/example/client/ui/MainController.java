@@ -324,6 +324,11 @@ public class MainController {
                 showNiceTryEffectDialog(view);
                 return;
             }
+
+            if (isEffectRequestForMe(payload, "COUNTERATTACK")) {
+                showCounterattackEffectDialog(view);
+                return;
+            }
         });
 
         Scene scene = createStyledScene(view, 1280, 800);
@@ -378,6 +383,10 @@ public class MainController {
 
         String targetPlayer = payload.substring(prefix.length()).trim();
         return targetPlayer.equals(username);
+    }
+
+    private boolean isColorlessSpecialCard(int cardId) {
+        return cardId >= 101 && cardId <= 124;
     }
 
     private boolean isCurrentTurnForMe(String currentPlayerName) {
@@ -686,51 +695,59 @@ public class MainController {
         new FadeIn(view).play();
     }
 
-
     private void renderDiscardPile(GameView view) {
         view.getDiscardPilePane().getChildren().clear();
 
         String requestedColor = state.getRequestedColor();
-        if (requestedColor != null && !requestedColor.isBlank()) {
-            try {
-                WishCardView wishCardView = WishCardView.forColorWish(
-                        ch.unibas.dmi.dbis.cs108.example.model.game.CardColor.valueOf(requestedColor),
-                        registry
-                );
-                view.getDiscardPilePane().getChildren().add(wishCardView);
-                return;
-            } catch (IllegalArgumentException ignored) {
-                // Ignore invalid color values.
-            }
-        }
-
         String requestedNumber = state.getRequestedNumber();
-        if (requestedNumber != null && !requestedNumber.isBlank()) {
+        String topCardIdText = state.getTopCardId();
+
+        String cardIdToRender = topCardIdText;
+
+        if (requestedNumber != null && !requestedNumber.isBlank()
+                && topCardIdText != null && !topCardIdText.isBlank()) {
             try {
-                int number = Integer.parseInt(requestedNumber);
-                WishCardView wishCardView = WishCardView.forNumberWish(number, registry);
-                view.getDiscardPilePane().getChildren().add(wishCardView);
-                return;
+                int topCardId = Integer.parseInt(topCardIdText);
+
+                if (isColorlessSpecialCard(topCardId)) {
+                    String previousRenderable = state.getPreviousRenderableTopCardId();
+                    if (previousRenderable != null && !previousRenderable.isBlank()) {
+                        cardIdToRender = previousRenderable;
+                    }
+                }
             } catch (NumberFormatException ignored) {
-                // Ignore invalid numeric values.
+                // Fall back to the real top card if parsing fails.
             }
         }
 
-        String topCardIdText = state.getTopCardId();
-        if (topCardIdText == null || topCardIdText.isBlank()) {
+        if (cardIdToRender == null || cardIdToRender.isBlank()) {
             return;
         }
 
         int cardId;
         try {
-            cardId = Integer.parseInt(topCardIdText);
+            cardId = Integer.parseInt(cardIdToRender);
         } catch (NumberFormatException e) {
             return;
         }
 
         CardView discardCardView = new CardView(cardId, registry, null);
         view.getDiscardPilePane().getChildren().add(discardCardView);
+
+        if (requestedColor != null && !requestedColor.isBlank()) {
+            try {
+                WishCardView wishCardView = WishCardView.forColorWish(
+                        ch.unibas.dmi.dbis.cs108.example.model.game.CardColor.valueOf(requestedColor),
+                        registry
+                );
+                view.getDiscardPilePane().getChildren().setAll(wishCardView);
+            } catch (IllegalArgumentException ignored) {
+                // Ignore invalid color values.
+            }
+        }
     }
+
+
     private void showFantasticEffectDialog(GameView view) {
         boolean alreadyOpen = view.getRootStack().getChildren().stream()
                 .anyMatch(node -> node instanceof FantasticView);
@@ -934,6 +951,24 @@ public class MainController {
 
         effectView.setOnFinish(targetPlayer -> {
             networkClient.resolveNiceTry(targetPlayer);
+            view.getRootStack().getChildren().remove(effectView);
+        });
+
+        view.getRootStack().getChildren().add(effectView);
+    }
+
+    private void showCounterattackEffectDialog(GameView view) {
+        boolean alreadyOpen = view.getRootStack().getChildren().stream()
+                .anyMatch(node -> node instanceof CounterattackView);
+
+        if (alreadyOpen) {
+            return;
+        }
+
+        CounterattackView effectView = new CounterattackView();
+
+        effectView.setOnFinish(color -> {
+            networkClient.resolveCounterattack(color);
             view.getRootStack().getChildren().remove(effectView);
         });
 
