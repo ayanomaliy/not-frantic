@@ -521,12 +521,15 @@ public class FxNetworkClient implements ClientMessageHandler {
                 case "currentPlayer" -> state.setCurrentPlayer(value);
                 case "discardTop" -> {
                     if ("none".equalsIgnoreCase(value)) {
+                        state.setTopCardId("");
                         state.setTopCardText("-");
                     } else {
                         try {
                             int cardId = Integer.parseInt(value);
+                            state.setTopCardId(String.valueOf(cardId));
                             state.setTopCardText(CardTextFormatter.formatCardLabelWithId(cardId));
                         } catch (NumberFormatException e) {
+                            state.setTopCardId("");
                             state.setTopCardText("Card #" + value);
                         }
                     }
@@ -548,6 +551,7 @@ public class FxNetworkClient implements ClientMessageHandler {
         state.setCurrentPhase("WAITING");
         state.setTopCardText("-");
         state.getCurrentHandCards().clear();
+        state.setTopCardId("");
     }
 
     /**
@@ -558,6 +562,7 @@ public class FxNetworkClient implements ClientMessageHandler {
     private void clearLocalState(String statusText) {
         gameViewShown = false;
         state.setCurrentLobby("");
+        state.setTopCardId("");
 
         Platform.runLater(() -> {
             state.setConnected(false);

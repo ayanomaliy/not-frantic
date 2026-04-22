@@ -236,6 +236,9 @@ public class MainController {
         state.getCurrentHandCards().addListener(handCardsListener);
         renderHand(view);
 
+        state.topCardIdProperty().addListener((obs, oldValue, newValue) -> renderDiscardPile(view));
+        renderDiscardPile(view);
+
         updateDisplayedChat(view);
 
         view.getChatModeButton().textProperty().bind(state.chatModeProperty());
@@ -572,5 +575,25 @@ public class MainController {
         Scene scene = createStyledScene(view, 900, 700);
         stage.setScene(scene);
         new FadeIn(view).play();
+    }
+
+
+    private void renderDiscardPile(GameView view) {
+        view.getDiscardPilePane().getChildren().clear();
+
+        String topCardIdText = state.getTopCardId();
+        if (topCardIdText == null || topCardIdText.isBlank()) {
+            return;
+        }
+
+        int cardId;
+        try {
+            cardId = Integer.parseInt(topCardIdText);
+        } catch (NumberFormatException e) {
+            return;
+        }
+
+        CardView discardCardView = new CardView(cardId, registry, null);
+        view.getDiscardPilePane().getChildren().add(discardCardView);
     }
 }

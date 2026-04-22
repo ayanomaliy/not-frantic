@@ -600,4 +600,12 @@ public class GameView extends BorderPane {
     public StackPane getDrawPilePane() {
         return drawPilePane;
     }
+
+    /**
+     * Getter to display the top card of the discard pile.
+     * @return discardPilePane
+     */
+    public StackPane getDiscardPilePane() {
+        return discardPilePane;
+    }
 }
