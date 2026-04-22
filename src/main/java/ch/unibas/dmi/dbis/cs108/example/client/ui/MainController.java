@@ -331,6 +331,11 @@ public class MainController {
             }
         });
 
+        networkClient.setEventCardFlippedListener(eventCardId -> {
+            EventBannerData data = describeEventCard(eventCardId);
+            view.playEventOverlay(data.title(), data.description());
+        });
+
         Scene scene = createStyledScene(view, 1280, 800);
         stage.setScene(scene);
         new FadeIn(view).play();
@@ -973,5 +978,34 @@ public class MainController {
         });
 
         view.getRootStack().getChildren().add(effectView);
+    }
+
+
+    private record EventBannerData(String title, String description) {}
+
+    private EventBannerData describeEventCard(int eventCardId) {
+        return switch (eventCardId) {
+            case 0 -> new EventBannerData("All Draw Two", "Everyone draws two cards.");
+            case 1 -> new EventBannerData("All Draw One", "Everyone draws one card.");
+            case 2 -> new EventBannerData("All Skip", "Everybody gets skipped once.");
+            case 3 -> new EventBannerData("Instant Round End", "The round ends immediately.");
+            case 4 -> new EventBannerData("Reverse Order", "Turn order is reversed.");
+            case 5 -> new EventBannerData("Steal From Next", "The current player steals from the next player.");
+            case 6 -> new EventBannerData("Steal From Previous", "The current player steals from the previous player.");
+            case 7 -> new EventBannerData("Discard Highest", "Highest-value cards are discarded.");
+            case 8 -> new EventBannerData("Discard Color", "A whole color gets discarded.");
+            case 9 -> new EventBannerData("Swap Hands", "Hands are swapped around.");
+            case 10 -> new EventBannerData("Block Specials", "Special cards are temporarily blocked.");
+            case 11 -> new EventBannerData("Gift Chain", "Cards start moving around the table.");
+            case 12 -> new EventBannerData("Hand Reset", "Hands are reset.");
+            case 13 -> new EventBannerData("Lucky Draw", "Someone gets lucky with extra cards.");
+            case 14 -> new EventBannerData("Penalty Draw", "Penalty cards are handed out.");
+            case 15 -> new EventBannerData("Equalize", "Hands get pulled closer together.");
+            case 16 -> new EventBannerData("Wild Request", "A new request changes what can be played.");
+            case 17 -> new EventBannerData("Cancel Effects", "Pending effects are cancelled.");
+            case 18 -> new EventBannerData("Bonus Play", "The current player gets another play.");
+            case 19 -> new EventBannerData("Double Scoring", "This round will count double.");
+            default -> new EventBannerData("Event Triggered", "A global event changes the game.");
+        };
     }
 }

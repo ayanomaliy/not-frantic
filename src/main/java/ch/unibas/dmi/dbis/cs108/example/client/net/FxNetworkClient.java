@@ -42,6 +42,8 @@ public class FxNetworkClient implements ClientMessageHandler {
 
     private Consumer<String> effectRequestListener;
 
+    private Consumer<Integer> eventCardFlippedListener;
+
     /**
      * Creates a new GUI network adapter.
      *
@@ -511,8 +513,22 @@ public class FxNetworkClient implements ClientMessageHandler {
                 state.getGameMessages().add("[HAND] " + message.content());
             });
 
-            case GAME -> Platform.runLater(() ->
-                    state.getGameMessages().add("[GAME] " + message.content()));
+            case GAME -> Platform.runLater(() -> {
+                String content = message.content();
+                state.getGameMessages().add("[GAME] " + content);
+
+                if (content.startsWith("EVENT_CARD_FLIPPED:")) {
+                    String idPart = content.substring("EVENT_CARD_FLIPPED:".length()).trim();
+                    try {
+                        int eventCardId = Integer.parseInt(idPart);
+                        if (eventCardFlippedListener != null) {
+                            eventCardFlippedListener.accept(eventCardId);
+                        }
+                    } catch (NumberFormatException ignored) {
+                        // Ignore malformed event ids.
+                    }
+                }
+            });
 
             case EFFECT_REQUEST -> Platform.runLater(() -> {
                 String content = message.content();
@@ -750,4 +766,7 @@ public class FxNetworkClient implements ClientMessageHandler {
     }
 
 
+    public void setEventCardFlippedListener(Consumer<Integer> eventCardFlippedListener) {
+        this.eventCardFlippedListener = eventCardFlippedListener;
+    }
 }

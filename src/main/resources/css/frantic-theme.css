@@ -428,3 +428,28 @@
     -fx-border-color: color-warm-dark;
     -fx-border-width: 3;
 }
+
+.event-overlay {
+    -fx-background-color: rgba(0, 0, 0, 0.08);
+    -fx-padding: 0;
+}
+
+.event-panel {
+    -fx-background-color: rgba(0, 0, 0, 0.82);
+    -fx-padding: 110 90 110 90;
+    -fx-shape: "M 0 70 L 1600 0 L 1600 420 L 0 350 Z";
+    -fx-scale-shape: false;
+    -fx-background-insets: 0;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.35), 24, 0.25, 0, 6);
+}
+
+.event-title {
+    -fx-font-size: 30px;
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+}
+
+.event-description {
+    -fx-font-size: 16px;
+    -fx-text-fill: white;
+}
