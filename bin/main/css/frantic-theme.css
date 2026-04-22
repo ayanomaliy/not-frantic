@@ -297,3 +297,36 @@
 .button-box {
     -fx-alignment: center;
 }
+
+
+.draw-pile-clickable {
+    -fx-cursor: hand;
+}
+
+.draw-pile-clickable:hover {
+    -fx-scale-x: 1.03;
+    -fx-scale-y: 1.03;
+}
+
+.wish-card {
+    -fx-background-radius: 16;
+    -fx-border-radius: 16;
+}
+
+.wish-card-number {
+    -fx-background-color: color-warm-dark;
+}
+
+.turn-overlay {
+    -fx-background-color: rgba(0, 0, 0, 0.20);
+    -fx-padding: 40;
+}
+
+.turn-overlay-label {
+    -fx-font-size: 34px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #000000;
+    -fx-background-color: rgba(0, 0, 0, 0.45);
+    -fx-background-radius: 18;
+    -fx-padding: 18 32 18 32;
+}

@@ -26,6 +26,8 @@ public class FranticFxApp extends Application {
     /** Network client responsible for server communication. */
     private final FxNetworkClient networkClient = new FxNetworkClient(state);
 
+
+
     /**
      * Starts the JavaFX application and shows the initial connect screen.
      *
@@ -123,4 +125,5 @@ public class FranticFxApp extends Application {
      */
     private record PrefillData(String host, String port, String username) {
     }
+
 }

@@ -14,6 +14,10 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextInputDialog;
 import javafx.stage.Stage;
+import javafx.scene.layout.Region;
+import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
+
 
 /**
  * Coordinates screen changes and user interaction in the Frantic^-1 JavaFX client.
@@ -263,36 +267,98 @@ public class MainController {
 
         view.getDrawPilePane().setOnMouseClicked(e -> {
             registry.getSoundId("CARD_DRAWN").ifPresent(soundManager::play);
-            networkClient.drawCard();
-        });
-        view.getEndTurnButton().setOnAction(e -> networkClient.endTurn());
 
+            if (isSecondChanceActiveForMe()) {
+                networkClient.resolveSecondChanceDrawPenalty();
+                clearPendingEffectIfSecondChance();
+            } else {
+                networkClient.drawCard();
+            }
+        });
+
+        view.getEndTurnButton().setOnAction(e -> networkClient.endTurn());
         view.getLeaveButton().setOnAction(e -> leaveCurrentLobbyAndShowLobbyView());
+
+        networkClient.setEffectRequestListener(effectPayload -> {
+            if (effectPayload == null || effectPayload.isBlank()) {
+                return;
+            }
+
+            String payload = effectPayload.trim();
+
+            if (isEffectRequestForMe(payload, "FANTASTIC")) {
+                showFantasticEffectDialog(view);
+                return;
+            }
+
+            if (isEffectRequestForMe(payload, "EQUALITY")) {
+                showEqualityEffectDialog(view);
+                return;
+            }
+
+            if (isEffectRequestForMe(payload, "FANTASTIC_FOUR")) {
+                showFantasticFourEffectDialog(view);
+                return;
+            }
+
+            if (isEffectRequestForMe(payload, "GIFT")) {
+                showGiftEffectDialog(view);
+                return;
+            }
+
+            if (isEffectRequestForMe(payload, "SECOND_CHANCE")) {
+                state.setPendingEffectRequest(payload);
+                state.getGameMessages().add(
+                        "[INFO] Second Chance: click a card to play it, or click draw pile to draw."
+                );
+                return;
+            }
+
+            if (isEffectRequestForMe(payload, "EXCHANGE")) {
+                showExchangeEffectDialog(view);
+                return;
+            }
+
+            if (isEffectRequestForMe(payload, "SKIP")) {
+                showSkipEffectDialog(view);
+            }
+
+            if (isEffectRequestForMe(payload, "NICE_TRY")) {
+                showNiceTryEffectDialog(view);
+                return;
+            }
+
+            if (isEffectRequestForMe(payload, "COUNTERATTACK")) {
+                showCounterattackEffectDialog(view);
+                return;
+            }
+        });
+
+        networkClient.setEventCardFlippedListener(eventCardId -> {
+            EventBannerData data = describeEventCard(eventCardId);
+            view.playEventOverlay(data.title(), data.description());
+        });
 
         Scene scene = createStyledScene(view, 1280, 800);
         stage.setScene(scene);
         new FadeIn(view).play();
 
-
-        final String[] previousCurrentPlayer = {state.getCurrentPlayer()};
-
         state.currentPlayerProperty().addListener((obs, oldValue, newValue) -> {
-            String username = state.getUsername();
-            if (username == null || username.isBlank() || newValue == null) {
-                previousCurrentPlayer[0] = newValue;
+            if (newValue == null) {
                 return;
             }
 
-            boolean isNowMyTurn = newValue.equals(username) || newValue.startsWith(username + "(");
-            boolean wasMyTurnBefore = oldValue != null
-                    && (oldValue.equals(username) || oldValue.startsWith(username + "("));
+            boolean isNowMyTurn = isCurrentTurnForMe(newValue);
+            boolean wasMyTurnBefore = isCurrentTurnForMe(oldValue);
 
             if (isNowMyTurn && !wasMyTurnBefore) {
                 view.playTurnOverlay();
             }
-
-            previousCurrentPlayer[0] = newValue;
         });
+
+        if (isCurrentTurnForMe(state.getCurrentPlayer())) {
+            view.playTurnOverlay();
+        }
 
         networkClient.requestHand();
     }
@@ -306,6 +372,37 @@ public class MainController {
     private void leaveCurrentLobbyAndShowLobbyView() {
         networkClient.leaveLobby();
         showLobbyView();
+    }
+
+    private boolean isEffectRequestForMe(String payload, String effectName) {
+        if (payload == null || payload.isBlank()) {
+            return false;
+        }
+
+        String username = state.getUsername();
+        if (username == null || username.isBlank()) {
+            return false;
+        }
+
+        String prefix = effectName + ":";
+        if (!payload.toUpperCase().startsWith(prefix)) {
+            return false;
+        }
+
+        String targetPlayer = payload.substring(prefix.length()).trim();
+        return targetPlayer.equals(username);
+    }
+
+    private boolean isColorlessSpecialCard(int cardId) {
+        return cardId >= 101 && cardId <= 124;
+    }
+
+    private boolean isCurrentTurnForMe(String currentPlayerName) {
+        String username = state.getUsername();
+        return username != null
+                && !username.isBlank()
+                && currentPlayerName != null
+                && currentPlayerName.equals(username);
     }
 
     /**
@@ -326,7 +423,13 @@ public class MainController {
 
             CardView cardView = new CardView(cardId, registry, () -> {
                 registry.getSoundId(CardView.lookupCard(cardId)).ifPresent(soundManager::play);
-                networkClient.playCard(cardId);
+
+                if (isSecondChanceActiveForMe()) {
+                    networkClient.resolveSecondChance(cardId);
+                    clearPendingEffectIfSecondChance();
+                } else {
+                    networkClient.playCard(cardId);
+                }
             });
 
             view.getPlayerHandPane().getChildren().add(cardView);
@@ -489,14 +592,28 @@ public class MainController {
     private Scene createStyledScene(Parent root, double width, double height) {
         Scene scene = new Scene(root, width, height);
 
-        scene.setFill(javafx.scene.paint.Paint.valueOf("#bfc5ff"));
-
         var stylesheet = getClass().getResource(THEME_STYLESHEET);
         if (stylesheet != null) {
             scene.getStylesheets().add(stylesheet.toExternalForm());
         }
 
+        applySceneFillFromRootBackground(scene, root);
+
         return scene;
+    }
+
+    private void applySceneFillFromRootBackground(Scene scene, Parent root) {
+        root.applyCss();
+        root.layout();
+
+        if (root instanceof Region region
+                && region.getBackground() != null
+                && !region.getBackground().getFills().isEmpty()
+                && region.getBackground().getFills().get(0).getFill() instanceof Color color) {
+            scene.setFill(color);
+        } else {
+            scene.setFill(Paint.valueOf("#26201e"));
+        }
     }
 
     /**
@@ -600,49 +717,312 @@ public class MainController {
         new FadeIn(view).play();
     }
 
-
     private void renderDiscardPile(GameView view) {
         view.getDiscardPilePane().getChildren().clear();
 
         String requestedColor = state.getRequestedColor();
-        if (requestedColor != null && !requestedColor.isBlank()) {
-            try {
-                WishCardView wishCardView = WishCardView.forColorWish(
-                        ch.unibas.dmi.dbis.cs108.example.model.game.CardColor.valueOf(requestedColor),
-                        registry
-                );
-                view.getDiscardPilePane().getChildren().add(wishCardView);
-                return;
-            } catch (IllegalArgumentException ignored) {
-                // Ignore invalid color values.
-            }
-        }
-
         String requestedNumber = state.getRequestedNumber();
-        if (requestedNumber != null && !requestedNumber.isBlank()) {
+        String topCardIdText = state.getTopCardId();
+
+        String cardIdToRender = topCardIdText;
+
+        if (requestedNumber != null && !requestedNumber.isBlank()
+                && topCardIdText != null && !topCardIdText.isBlank()) {
             try {
-                int number = Integer.parseInt(requestedNumber);
-                WishCardView wishCardView = WishCardView.forNumberWish(number, registry);
-                view.getDiscardPilePane().getChildren().add(wishCardView);
-                return;
+                int topCardId = Integer.parseInt(topCardIdText);
+
+                if (isColorlessSpecialCard(topCardId)) {
+                    String previousRenderable = state.getPreviousRenderableTopCardId();
+                    if (previousRenderable != null && !previousRenderable.isBlank()) {
+                        cardIdToRender = previousRenderable;
+                    }
+                }
             } catch (NumberFormatException ignored) {
-                // Ignore invalid numeric values.
+                // Fall back to the real top card if parsing fails.
             }
         }
 
-        String topCardIdText = state.getTopCardId();
-        if (topCardIdText == null || topCardIdText.isBlank()) {
+        if (cardIdToRender == null || cardIdToRender.isBlank()) {
             return;
         }
 
         int cardId;
         try {
-            cardId = Integer.parseInt(topCardIdText);
+            cardId = Integer.parseInt(cardIdToRender);
         } catch (NumberFormatException e) {
             return;
         }
 
         CardView discardCardView = new CardView(cardId, registry, null);
         view.getDiscardPilePane().getChildren().add(discardCardView);
+
+        if (requestedColor != null && !requestedColor.isBlank()) {
+            try {
+                WishCardView wishCardView = WishCardView.forColorWish(
+                        ch.unibas.dmi.dbis.cs108.example.model.game.CardColor.valueOf(requestedColor),
+                        registry
+                );
+                view.getDiscardPilePane().getChildren().setAll(wishCardView);
+            } catch (IllegalArgumentException ignored) {
+                // Ignore invalid color values.
+            }
+        }
+    }
+
+
+    private void showFantasticEffectDialog(GameView view) {
+        boolean alreadyOpen = view.getRootStack().getChildren().stream()
+                .anyMatch(node -> node instanceof FantasticView);
+
+        if (alreadyOpen) {
+            return;
+        }
+
+        FantasticView effectView = new FantasticView();
+
+        effectView.setOnFinish((color, number) -> {
+            networkClient.resolveFantastic(color, number);
+            view.getRootStack().getChildren().remove(effectView);
+        });
+
+        view.getRootStack().getChildren().add(effectView);
+    }
+
+    private void showEqualityEffectDialog(GameView view) {
+        boolean alreadyOpen = view.getRootStack().getChildren().stream()
+                .anyMatch(node -> node instanceof EqualityView);
+
+        if (alreadyOpen) {
+            return;
+        }
+
+        String username = state.getUsername();
+
+        java.util.List<String> selectablePlayers = state.getPlayers().stream()
+                .filter(name -> !name.equals(username))
+                .toList();
+
+        EqualityView effectView = new EqualityView(selectablePlayers);
+
+        effectView.setOnFinish((targetPlayer, color) -> {
+            networkClient.resolveEquality(targetPlayer, color);
+            view.getRootStack().getChildren().remove(effectView);
+        });
+
+        view.getRootStack().getChildren().add(effectView);
+    }
+
+    private void showFantasticFourEffectDialog(GameView view) {
+        boolean alreadyOpen = view.getRootStack().getChildren().stream()
+                .anyMatch(node -> node instanceof FantasticFourView);
+
+        if (alreadyOpen) {
+            return;
+        }
+
+        String username = state.getUsername();
+
+        java.util.List<String> selectablePlayers = state.getPlayers().stream()
+                .filter(name -> name != null && !name.isBlank())
+                .filter(name -> !name.equals(username))
+                .toList();
+
+        FantasticFourView effectView = new FantasticFourView(selectablePlayers);
+
+        effectView.setOnFinish(result -> {
+            networkClient.resolveFantasticFour(
+                    result.getColor(),
+                    result.getNumber(),
+                    result.getTargetPlayers()
+            );
+            view.getRootStack().getChildren().remove(effectView);
+        });
+
+        view.getRootStack().getChildren().add(effectView);
+    }
+
+    private boolean isSecondChanceActiveForMe() {
+        String payload = state.getPendingEffectRequest();
+        if (payload == null || payload.isBlank()) {
+            return false;
+        }
+
+        String username = state.getUsername();
+        if (username == null || username.isBlank()) {
+            return false;
+        }
+
+        if (!payload.toUpperCase().startsWith("SECOND_CHANCE:")) {
+            return false;
+        }
+
+        String targetPlayer = payload.substring("SECOND_CHANCE:".length()).trim();
+        return targetPlayer.equals(username);
+    }
+
+    private void clearPendingEffectIfSecondChance() {
+        String payload = state.getPendingEffectRequest();
+        if (payload != null && payload.toUpperCase().startsWith("SECOND_CHANCE:")) {
+            state.setPendingEffectRequest("");
+        }
+    }
+
+    private void showGiftEffectDialog(GameView view) {
+        boolean alreadyOpen = view.getRootStack().getChildren().stream()
+                .anyMatch(node -> node instanceof GiftView);
+
+        if (alreadyOpen) {
+            return;
+        }
+
+        String username = state.getUsername();
+
+        java.util.List<String> selectablePlayers = state.getPlayers().stream()
+                .filter(name -> name != null && !name.isBlank())
+                .filter(name -> !name.equals(username))
+                .toList();
+
+        java.util.List<Integer> handCardIds = state.getCurrentHandCards().stream()
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .map(Integer::parseInt)
+                .toList();
+
+        GiftView effectView = new GiftView(selectablePlayers, handCardIds, registry);
+
+        effectView.setOnFinish((targetPlayer, cardIds) -> {
+            networkClient.resolveGift(targetPlayer, cardIds);
+            view.getRootStack().getChildren().remove(effectView);
+        });
+
+        view.getRootStack().getChildren().add(effectView);
+    }
+
+    private void showExchangeEffectDialog(GameView view) {
+        boolean alreadyOpen = view.getRootStack().getChildren().stream()
+                .anyMatch(node -> node instanceof ExchangeView);
+
+        if (alreadyOpen) {
+            return;
+        }
+
+        String username = state.getUsername();
+
+        java.util.List<String> selectablePlayers = state.getPlayers().stream()
+                .filter(name -> name != null && !name.isBlank())
+                .filter(name -> !name.equals(username))
+                .toList();
+
+        java.util.List<Integer> handCardIds = state.getCurrentHandCards().stream()
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .map(Integer::parseInt)
+                .toList();
+
+        ExchangeView effectView = new ExchangeView(selectablePlayers, handCardIds, registry);
+
+        effectView.setOnFinish((targetPlayer, cardIds) -> {
+            networkClient.resolveExchange(targetPlayer, cardIds);
+            view.getRootStack().getChildren().remove(effectView);
+        });
+
+        view.getRootStack().getChildren().add(effectView);
+    }
+
+    private void showSkipEffectDialog(GameView view) {
+        boolean alreadyOpen = view.getRootStack().getChildren().stream()
+                .anyMatch(node -> node instanceof SkipView);
+
+        if (alreadyOpen) {
+            return;
+        }
+
+        String username = state.getUsername();
+
+        java.util.List<String> selectablePlayers = state.getPlayers().stream()
+                .filter(name -> name != null && !name.isBlank())
+                .filter(name -> !name.equals(username))
+                .toList();
+
+        SkipView effectView = new SkipView(selectablePlayers);
+
+        effectView.setOnFinish(targetPlayer -> {
+            networkClient.resolveSkip(targetPlayer);
+            view.getRootStack().getChildren().remove(effectView);
+        });
+
+        view.getRootStack().getChildren().add(effectView);
+    }
+
+    private void showNiceTryEffectDialog(GameView view) {
+        boolean alreadyOpen = view.getRootStack().getChildren().stream()
+                .anyMatch(node -> node instanceof NiceTryView);
+
+        if (alreadyOpen) {
+            return;
+        }
+
+        String username = state.getUsername();
+
+        java.util.List<String> selectablePlayers = state.getPlayers().stream()
+                .filter(name -> name != null && !name.isBlank())
+                .filter(name -> !name.equals(username))
+                .toList();
+
+        NiceTryView effectView = new NiceTryView(selectablePlayers);
+
+        effectView.setOnFinish(targetPlayer -> {
+            networkClient.resolveNiceTry(targetPlayer);
+            view.getRootStack().getChildren().remove(effectView);
+        });
+
+        view.getRootStack().getChildren().add(effectView);
+    }
+
+    private void showCounterattackEffectDialog(GameView view) {
+        boolean alreadyOpen = view.getRootStack().getChildren().stream()
+                .anyMatch(node -> node instanceof CounterattackView);
+
+        if (alreadyOpen) {
+            return;
+        }
+
+        CounterattackView effectView = new CounterattackView();
+
+        effectView.setOnFinish(color -> {
+            networkClient.resolveCounterattack(color);
+            view.getRootStack().getChildren().remove(effectView);
+        });
+
+        view.getRootStack().getChildren().add(effectView);
+    }
+
+
+    private record EventBannerData(String title, String description) {}
+
+    private EventBannerData describeEventCard(int eventCardId) {
+        return switch (eventCardId) {
+            case 0 -> new EventBannerData("All Draw Two", "Everyone draws two cards.");
+            case 1 -> new EventBannerData("All Draw One", "Everyone draws one card.");
+            case 2 -> new EventBannerData("All Skip", "Everybody gets skipped once.");
+            case 3 -> new EventBannerData("Instant Round End", "The round ends immediately.");
+            case 4 -> new EventBannerData("Reverse Order", "Turn order is reversed.");
+            case 5 -> new EventBannerData("Steal From Next", "The current player steals from the next player.");
+            case 6 -> new EventBannerData("Steal From Previous", "The current player steals from the previous player.");
+            case 7 -> new EventBannerData("Discard Highest", "Highest-value cards are discarded.");
+            case 8 -> new EventBannerData("Discard Color", "A whole color gets discarded.");
+            case 9 -> new EventBannerData("Swap Hands", "Hands are swapped around.");
+            case 10 -> new EventBannerData("Block Specials", "Special cards are temporarily blocked.");
+            case 11 -> new EventBannerData("Gift Chain", "Cards start moving around the table.");
+            case 12 -> new EventBannerData("Hand Reset", "Hands are reset.");
+            case 13 -> new EventBannerData("Lucky Draw", "Someone gets lucky with extra cards.");
+            case 14 -> new EventBannerData("Penalty Draw", "Penalty cards are handed out.");
+            case 15 -> new EventBannerData("Equalize", "Hands get pulled closer together.");
+            case 16 -> new EventBannerData("Wild Request", "A new request changes what can be played.");
+            case 17 -> new EventBannerData("Cancel Effects", "Pending effects are cancelled.");
+            case 18 -> new EventBannerData("Bonus Play", "The current player gets another play.");
+            case 19 -> new EventBannerData("Double Scoring", "This round will count double.");
+            default -> new EventBannerData("Event Triggered", "A global event changes the game.");
+        };
     }
 }

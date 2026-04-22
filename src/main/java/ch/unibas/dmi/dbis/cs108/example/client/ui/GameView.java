@@ -88,6 +88,12 @@ public class GameView extends BorderPane {
     private boolean chatExpanded = false;
     private final Button toggleChatButton = new Button("Expand Chat");
 
+    // events
+    private final StackPane eventOverlay = new StackPane();
+    private final VBox eventPanel = new VBox(18);
+    private final Label eventTitleLabel = new Label();
+    private final Label eventDescriptionLabel = new Label();
+
     private VBox playersBox;
     private VBox infoBox;
     private VBox chatBox;
@@ -174,10 +180,128 @@ public class GameView extends BorderPane {
 
         configureTurnOverlay();
 
-        rootStack.getChildren().addAll(outerScrollPane, turnOverlay);
+        configureEventOverlay();
+
+        rootStack.getChildren().addAll(outerScrollPane, turnOverlay, eventOverlay);
         StackPane.setAlignment(turnOverlay, Pos.CENTER);
+        StackPane.setAlignment(eventOverlay, Pos.CENTER);
 
         setCenter(rootStack);
+    }
+
+    private void configureEventOverlay() {
+        eventOverlay.getStyleClass().add("event-overlay");
+        eventOverlay.setAlignment(Pos.CENTER);
+
+        eventOverlay.setVisible(false);
+        eventOverlay.setOpacity(0.0);
+        eventOverlay.setMouseTransparent(true);
+
+        eventOverlay.prefWidthProperty().bind(rootStack.widthProperty());
+        eventOverlay.prefHeightProperty().bind(rootStack.heightProperty());
+        eventOverlay.maxWidthProperty().bind(rootStack.widthProperty());
+        eventOverlay.maxHeightProperty().bind(rootStack.heightProperty());
+
+        eventPanel.getStyleClass().add("event-panel");
+        eventPanel.setAlignment(Pos.CENTER);
+        eventPanel.setFillWidth(false);
+        eventPanel.setMinHeight(320);
+
+        // Make the manga panel longer than the window so it always covers it.
+        eventPanel.prefWidthProperty().bind(rootStack.widthProperty().multiply(1.35));
+        eventPanel.maxWidthProperty().bind(rootStack.widthProperty().multiply(1.35));
+
+        eventTitleLabel.getStyleClass().add("event-title");
+        eventTitleLabel.setWrapText(true);
+        eventTitleLabel.setAlignment(Pos.CENTER);
+
+        eventDescriptionLabel.getStyleClass().add("event-description");
+        eventDescriptionLabel.setWrapText(true);
+        eventDescriptionLabel.setMaxWidth(520);
+        eventDescriptionLabel.setAlignment(Pos.CENTER);
+
+        eventPanel.getChildren().setAll(eventTitleLabel, eventDescriptionLabel);
+        eventOverlay.getChildren().setAll(eventPanel);
+    }
+
+    public void playEventOverlay(String title, String description) {
+        if (title == null || title.isBlank()) {
+            return;
+        }
+
+        eventTitleLabel.setText(title);
+        eventDescriptionLabel.setText(description == null ? "" : description);
+
+        eventOverlay.setVisible(true);
+        eventOverlay.setOpacity(1.0);
+
+        outerScrollPane.setEffect(turnBlur);
+
+        double sceneWidth = rootStack.getWidth() > 0 ? rootStack.getWidth() : 1280;
+        double startX = sceneWidth * 1.2;
+
+        eventPanel.setTranslateX(startX);
+
+        Timeline blurIn = new Timeline(
+                new KeyFrame(
+                        Duration.ZERO,
+                        new KeyValue(turnBlur.radiusProperty(), 0)
+                ),
+                new KeyFrame(
+                        Duration.millis(90),
+                        new KeyValue(
+                                turnBlur.radiusProperty(),
+                                12,
+                                Interpolator.SPLINE(0.15, 0.95, 0.25, 1.0)
+                        )
+                )
+        );
+
+        Timeline slideIn = new Timeline(
+                new KeyFrame(
+                        Duration.ZERO,
+                        new KeyValue(eventPanel.translateXProperty(), startX, Interpolator.EASE_OUT)
+                ),
+                new KeyFrame(
+                        Duration.millis(170),
+                        new KeyValue(eventPanel.translateXProperty(), 0, Interpolator.EASE_OUT)
+                )
+        );
+
+        int baseMs = 1800;
+        int extraMs = Math.min(2200, eventDescriptionLabel.getText().length() * 35);
+        PauseTransition hold = new PauseTransition(Duration.millis(baseMs + extraMs));
+
+        Timeline slideOut = new Timeline(
+                new KeyFrame(
+                        Duration.ZERO,
+                        new KeyValue(eventPanel.translateXProperty(), 0, Interpolator.EASE_IN)
+                ),
+                new KeyFrame(
+                        Duration.millis(220),
+                        new KeyValue(eventPanel.translateXProperty(), -sceneWidth * 1.25, Interpolator.EASE_IN)
+                )
+        );
+
+        Timeline blurOut = new Timeline(
+                new KeyFrame(Duration.ZERO, new KeyValue(turnBlur.radiusProperty(), 12)),
+                new KeyFrame(Duration.millis(220), new KeyValue(turnBlur.radiusProperty(), 0))
+        );
+
+        slideOut.setOnFinished(e -> {
+            eventOverlay.setVisible(false);
+            eventPanel.setTranslateX(0);
+            outerScrollPane.setEffect(turnBlur);
+        });
+
+        blurIn.play();
+        slideIn.setOnFinished(e -> hold.play());
+        hold.setOnFinished(e -> {
+            blurOut.play();
+            slideOut.play();
+        });
+
+        slideIn.play();
     }
 
     /**
@@ -686,6 +810,11 @@ public class GameView extends BorderPane {
 
         SequentialTransition sequence = new SequentialTransition(fadeIn, hold, fadeOut);
         sequence.play();
+    }
+
+
+    public StackPane getRootStack() {
+        return rootStack;
     }
 
 }

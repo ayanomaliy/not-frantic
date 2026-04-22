@@ -20,27 +20,15 @@ import java.util.Objects;
  *   <li><b>Number wish:</b> shows a special-style card with only the wished number icon.</li>
  * </ul>
  *
- * <p>Static visual styling such as radius, border, and special-card background should
- * come from CSS classes. Only the dynamic wished color is applied programmatically,
- * because it depends on runtime state.</p>
+ * <p>All visual styling is driven by CSS classes so the wish cards stay consistent
+ * with normal {@link CardView} colors.</p>
  */
 public class WishCardView extends StackPane {
 
-    /** Shared card width used by the game card visuals. */
     private static final double CARD_WIDTH = 90;
-
-    /** Shared card height used by the game card visuals. */
     private static final double CARD_HEIGHT = 130;
-
-    /** Preferred size of the centered number icon for number wishes. */
     private static final double ICON_SIZE = 54;
 
-    /**
-     * Creates the base container for a wish card.
-     *
-     * <p>The common geometry is defined here, while visual appearance is supplied
-     * through CSS classes and, for color wishes, a runtime background color.</p>
-     */
     private WishCardView() {
         getStyleClass().addAll("game-card-button", "wish-card");
         setPrefSize(CARD_WIDTH, CARD_HEIGHT);
@@ -52,12 +40,8 @@ public class WishCardView extends StackPane {
     /**
      * Creates a visual card for a requested color.
      *
-     * <p>The card is intentionally blank and uses only the configured card color
-     * background so that it reads as a pure color wish rather than as a normal
-     * playable card.</p>
-     *
      * @param color the requested color to display
-     * @param registry the asset registry used to resolve configured card colors
+     * @param registry unused for color styling now, kept for API compatibility
      * @return a wish card showing the requested color
      * @throws NullPointerException if {@code color} or {@code registry} is {@code null}
      */
@@ -66,24 +50,14 @@ public class WishCardView extends StackPane {
         Objects.requireNonNull(registry, "registry must not be null");
 
         WishCardView view = new WishCardView();
-        view.getStyleClass().add("wish-card-color");
-
-        String bg = registry.getBackgroundColor(color).orElse("");
-        if (!bg.isBlank()) {
-            view.setStyle("-fx-background-color: " + bg + ";");
-        }
-
+        view.getStyleClass().addAll("wish-card-color", toCardColorStyleClass(color));
         return view;
     }
 
     /**
      * Creates a visual card for a requested number.
      *
-     * <p>The background styling is supplied through CSS so that the special-card
-     * appearance remains centralized in the theme. Only the requested number icon
-     * is added programmatically.</p>
-     *
-     * @param number the requested number, expected in the range supported by the card icons
+     * @param number the requested number
      * @param registry the asset registry used to load the configured number icon
      * @return a wish card showing the requested number
      * @throws NullPointerException if {@code registry} is {@code null}
@@ -101,5 +75,15 @@ public class WishCardView extends StackPane {
         });
 
         return view;
+    }
+
+    private static String toCardColorStyleClass(CardColor color) {
+        return switch (color) {
+            case RED -> "card-red";
+            case YELLOW -> "card-yellow";
+            case GREEN -> "card-green";
+            case BLUE -> "card-blue";
+            case BLACK -> "card-black";
+        };
     }
 }

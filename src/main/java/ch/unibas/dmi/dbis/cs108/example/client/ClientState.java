@@ -70,6 +70,10 @@ public class ClientState {
     /** List of final scores*/
     private final ObservableList<String> finalScoreRows = FXCollections.observableArrayList();
 
+    private final StringProperty pendingEffectRequest = new SimpleStringProperty("");
+
+    private final StringProperty previousRenderableTopCardId = new SimpleStringProperty("");
+
 
     /**
      * Creates a new shared client state object.
@@ -419,5 +423,29 @@ public class ClientState {
 
     public void setRequestedNumber(String value) {
         requestedNumber.set(value == null ? "" : value);
+    }
+
+    public StringProperty pendingEffectRequestProperty() {
+        return pendingEffectRequest;
+    }
+
+    public String getPendingEffectRequest() {
+        return pendingEffectRequest.get();
+    }
+
+    public void setPendingEffectRequest(String value) {
+        pendingEffectRequest.set(value == null ? "" : value);
+    }
+
+    public StringProperty previousRenderableTopCardIdProperty() {
+        return previousRenderableTopCardId;
+    }
+
+    public String getPreviousRenderableTopCardId() {
+        return previousRenderableTopCardId.get();
+    }
+
+    public void setPreviousRenderableTopCardId(String value) {
+        previousRenderableTopCardId.set(value == null ? "" : value);
     }
 }

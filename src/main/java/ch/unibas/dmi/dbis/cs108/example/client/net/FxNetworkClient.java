@@ -9,6 +9,9 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
+import ch.unibas.dmi.dbis.cs108.example.model.game.CardColor;
+import java.util.function.Consumer;
+
 /**
  * JavaFX adapter around the shared protocol client.
  *
@@ -36,6 +39,10 @@ public class FxNetworkClient implements ClientMessageHandler {
     private boolean gameViewShown = false;
 
     private Runnable gameEndListener;
+
+    private Consumer<String> effectRequestListener;
+
+    private Consumer<Integer> eventCardFlippedListener;
 
     /**
      * Creates a new GUI network adapter.
@@ -228,6 +235,104 @@ public class FxNetworkClient implements ClientMessageHandler {
         protocolClient.playCard(cardId);
     }
 
+// RESOLVE EFFECTS:
+    /**
+     * Sends a FANTASTIC effect response with either a color or a number.
+     *
+     * @param color the selected color, or null
+     * @param number the selected number, or null
+     */
+    public void resolveFantastic(CardColor color, Integer number) {
+        protocolClient.resolveFantastic(color, number);
+    }
+
+    /**
+     * Sends an EQUALITY effect response.
+     *
+     * @param targetPlayer the player who should draw up
+     * @param color the requested color
+     */
+    public void resolveEquality(String targetPlayer, CardColor color) {
+        protocolClient.resolveEquality(targetPlayer, color);
+    }
+
+    /**
+     * Sends a FANTASTIC_FOUR effect response.
+     *
+     * @param color the selected color, or null
+     * @param number the selected number, or null
+     * @param targetPlayers exactly four recipient names
+     */
+    public void resolveFantasticFour(CardColor color, Integer number, java.util.List<String> targetPlayers) {
+        protocolClient.resolveFantasticFour(color, number, targetPlayers);
+    }
+
+    /**
+     * Sends a SECOND_CHANCE effect response for playing another card.
+     *
+     * @param cardId the card id to play
+     */
+    public void resolveSecondChance(int cardId) {
+        protocolClient.resolveSecondChance(cardId);
+    }
+
+    /**
+     * Sends a SECOND_CHANCE effect response indicating that the player draws instead.
+     */
+    public void resolveSecondChanceDrawPenalty() {
+        protocolClient.resolveSecondChanceDrawPenalty();
+    }
+
+
+    /**
+     * Sends a GIFT effect response.
+     *
+     * @param targetPlayer the receiving player
+     * @param cardIds the selected card ids
+     */
+    public void resolveGift(String targetPlayer, List<Integer> cardIds) {
+        protocolClient.resolveGift(targetPlayer, cardIds);
+    }
+
+    /**
+     * Sends an EXCHANGE effect response.
+     *
+     * @param targetPlayer the exchange partner
+     * @param cardIds the selected card ids
+     */
+    public void resolveExchange(String targetPlayer, List<Integer> cardIds) {
+        protocolClient.resolveExchange(targetPlayer, cardIds);
+    }
+
+    /**
+     * Sends a SKIP effect response.
+     *
+     * @param targetPlayer the player whose next turn should be skipped
+     */
+    public void resolveSkip(String targetPlayer) {
+        protocolClient.resolveSkip(targetPlayer);
+    }
+
+    /**
+     * Sends a NICE_TRY effect response.
+     *
+     * @param targetPlayer the player who should receive the penalty
+     */
+    public void resolveNiceTry(String targetPlayer) {
+        protocolClient.resolveNiceTry(targetPlayer);
+    }
+
+    /**
+     * Sends a COUNTERATTACK effect response that requests a color.
+     *
+     * @param color the selected color
+     */
+    public void resolveCounterattack(CardColor color) {
+        protocolClient.resolveCounterattack(color);
+    }
+
+    // --------------------------------------------------------------------------------
+
     /**
      * Set Game end Listener
      *
@@ -383,6 +488,9 @@ public class FxNetworkClient implements ClientMessageHandler {
 
             case GAME_STATE -> Platform.runLater(() -> {
                 applyGameStatePayload(message.content());
+                if (!"RESOLVING_EFFECT".equals(state.getCurrentPhase())) {
+                    state.setPendingEffectRequest("");
+                }
                 state.getGameMessages().add("[GAME_STATE] " + message.content());
 
                 if (!gameViewShown) {
@@ -405,11 +513,32 @@ public class FxNetworkClient implements ClientMessageHandler {
                 state.getGameMessages().add("[HAND] " + message.content());
             });
 
-            case GAME -> Platform.runLater(() ->
-                    state.getGameMessages().add("[GAME] " + message.content()));
+            case GAME -> Platform.runLater(() -> {
+                String content = message.content();
+                state.getGameMessages().add("[GAME] " + content);
 
-            case EFFECT_REQUEST -> Platform.runLater(() ->
-                    state.getGameMessages().add("[EFFECT_REQUEST] " + message.content()));
+                if (content.startsWith("EVENT_CARD_FLIPPED:")) {
+                    String idPart = content.substring("EVENT_CARD_FLIPPED:".length()).trim();
+                    try {
+                        int eventCardId = Integer.parseInt(idPart);
+                        if (eventCardFlippedListener != null) {
+                            eventCardFlippedListener.accept(eventCardId);
+                        }
+                    } catch (NumberFormatException ignored) {
+                        // Ignore malformed event ids.
+                    }
+                }
+            });
+
+            case EFFECT_REQUEST -> Platform.runLater(() -> {
+                String content = message.content();
+                state.getGameMessages().add("[EFFECT_REQUEST] " + content);
+                state.setPendingEffectRequest(content);
+
+                if (effectRequestListener != null) {
+                    effectRequestListener.accept(content);
+                }
+            });
 
             case ROUND_END -> Platform.runLater(() -> {
                 state.getGameMessages().add("[ROUND_END] Round over! Scores: " + message.content());
@@ -518,7 +647,9 @@ public class FxNetworkClient implements ClientMessageHandler {
 
             switch (key) {
                 case "phase" -> state.setCurrentPhase(value);
+
                 case "currentPlayer" -> state.setCurrentPlayer(value);
+
                 case "requestedColor" -> {
                     if ("none".equalsIgnoreCase(value)) {
                         state.setRequestedColor("");
@@ -526,6 +657,7 @@ public class FxNetworkClient implements ClientMessageHandler {
                         state.setRequestedColor(value);
                     }
                 }
+
                 case "requestedNumber" -> {
                     if ("none".equalsIgnoreCase(value)) {
                         state.setRequestedNumber("");
@@ -533,28 +665,42 @@ public class FxNetworkClient implements ClientMessageHandler {
                         state.setRequestedNumber(value);
                     }
                 }
+
                 case "discardTop" -> {
                     if ("none".equalsIgnoreCase(value)) {
                         state.setTopCardId("");
                         state.setTopCardText("-");
+                        state.setPreviousRenderableTopCardId("");
                     } else {
                         try {
                             int cardId = Integer.parseInt(value);
+
                             state.setTopCardId(String.valueOf(cardId));
                             state.setTopCardText(CardTextFormatter.formatCardLabelWithId(cardId));
+
+                            if (isRenderableDiscardCard(cardId)) {
+                                state.setPreviousRenderableTopCardId(String.valueOf(cardId));
+                            }
                         } catch (NumberFormatException e) {
                             state.setTopCardId("");
                             state.setTopCardText("Card #" + value);
                         }
                     }
-
-
                 }
+
                 default -> {
                     // Ignore unknown fields for forward compatibility.
                 }
             }
         }
+    }
+
+    private boolean isRenderableDiscardCard(int cardId) {
+        return !isColorlessSpecialCard(cardId);
+    }
+
+    private boolean isColorlessSpecialCard(int cardId) {
+        return (cardId >= 101 && cardId <= 124);
     }
 
     /**
@@ -568,6 +714,7 @@ public class FxNetworkClient implements ClientMessageHandler {
         state.setTopCardText("-");
         state.getCurrentHandCards().clear();
         state.setTopCardId("");
+        state.setPreviousRenderableTopCardId("");
         state.setRequestedColor("");
         state.setRequestedNumber("");
     }
@@ -581,6 +728,7 @@ public class FxNetworkClient implements ClientMessageHandler {
         gameViewShown = false;
         state.setCurrentLobby("");
         state.setTopCardId("");
+        state.setPreviousRenderableTopCardId("");
         state.setRequestedColor("");
         state.setRequestedNumber("");
 
@@ -604,5 +752,21 @@ public class FxNetworkClient implements ClientMessageHandler {
 
             state.getGameMessages().clear();
         });
+    }
+
+
+
+    /**
+     * Registers a callback that is invoked when the server sends an EFFECT_REQUEST.
+     *
+     * @param effectRequestListener the callback to invoke with the raw effect payload
+     */
+    public void setEffectRequestListener(Consumer<String> effectRequestListener) {
+        this.effectRequestListener = effectRequestListener;
+    }
+
+
+    public void setEventCardFlippedListener(Consumer<Integer> eventCardFlippedListener) {
+        this.eventCardFlippedListener = eventCardFlippedListener;
     }
 }
