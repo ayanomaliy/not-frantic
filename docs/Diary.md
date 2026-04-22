@@ -142,19 +142,67 @@ In addition, I created a new `AppMain` launcher class so that the executable `no
 
 ### Game Rules (Sevval)
 
-#### What did we do today?
+## What did we do today?
 
-- The Game rules have been revised, officially established and uploaded. 
-- Waiting for QA slides to work on.
+- The game rules were revised, improved, and officially finalized.
+- The updated rules were uploaded.
+- Currently waiting for the QA slides in order to continue with the next tasks.
 
-#### Work Summary
+## Work Summary
 
-I revised and improved the rule set for our game. The goal was to create a clearer and more structured set of rules so that players can easily understand how the game works.
-First, the rules were reorganized into clear sections, including the game objective, scoring system, card types turn structure and special mechanics. This structure helps players quickly find important infos and understand the gameplay.
-The objective of the game is for players to get rid of all the cards in their hand using their different cards strategically to affect other players. The game ends when player has no cards left or when a special event ends the game. The winner is determined by counting the points of the cards remaining in each players hand.
-The rules describe different types of cards. Normal cards are played by matching color or number, while black cards trigger event cards that affect all players. Effect cards introduce special abilities that allow players to manipulate the game, such as exchanging hands or forcing others to draw cards.
-Event cards ass unpredictable elements to the game. When triggered, they create situations that affect all players, such as reshuffling all hands or starting a final countdown of rounds.
-Overall, the revised rules make the game easier to understand while keeping its strategic and chaotic gameplay.
+Today, I focused on revising and improving the rule set for our game. The main goal was to create a clearer, more structured, and professional version of the rules so that new players can easily understand how the game works.
+
+### Rule Structure
+
+First, the rules were reorganized into clearly defined sections, including:
+
+- **Game Objective**
+- **Scoring System**
+- **Card Types**
+- **Turn Structure**
+- **Special Mechanics**
+
+This new structure helps players quickly find important information and makes the gameplay easier to learn.
+
+### Game Objective
+
+The objective of the game is to get rid of all cards in your hand before the other players. Players must use their cards strategically in order to influence the game and affect their opponents.
+
+The game ends when:
+
+- A player has no cards left, or
+- A special event card triggers the end of the game.
+
+The winner is determined by counting the total points of the remaining cards in each player's hand. The player with the lowest number of points wins.
+
+### Card Types
+
+The revised rules explain the different card categories in detail:
+
+#### Normal Cards
+- Can be played by matching either the **color** or the **number** of the top card on the discard pile.
+
+#### Black Cards
+- Trigger **event cards** that affect all players.
+
+#### Effect Cards
+- Provide special abilities that allow players to manipulate the game.
+- Examples include:
+  - Exchanging hands with another player
+  - Forcing opponents to draw cards
+  - Changing the direction of play
+
+### Event Cards
+
+Event cards add unpredictable and chaotic elements to the game. When triggered, they create situations that impact every player. Examples include:
+
+- Reshuffling all players’ hands
+- Starting a final countdown of rounds
+- Random global effects that change the flow of the game
+
+### Conclusion
+
+Overall, the revised rules make the game much easier to understand while preserving its strategic, competitive, and chaotic gameplay style. The improved formatting and structure also make the rules more professional and user-friendly.
 
 #### Future Plans
 
@@ -224,7 +272,7 @@ Today, I focused on building the JavaFX GUI for the client and integrating it wi
   - Clear separation between UI, controller, state, and networking
   - Reuse of the same message protocol across both GUI and CLI clients
 
-#### Next Steps
+#### Futrue Plans
 
 - Improve the **visual design of the GUI** (layout, spacing, styling)
 - Make the GUI more intuitive and user-friendly
@@ -342,12 +390,43 @@ Today, I focused on restructuring the client architecture and improving the game
 
 ## Date: April 8, 2026
 
-### QA (Sevval)
+### QA / Code Coverage (Sevval)
 
-#### What did we do today?
+## What did I do today?
 
-Today I did the measurements with MetricsReloaded then started to work with Jacoco but the test gave me 0% so i tried to figure out where the problem is. I figured our Java 25 is not compatible with our Grandle, so I would need to change our Java version to 21-22 since Grandle doesn't work with Java 25, but I also don't know if we are allowed to change our Java version, so I messaged our tutor and now im waiting for a response.
-Our QA concept is finished besides the Jacoco part. 
+- I completed the measurements using **MetricsReloaded**.
+- I started working with **JaCoCo** for test coverage analysis.
+- The generated report showed **0% coverage**, so I began investigating the issue.
+- I identified a possible compatibility problem between **Java 25** and **Gradle**.
+- I contacted our tutor for clarification and I am currently waiting for a response.
+- Our **QA concept** is finished except for the JaCoCo integration part.
+
+## What did I do today?
+
+Today, I focused on the quality assurance and code analysis section of our project.
+
+### MetricsReloaded
+
+First, I completed the required software measurements using **MetricsReloaded**. These metrics help us analyze the structure and quality of the codebase, for example complexity, maintainability, and other important indicators. This step is important for evaluating the technical quality of our project.
+
+### JaCoCo Test Coverage
+
+After that, I started working with **JaCoCo**, which we use to measure automated test coverage. The goal was to generate a report showing how much of our code is tested by unit tests.
+
+However, after running the tests, the report displayed **0% coverage**, which indicated that something was not working correctly. Because of this, I began troubleshooting the setup and checking possible causes.
+
+### Problem Analysis
+
+After investigating the issue, I found that the most likely reason is a **compatibility conflict between Java 25 and Gradle**. Our current Gradle version appears not to fully support Java 25, which may prevent JaCoCo from running correctly.
+
+A possible solution would be to switch the project to **Java 21 or Java 22**, since these versions are generally more stable and commonly supported by Gradle tools. However, before making such a change, I wanted to confirm whether we are allowed to modify the Java version for the project.
+
+## Work Summary
+At the moment, our **QA concept is fully completed except for the JaCoCo coverage part**. Once the compatibility issue is resolved, the final section can be finished quickly.
+
+### Future Pans
+
+To clarify this, I contacted our tutor and am currently waiting for a response. Once I receive feedback, I can continue with the JaCoCo setup and finalize the remaining QA section.
 
 ## Date: April 8, 2026 (Senanur)
 
@@ -402,13 +481,42 @@ Today, I worked on improving the lobby system by enforcing stricter join rules a
 
 ## Date: April 11, 2026
 
-### QA (Sevval)
+### QA / Project Planning (Sevval)
 
-#### What did we do today?
-Since I thought our Java version doesn't work with javacoco, I messaged our tutor and we are in touch trying to solve this problem. 
-QA Concept is missing just the javacoco part and I'll revise the project plan soon since we didn't get the points for it on MS1.
-Our QA report is finished and will be uploaded. 
-For our Project plan I decided to redo it tomorrow and finish it.
+## What did we do today?
+
+- I contacted our tutor because I suspected that our current Java version is causing problems with **JaCoCo**.
+- We are currently in contact and working on a solution for the issue.
+- The **QA Concept** is almost complete and only the JaCoCo section is still missing.
+- Our **QA Report** is finished and will be uploaded soon.
+- I also planned to revise the **Project Plan**, since we did not receive the points for it in **MS1**.
+- I decided to fully redo the Project Plan tomorrow and complete it.
+
+## What did I do today?
+
+Today, I mainly focused on the quality assurance documentation and project organization.
+
+### JaCoCo / Java Compatibility Issue
+
+Since I believed that our current Java version might not be compatible with **JaCoCo**, I contacted our tutor to clarify the problem. We are now in communication and trying to find the best solution so that the coverage tool can work correctly. Resolving this issue is important because the final missing part of our QA Concept depends on the successful JaCoCo integration.
+
+### QA Concept
+
+The **QA Concept** is nearly finished. At the moment, only the JaCoCo coverage section is still missing. Once the technical issue has been solved, this remaining part can be completed quickly.
+
+### QA Report
+
+In addition, the **QA Report** has already been completed. It is ready for submission and will be uploaded shortly. This means that the majority of our quality assurance documentation is already finalized.
+
+### Project Plan Revision
+
+Another important task was reviewing our **Project Plan**. Since we did not receive the points for it in **MS1**, I decided that it would be better to revise and improve it completely instead of only making small changes.
+
+My plan is to redo the Project Plan tomorrow and finish a stronger, clearer, and more professional version that better meets the requirements.
+
+### Work Summary
+
+Overall, most of the QA work is completed, the report is ready, and the remaining focus is on solving the JaCoCo issue and improving the Project Plan.
 
 ## Date: April 12, 2026 (Aiysha)
 
@@ -448,30 +556,111 @@ Today, I worked on cleaning up several parts of the project that were still roug
 
 ### QA (Sevval)
 
-#### What did we do today?
-Today I redid our project plan and did a gantt chart aswell. 
-I uploaded the project plan and our qa concept.
+## What did I do today?
+
+- I completely revised and recreated our **Project Plan**.
+- I also created a new **Gantt Chart** to improve the planning and scheduling of the project.
+- I uploaded the finished **Project Plan**.
+- I uploaded our completed **QA Concept** as well.
+- In general, I focused on improving the organization and documentation of our project.
+
+### Project Plan Revision
+
+One of the main tasks was to redo our **Project Plan**. The goal was to create a clearer, more structured, and more professional version that better reflects the current progress of the project and meets the required standards. I reviewed the previous version, improved the content, and reorganized the planning details.
+
+### Gantt Chart Creation
+
+In addition, I created a **Gantt Chart** to visually represent the timeline of the project. This chart helps to organize tasks, deadlines, milestones, and responsibilities more effectively. It also provides a better overview of the project schedule and makes progress tracking easier.
+
+### Uploads and Documentation
+
+After completing the revisions, I uploaded the updated **Project Plan**. I also uploaded our finished **QA Concept**, which means an important part of our quality assurance documentation is now completed and submitted.
+
+### Work Summary
+
+Overall, today’s work helped improve both the planning structure and the project documentation. With the updated project plan, new Gantt chart, and uploaded QA documents, our organizational work is now in a much stronger state.
 
 ## Date: April 16, 2026
-### Win Endscreen (Sevval, Aiysha)
-We created a new view GameEndView to display the end score and tested if it works, which it did. 
-We figured out that something might be wrong with the /cheatwin command.
 
-#### Future Plans
-* Connect the score with persistent High Score storing. It should store the High Score in a txt file.
-* Figure out a way to display the resolve effect and the layout of the game.
-* Figure out what is wrong with the /cheatwin command
+### Win Endscreen (Sevval, Aiysha)
+
+## What did we do today?
+
+- We created a new view called **GameEndView**.
+- The new view displays the final score at the end of the game.
+- We tested the feature successfully and confirmed that it works.
+- We also discovered that there may be an issue with the **/cheatwin** command.
+
+## Work Summary
+
+Today, we focused on improving the endgame experience by creating a dedicated win endscreen for the game.
+
+### GameEndView Implementation
+
+We developed a new screen called **GameEndView**, which is shown when the game ends. The purpose of this view is to present the final results in a clear and user-friendly way. It currently displays the end score so players can immediately see the outcome of the match once the game is finished.
+
+Creating a separate endscreen improves the overall structure of the game, since the transition from gameplay to results now feels more complete and professional. It also gives us a good foundation for adding more endgame features later.
+
+### Testing
+
+After implementing the new view, we tested it to ensure that it opens correctly and displays the score as intended. The tests were successful, and the GameEndView is functioning properly at the moment.
+
+### /cheatwin Command Issue
+
+During testing, we noticed that the **/cheatwin** command does not seem to work correctly. Since this command is useful for triggering an instant win state during development and testing, we identified it as an issue that needs to be investigated further.
+
+## Future Plans
+
+### High Score System
+
+- Connect the final score with a persistent **High Score** system.
+- Store the highest score in a **.txt file** so it remains saved after closing the game.
+
+### Effects and Layout
+
+- Find a better way to display the **resolve effect**.
+- Improve the overall **game layout** and visual presentation.
+
+### /cheatwin Debugging
+
+- Investigate what is causing the **/cheatwin** command to fail.
+- Fix the issue so it can be used again for testing purposes.
 
 ## Date: April 21, 2026
+
 ### Win Endscreen (Sevval, Aiysha)
-During this work session, we focused on improving the win endscreen system and adding new achievement-related features to the game. One of the main tasks was fixing the /cheatwin command. Previously, this command did not function correctly or did not trigger the intended result. We reviewed the code, identified the issues, and corrected the logic so that the command now works properly. When used, /cheatwin successfully activates the win condition and allows the game to immediately display the win endscreen. This is especially useful for testing purposes, as it allows us to quickly check whether the endscreen, rewards, and related systems are functioning as expected without needing to finish a full match.
 
-In addition, we worked on the achievement system by creating a HighScoreHistory list for the “High Score” achievement. This list is used to store and track players’ previous scores over time. By saving score history, the system can now compare current results with earlier performances and determine whether a player has reached a new personal best or unlocked the achievement. This creates a stronger sense of progression and gives players an extra motivation to improve their results.
+## What did we do today?
 
-The HighScoreHistory feature also lays the foundation for future expansions, such as detailed statistics, leaderboards, progress tracking, or additional score-based achievements. Overall, this session helped improve both the technical testing tools and the long-term replay value of the game.
+- We improved the **win endscreen system**.
+- We fixed the **/cheatwin** command so it now works correctly.
+- We created a **HighScoreHistory** list for the **High Score** achievement.
+- We expanded the achievement system with score tracking features.
 
-#### Future Plans
-We have to fix our Unit tests and we also want to have custom sound effects.
+## Work Summary
+
+During this work session, we focused on improving the win endscreen system and adding new achievement-related features to the game.
+
+### /cheatwin Command Fix
+
+One of the main tasks was fixing the **/cheatwin** command. Previously, this command did not function correctly or did not trigger the intended result. We reviewed the code, identified the issues, and corrected the logic so that the command now works properly.
+
+When used, **/cheatwin** successfully activates the win condition and immediately displays the win endscreen. This is especially useful for development and testing purposes, since it allows us to quickly verify whether the endscreen, rewards, and related systems are functioning correctly without needing to finish a full game round.
+
+### HighScoreHistory Achievement System
+
+In addition, we worked on the achievement system by creating a **HighScoreHistory** list for the **High Score** achievement. This list is used to store and track players’ previous scores over time.
+
+By saving score history, the system can now compare current results with earlier performances and determine whether a player has reached a new personal best or unlocked the achievement. This creates a stronger sense of progression and gives players additional motivation to improve their results.
+
+### Conclusion
+
+Overall, this session improved both the technical testing tools and the long-term replay value of the game. The fixed cheat command simplifies development testing, while the new score history system makes progression more rewarding for players.
+
+## Future Plans
+
+- Fix and improve our **unit tests**.
+- Add **custom sound effects** for special cards, events, and actions.
 
 ## Date: April 22, 2026 (Senanur)
 
@@ -494,14 +683,74 @@ Updated failing tests after UI refactor from draw button to draw pile.
 - Increase coverage for user interactions.
 
 ## Date: April 22, 2026
+
 ### GUI (Sevval, Aiysha)
-During this work phase, we focused intensively on improving the GUI of our game and implemented several important upgrades. One of the main tasks was working on the **draw pile** and the **discard pile**. At the beginning, both piles were only displayed as white placeholders and were not properly integrated into the GUI. This meant that they were neither visually appealing nor functionally connected to the game system.
-As a first step, we redesigned the appearance of both piles. We adjusted their **size, position, and overall layout** so that they fit better into the game board and matched the rest of the interface. After that, we programmed the full functionality of both piles directly into the GUI. The **draw pile** now allows players to draw cards directly by clicking on the pile in the game area, while the **discard pile** correctly displays and updates the played cards. Because of this improvement, we were also able to remove the previous **“Draw Card” button**, since drawing cards now works directly through the GUI. This makes the gameplay more intuitive and realistic.
-Besides working on the card piles, we also focused on visual effects to improve the overall player experience. We implemented a **blur effect** together with the message **“It is your turn.”** Whenever it is a player’s turn, the background becomes slightly blurred and the message is highlighted on the screen. This makes it immediately clear whose turn it is and improves the clarity of the game flow. At the same time, it gives the game a more modern and polished look.
-In addition, we added new **sound effects** for special game actions. For the **“F you” card**, we created and implemented a unique sound effect. Whenever this card is played, the special sound is triggered, giving the card more impact and making the gameplay more dynamic and entertaining.
+
+## What did we do today?
+
+- We improved the graphical user interface (**GUI**) of the game.
+- We redesigned and fully integrated the **draw pile** and **discard pile**.
+- We removed the old **Draw Card** button because drawing now works directly in the GUI.
+- We added a **blur effect** with the message **“It is your turn.”**
+- We implemented a custom sound effect for the **“F you”** card.
+
+## Work Summary
+
+During this work phase, we focused intensively on improving the **GUI** of our game and implemented several important upgrades.
+
 Overall, we were able to significantly improve both the **functionality** and the **design** of our game. The draw and discard piles are now fully integrated into the GUI, unnecessary buttons were removed, new visual effects were added, and special sounds make the game feel more immersive and engaging.
 
+### Draw Pile & Discard Pile
 
-#### Future Plans
-Our future plans are to continue improving the visual effects and finalizing the GUI of the game. For the effect cards, we want to implement a **blur effect combined with a message display**, similar to the “It is your turn” notification. Whenever a special effect card is played, the background should blur and an appropriate message should appear on the screen to clearly show the card’s action and impact. This will make the gameplay more interactive, easier to understand, and visually more appealing.
-In addition, we plan to fully complete and polish the GUI. This includes refining the layout, improving the design consistency, adjusting remaining elements, and ensuring that all game features are smoothly integrated into the interface. Our goal is to create a clean, user-friendly, and professional-looking game experience.
+One of the main tasks was working on the **draw pile** and the **discard pile**. At the beginning, both piles were only displayed as white placeholders and were not properly integrated into the GUI. This meant that they were neither visually appealing nor functionally connected to the game system.
+
+As a first step, we redesigned the appearance of both piles. We adjusted their **size, position, and overall layout** so that they fit better into the game board and matched the rest of the interface.
+
+After that, we programmed the full functionality of both piles directly into the GUI:
+
+- The **draw pile** now allows players to draw cards directly by clicking on the pile.
+- The **discard pile** correctly displays and updates the played cards.
+
+Because of this improvement, we were also able to remove the previous **Draw Card** button, since drawing cards now works directly through the GUI. This makes the gameplay more intuitive and realistic.
+
+### Visual Effects
+
+Besides working on the card piles, we also focused on visual effects to improve the overall player experience.
+
+We implemented a **blur effect** together with the message **“It is your turn.”** Whenever it is a player’s turn:
+
+- The background becomes slightly blurred.
+- The message is highlighted on the screen.
+
+This makes it immediately clear whose turn it is and improves the clarity of the game flow. At the same time, it gives the game a more modern and polished look.
+
+### Sound Effects
+
+In addition, we added new sound effects for special game actions.
+
+For the **“F you”** card, we created and implemented a unique sound effect. Whenever this card is played, the special sound is triggered, giving the card more impact and making the gameplay more dynamic and entertaining.
+
+## Future Plans
+
+### Effect Card Notifications
+
+Our future plans are to continue improving the visual effects. For the **effect cards**, we want to implement a blur effect combined with a message display, similar to the **“It is your turn”** notification.
+
+Whenever a special effect card is played:
+
+- The background should blur.
+- A fitting message should appear on the screen.
+- The card’s action and impact should be clearly shown.
+
+This will make the gameplay more interactive, easier to understand, and visually more appealing.
+
+### Final GUI Polish
+
+In addition, we plan to fully complete and polish the GUI. This includes:
+
+- Refining the layout
+- Improving design consistency
+- Adjusting remaining elements
+- Ensuring all game features are smoothly integrated
+
+Our goal is to create a clean, user-friendly, and professional-looking game experience.  
