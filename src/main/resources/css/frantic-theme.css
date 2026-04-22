@@ -297,3 +297,13 @@
 .button-box {
     -fx-alignment: center;
 }
+
+
+.draw-pile-clickable {
+    -fx-cursor: hand;
+}
+
+.draw-pile-clickable:hover {
+    -fx-scale-x: 1.03;
+    -fx-scale-y: 1.03;
+}

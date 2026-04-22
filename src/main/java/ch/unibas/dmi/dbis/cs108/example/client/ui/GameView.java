@@ -59,7 +59,9 @@ public class GameView extends BorderPane {
     private final Label phaseLabel = new Label("Phase: -");
     private final Label discardTopLabel = new Label("Top Card: -");
 
-    private final Button drawButton = new Button("Draw Card");
+    private final StackPane drawPilePane = new StackPane();
+    private final StackPane discardPilePane = new StackPane();
+
     private final Button endTurnButton = new Button("End Turn");
 
     private final FlowPane playerHandPane = new FlowPane();
@@ -106,7 +108,12 @@ public class GameView extends BorderPane {
      * Applies shared CSS classes and basic control configuration.
      */
     private void configureControls() {
-        drawButton.getStyleClass().addAll("frantic-button", "primary-button");
+        drawPilePane.getStyleClass().addAll("pile-placeholder", "draw-pile-clickable");
+        discardPilePane.getStyleClass().add("pile-placeholder");
+
+        drawPilePane.setFocusTraversable(false);
+        discardPilePane.setFocusTraversable(false);
+
         endTurnButton.getStyleClass().addAll("frantic-button", "secondary-button");
         leaveButton.getStyleClass().addAll("frantic-button", "danger-button");
 
@@ -198,8 +205,8 @@ public class GameView extends BorderPane {
         HBox pilesBox = new HBox(28);
         pilesBox.setAlignment(Pos.CENTER);
 
-        VBox drawPileBox = createPileBox("Draw Pile");
-        VBox discardPileBox = createPileBox("Discard Pile");
+        VBox drawPileBox = createPileBox("Draw Pile", drawPilePane);
+        VBox discardPileBox = createPileBox("Discard Pile", discardPilePane);
         pilesBox.getChildren().addAll(drawPileBox, discardPileBox);
 
         currentPlayerLabel.setWrapText(true);
@@ -209,8 +216,7 @@ public class GameView extends BorderPane {
         HBox statusRow = new HBox(20, currentPlayerLabel, phaseLabel, discardTopLabel);
         statusRow.setAlignment(Pos.CENTER);
 
-        HBox buttonRow = new HBox(10, drawButton, endTurnButton);
-        buttonRow.setAlignment(Pos.CENTER);
+        HBox buttonRow = new HBox(10, endTurnButton);
 
         VBox centerWrapper = new VBox(24, pilesBox, statusRow, buttonRow);
         centerWrapper.setAlignment(Pos.CENTER);
@@ -442,17 +448,15 @@ public class GameView extends BorderPane {
      * @param titleText the pile title
      * @return the configured pile box
      */
-    private VBox createPileBox(String titleText) {
+    private VBox createPileBox(String titleText, StackPane pilePane) {
         Label title = new Label(titleText);
         title.getStyleClass().add("field-label");
 
-        StackPane cardPlaceholder = new StackPane();
-        cardPlaceholder.setPrefSize(110, 150);
-        cardPlaceholder.setMinSize(110, 150);
-        cardPlaceholder.setMaxSize(110, 150);
-        cardPlaceholder.getStyleClass().add("pile-placeholder");
+        pilePane.setPrefSize(110, 150);
+        pilePane.setMinSize(110, 150);
+        pilePane.setMaxSize(110, 150);
 
-        VBox box = new VBox(10, title, cardPlaceholder);
+        VBox box = new VBox(10, title, pilePane);
         box.setAlignment(Pos.CENTER);
         return box;
     }
@@ -484,14 +488,6 @@ public class GameView extends BorderPane {
         return discardTopLabel;
     }
 
-    /**
-     * Returns the draw button.
-     *
-     * @return the draw button
-     */
-    public Button getDrawButton() {
-        return drawButton;
-    }
 
     /**
      * Returns the end-turn button.
@@ -599,5 +595,9 @@ public class GameView extends BorderPane {
      */
     public Button getToggleChatButton() {
         return toggleChatButton;
+    }
+
+    public StackPane getDrawPilePane() {
+        return drawPilePane;
     }
 }

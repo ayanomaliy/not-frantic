@@ -256,7 +256,7 @@ public class MainController {
         view.getCommandButton().setOnAction(e -> sendCommand(view));
         view.getCommandInput().setOnAction(e -> sendCommand(view));
 
-        view.getDrawButton().setOnAction(e -> {
+        view.getDrawPilePane().setOnMouseClicked(e -> {
             registry.getSoundId("CARD_DRAWN").ifPresent(soundManager::play);
             networkClient.drawCard();
         });
