@@ -418,3 +418,13 @@
     -fx-min-width: 90;
     -fx-min-height: 54;
 }
+
+
+.effect-response-card-pane {
+    -fx-alignment: center;
+}
+
+.effect-response-selected-card {
+    -fx-border-color: color-warm-dark;
+    -fx-border-width: 3;
+}

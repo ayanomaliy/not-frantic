@@ -282,6 +282,26 @@ public class FxNetworkClient implements ClientMessageHandler {
     }
 
 
+    /**
+     * Sends a GIFT effect response.
+     *
+     * @param targetPlayer the receiving player
+     * @param cardIds the selected card ids
+     */
+    public void resolveGift(String targetPlayer, List<Integer> cardIds) {
+        protocolClient.resolveGift(targetPlayer, cardIds);
+    }
+
+    /**
+     * Sends an EXCHANGE effect response.
+     *
+     * @param targetPlayer the exchange partner
+     * @param cardIds the selected card ids
+     */
+    public void resolveExchange(String targetPlayer, List<Integer> cardIds) {
+        protocolClient.resolveExchange(targetPlayer, cardIds);
+    }
+
     // --------------------------------------------------------------------------------
 
     /**

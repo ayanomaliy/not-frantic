@@ -38,7 +38,7 @@ public class CardValidator {
     public static boolean canPlay(Card card, Card topOfDiscard, GameState state) {
         return switch (card.type()) {
             case COLOR -> canPlayColorCard(card, topOfDiscard, state);
-            case BLACK -> canPlayBlackCard(card, topOfDiscard);
+            case BLACK -> canPlayBlackCard(card, topOfDiscard, state);
             case SPECIAL_SINGLE -> !state.isSpecialsBlocked() && canPlaySpecialSingle(card, topOfDiscard, state);
             case SPECIAL_FOUR -> !state.isSpecialsBlocked();
             case FUCK_YOU -> state.getCurrentPlayer().getHandSize() == 10;
@@ -85,7 +85,13 @@ public class CardValidator {
      * Same number as top AND top must not be a black card.
      * Active requests do not affect black card play eligibility.
      */
-    private static boolean canPlayBlackCard(Card card, Card top) {
+    private static boolean canPlayBlackCard(Card card, Card top, GameState state) {
+        Integer reqNumber = state.getRequestedNumber();
+
+        if (reqNumber != null) {
+            return top.type() != CardType.BLACK && card.value() == reqNumber;
+        }
+
         return top.type() != CardType.BLACK && card.value() == top.value();
     }
 

@@ -277,7 +277,6 @@ public class MainController {
         view.getLeaveButton().setOnAction(e -> leaveCurrentLobbyAndShowLobbyView());
 
         //EFFECTS:
-        // Fantastic:
         networkClient.setEffectRequestListener(effectPayload -> {
             if (effectPayload == null || effectPayload.isBlank()) {
                 return;
@@ -286,41 +285,36 @@ public class MainController {
             String payload = effectPayload.trim();
             String upper = payload.toUpperCase();
 
-            String username = state.getUsername();
-            if (username == null || username.isBlank()) {
+            if (isEffectRequestForMe(payload, "FANTASTIC")) {
+                showFantasticEffectDialog(view);
                 return;
             }
 
-            if (upper.startsWith("FANTASTIC:")) {
-                String targetPlayer = payload.substring("FANTASTIC:".length()).trim();
-                if (targetPlayer.equals(username) || targetPlayer.startsWith(username + "(")) {
-                    showFantasticEffectDialog(view);
-                }
+            if (isEffectRequestForMe(payload, "EQUALITY")) {
+                showEqualityEffectDialog(view);
                 return;
             }
 
-            if (upper.startsWith("EQUALITY:")) {
-                String targetPlayer = payload.substring("EQUALITY:".length()).trim();
-                if (targetPlayer.equals(username) || targetPlayer.startsWith(username + "(")) {
-                    showEqualityEffectDialog(view);
-                }
+            if (isEffectRequestForMe(payload, "FANTASTIC_FOUR")) {
+                showFantasticFourEffectDialog(view);
                 return;
             }
 
-            if (upper.startsWith("FANTASTIC_FOUR:")) {
-                String targetPlayer = payload.substring("FANTASTIC_FOUR:".length()).trim();
-                if (targetPlayer.equals(username) || targetPlayer.startsWith(username + "(")) {
-                    showFantasticFourEffectDialog(view);
-                }
+            if (isEffectRequestForMe(payload, "GIFT")) {
+                showGiftEffectDialog(view);
                 return;
             }
 
-            if (upper.startsWith("SECOND_CHANCE:")) {
-                String targetPlayer = payload.substring("SECOND_CHANCE:".length()).trim();
-                if (targetPlayer.equals(username) || targetPlayer.startsWith(username + "(")) {
-                    state.setPendingEffectRequest(payload);
-                    state.getGameMessages().add("[INFO] Second Chance: click a card to play it, or click draw pile to draw.");
-                }
+            if (isEffectRequestForMe(payload, "SECOND_CHANCE")) {
+                state.setPendingEffectRequest(payload);
+                state.getGameMessages().add(
+                        "[INFO] Second Chance: click a card to play it, or click draw pile to draw."
+                );
+            }
+
+            if (isEffectRequestForMe(payload, "EXCHANGE")) {
+                showExchangeEffectDialog(view);
+                return;
             }
         });
 
@@ -375,6 +369,25 @@ public class MainController {
     private void leaveCurrentLobbyAndShowLobbyView() {
         networkClient.leaveLobby();
         showLobbyView();
+    }
+
+    private boolean isEffectRequestForMe(String payload, String effectName) {
+        if (payload == null || payload.isBlank()) {
+            return false;
+        }
+
+        String username = state.getUsername();
+        if (username == null || username.isBlank()) {
+            return false;
+        }
+
+        String prefix = effectName + ":";
+        if (!payload.toUpperCase().startsWith(prefix)) {
+            return false;
+        }
+
+        String targetPlayer = payload.substring(prefix.length()).trim();
+        return targetPlayer.equals(username);
     }
 
     /**
@@ -793,19 +806,21 @@ public class MainController {
 
     private boolean isSecondChanceActiveForMe() {
         String payload = state.getPendingEffectRequest();
-        String username = state.getUsername();
-
-        if (payload == null || payload.isBlank() || username == null || username.isBlank()) {
+        if (payload == null || payload.isBlank()) {
             return false;
         }
 
-        String upper = payload.toUpperCase();
-        if (!upper.startsWith("SECOND_CHANCE:")) {
+        String username = state.getUsername();
+        if (username == null || username.isBlank()) {
+            return false;
+        }
+
+        if (!payload.toUpperCase().startsWith("SECOND_CHANCE:")) {
             return false;
         }
 
         String targetPlayer = payload.substring("SECOND_CHANCE:".length()).trim();
-        return targetPlayer.equals(username) || targetPlayer.startsWith(username + "(");
+        return targetPlayer.equals(username);
     }
 
     private void clearPendingEffectIfSecondChance() {
@@ -813,6 +828,68 @@ public class MainController {
         if (payload != null && payload.toUpperCase().startsWith("SECOND_CHANCE:")) {
             state.setPendingEffectRequest("");
         }
+    }
+
+    private void showGiftEffectDialog(GameView view) {
+        boolean alreadyOpen = view.getRootStack().getChildren().stream()
+                .anyMatch(node -> node instanceof GiftView);
+
+        if (alreadyOpen) {
+            return;
+        }
+
+        String username = state.getUsername();
+
+        java.util.List<String> selectablePlayers = state.getPlayers().stream()
+                .filter(name -> name != null && !name.isBlank())
+                .filter(name -> !name.equals(username))
+                .toList();
+
+        java.util.List<Integer> handCardIds = state.getCurrentHandCards().stream()
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .map(Integer::parseInt)
+                .toList();
+
+        GiftView effectView = new GiftView(selectablePlayers, handCardIds, registry);
+
+        effectView.setOnFinish((targetPlayer, cardIds) -> {
+            networkClient.resolveGift(targetPlayer, cardIds);
+            view.getRootStack().getChildren().remove(effectView);
+        });
+
+        view.getRootStack().getChildren().add(effectView);
+    }
+
+    private void showExchangeEffectDialog(GameView view) {
+        boolean alreadyOpen = view.getRootStack().getChildren().stream()
+                .anyMatch(node -> node instanceof ExchangeView);
+
+        if (alreadyOpen) {
+            return;
+        }
+
+        String username = state.getUsername();
+
+        java.util.List<String> selectablePlayers = state.getPlayers().stream()
+                .filter(name -> name != null && !name.isBlank())
+                .filter(name -> !name.equals(username))
+                .toList();
+
+        java.util.List<Integer> handCardIds = state.getCurrentHandCards().stream()
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .map(Integer::parseInt)
+                .toList();
+
+        ExchangeView effectView = new ExchangeView(selectablePlayers, handCardIds, registry);
+
+        effectView.setOnFinish((targetPlayer, cardIds) -> {
+            networkClient.resolveExchange(targetPlayer, cardIds);
+            view.getRootStack().getChildren().remove(effectView);
+        });
+
+        view.getRootStack().getChildren().add(effectView);
     }
 
 }
