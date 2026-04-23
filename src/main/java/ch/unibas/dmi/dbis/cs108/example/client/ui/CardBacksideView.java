@@ -1,6 +1,8 @@
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
 
-import com.fluxvend.svgfx.SvgImageView;
+import com.fluxvend.svgfx.utils.SvgLoader;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 
 /**
@@ -32,11 +34,13 @@ public class CardBacksideView extends StackPane {
 
         if (getClass().getResource(ASSET_PATH) != null) {
             try {
-                SvgImageView svgView = new SvgImageView(ASSET_PATH);
-                svgView.setPrefWidth(CARD_WIDTH);
-                svgView.setPrefHeight(CARD_HEIGHT);
-                svgView.setMouseTransparent(true);
-                getChildren().add(svgView);
+                Image img = SvgLoader.getInstance().loadSvgImage(ASSET_PATH, null, false, CARD_WIDTH, null);
+                ImageView imgView = new ImageView(img);
+                imgView.setPreserveRatio(true);
+                imgView.setFitWidth(CARD_WIDTH);
+                imgView.setFitHeight(CARD_HEIGHT);
+                imgView.setMouseTransparent(true);
+                getChildren().add(imgView);
             } catch (Exception e) {
                 System.err.println("[CardBacksideView] Cannot load backside asset: " + e.getMessage());
             }

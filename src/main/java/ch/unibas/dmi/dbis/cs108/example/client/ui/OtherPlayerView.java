@@ -191,6 +191,10 @@ public class OtherPlayerView extends Group {
         return fanPane.getChildren().size();
     }
 
+    boolean hasFaceUpCards() {
+        return fanPane.getChildren().stream().anyMatch(c -> c instanceof CardView);
+    }
+
     double getFanRotation() {
         return fanGroup.getRotate();
     }
