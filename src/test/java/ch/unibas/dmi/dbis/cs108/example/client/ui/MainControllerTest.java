@@ -688,7 +688,14 @@ class MainControllerTest {
         runOnFxAndWait(() -> {
             controller.showGameView();
             GameView view = (GameView) stage.getScene().getRoot();
-            //view.getDrawButton().fire();
+
+            // Simulate clicking draw pile
+            view.getDrawPilePane().fireEvent(new MouseEvent(
+                    MouseEvent.MOUSE_CLICKED, 0, 0, 0, 0,
+                    MouseButton.PRIMARY, 1,
+                    false, false, false, false,
+                    false, false, false, false, false, false, null));
+
             view.getEndTurnButton().fire();
             view.getLeaveButton().fire();
         });
