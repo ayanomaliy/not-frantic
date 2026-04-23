@@ -789,7 +789,7 @@ Today, I worked on expanding the JavaFX GUI so that special card effects no long
 
 In addition, I fixed several issues that came up during testing. I corrected how effect requests are targeted so that only the intended player sees the popup. I also added filtering so that players cannot select themselves in the Fantastic Four and Equality GUIs. On the server side, I tightened validation for Fantastic Four so that illegal self-targeting is rejected even if a client tries to send it anyway. Another bug I fixed was that hand updates were sometimes missing after event resolution, which caused the GUI to show stale cards until another action happened. I also improved the handling of Second Chance so that cards in hand and the draw pile can now be clicked directly during effect resolution instead of forcing command-line input.
 
-## Date: April 23, 2026
+## Date: April 23, 2026 (Denys)
 
 Documenting what I did a few days before. I created the asset-config file that allows you to assign colors, sounds and icons to cards, events, changes in game state e.t.c. Additonally created AssetConfig, AssetConfigLoader, AssetRegistry, SoundManager that all allow you to load the settings form asset-config into the JavaFX GUI. 
 
