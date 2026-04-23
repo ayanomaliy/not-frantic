@@ -173,14 +173,22 @@ class ProtocolIntegrationTest {
     }
 
     @Test
-    void parseEffectResponse_FANTASTIC_parsesColorAndNumber() {
+    void parseEffectResponse_FANTASTIC_parsesColorOnlyOrNumberOnly() {
         GameState state = twoPlayerState();
-        Object[] result = GameMessageParser.parseEffectResponse(
-                "FANTASTIC|BLUE|5", state, "Alice");
-        assertNotNull(result);
-        EffectArgs args = (EffectArgs) result[1];
-        assertEquals(CardColor.BLUE, args.getChosenColor());
-        assertEquals(5, args.getChosenNumber());
+
+        Object[] colorResult = GameMessageParser.parseEffectResponse(
+                "FANTASTIC|BLUE", state, "Alice");
+        assertNotNull(colorResult);
+        EffectArgs colorArgs = (EffectArgs) colorResult[1];
+        assertEquals(CardColor.BLUE, colorArgs.getChosenColor());
+        assertNull(colorArgs.getChosenNumber());
+
+        Object[] numberResult = GameMessageParser.parseEffectResponse(
+                "FANTASTIC||5", state, "Alice");
+        assertNotNull(numberResult);
+        EffectArgs numberArgs = (EffectArgs) numberResult[1];
+        assertNull(numberArgs.getChosenColor());
+        assertEquals(5, numberArgs.getChosenNumber());
     }
 
     @Test
@@ -225,10 +233,11 @@ class ProtocolIntegrationTest {
     void parseEffectResponse_COUNTERATTACK_parsesTarget() {
         GameState state = twoPlayerState();
         Object[] result = GameMessageParser.parseEffectResponse(
-                "COUNTERATTACK|Bob", state, "Alice");
+                "COUNTERATTACK|Bob|RED", state, "Alice");
         assertNotNull(result);
         EffectArgs args = (EffectArgs) result[1];
         assertEquals("Bob", args.getTargetPlayer());
+        assertEquals(CardColor.RED, args.getChosenColor());
     }
 
     // =========================================================================
