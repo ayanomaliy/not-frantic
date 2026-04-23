@@ -797,3 +797,7 @@ Documenting what I did a few days before. I created the asset-config file that a
 
 Next, I want to continue adding GUI support for the remaining special effects such as Gift, Exchange, Skip, Nice Try, and Counterattack, so that all effect resolution can eventually be done fully through the GUI.
 
+## Date: April 23, 2026
+
+### Testing and Bug fixes (Sevval, Aiysha)
+Today we tested the new GUI and the effect response views. We found some bugs regarding the end turn logic, as you were able to end the turn without drawing a card but we quickly fixed it.
