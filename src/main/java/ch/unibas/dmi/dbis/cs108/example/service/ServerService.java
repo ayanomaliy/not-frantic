@@ -1442,10 +1442,10 @@ public class ServerService {
 
         PlayerGameState current = state.getCurrentPlayer();
 
-        if (!current.hasDrawnThisTurn()) {
+        if (!current.hasPlayedThisTurn() && !current.hasDrawnThisTurn()) {
             session.send(new Message(
                     Message.Type.ERROR,
-                    "You may end your turn only after drawing a card."
+                    "You must play or draw before ending your turn."
             ).encode());
             return;
         }
