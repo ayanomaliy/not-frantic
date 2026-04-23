@@ -801,3 +801,39 @@ Next, I want to continue adding GUI support for the remaining special effects su
 
 ### Testing and Bug fixes (Sevval, Aiysha)
 Today we tested the new GUI and the effect response views. We found some bugs regarding the end turn logic, as you were able to end the turn without drawing a card but we quickly fixed it.
+
+## Date: April 23, 2026
+
+### Test Stabilization and Game Logic Refinement (Senanur)
+
+#### What did we do today?
+Today, I focused on stabilizing the test suite and aligning existing tests with the current game logic. The goal was to ensure consistency between implementation and expected behavior, especially for turn handling and game rules.
+
+#### Work Summary
+- Updated multiple tests to reflect the **current game logic and protocol behavior**.
+- Fixed inconsistencies between implementation and outdated test expectations.
+
+- Refined **turn handling logic**:
+  - Updated tests to enforce that a player must **perform an action (draw or play)** before ending their turn.
+  - Adjusted `TurnEngine` tests accordingly.
+
+- Improved **game rule validation**:
+  - Fixed tests related to special rules such as **counterattack** and **"fantastic four"** behavior.
+  - Ensured correct handling of the **current acting player** in edge cases (e.g., NICE_TRY scenario).
+
+- Updated **protocol and serialization tests**:
+  - Adapted `ProtocolIntegrationTest` to match updated **effect response parsing rules**.
+  - Fixed `GameStateSerializer` tests to reflect the **new payload format**.
+
+- Updated **UI-related tests**:
+  - Modified `MainController` tests to use the **draw pile interaction** instead of the removed draw button.
+  - Adjusted `FxNetworkClient` tests for correctly formatted **top card labels**.
+
+- Cleaned up the test suite:
+  - Removed **brittle tests** that depended on UI or assets.
+  - Improved overall test reliability and maintainability.
+
+#### Future Plans
+- Continue ensuring that all tests reflect the actual game logic and remain stable over time.
+- Add additional edge case tests for turn handling and special card effects.
+- Strengthen synchronization between server logic and client-side state.
