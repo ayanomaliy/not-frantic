@@ -353,9 +353,17 @@ class EffectResolverTest {
 
     @Test
     void niceTry_targetDrawsThreeCards_roundContinues() {
-        // Simulate Alice having just emptied her hand → ROUND_END
+        // Move the current player from Alice to Bob, because Bob is the acting player
+        state.advanceToNextPlayer();
+
+        // Simulate Alice having just emptied her hand
         PlayerGameState alice = state.getPlayer("Alice");
         alice.getHand().clear();
+
+        // NICE_TRY is being resolved after Bob has already played the triggering card
+        state.getCurrentPlayer().setHasPlayedThisTurn(true);
+
+        // Simulate the intermediate round-end state before NICE_TRY restores the round
         state.setPhase(GamePhase.ROUND_END);
 
         state.getPendingEffects().push(SpecialEffect.NICE_TRY);
@@ -363,8 +371,8 @@ class EffectResolverTest {
                 EffectArgs.withTarget("Alice"));
 
         assertEquals(3, alice.getHandSize());
-        // endTurn was called → phase is TURN_START (not ROUND_END)
         assertEquals(GamePhase.TURN_START, state.getPhase());
+        assertEquals("Charlie", state.getCurrentPlayer().getPlayerName());
     }
 
     @Test
