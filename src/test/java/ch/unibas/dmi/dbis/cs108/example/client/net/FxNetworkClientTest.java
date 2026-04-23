@@ -818,6 +818,7 @@ class FxNetworkClientTest {
     @Test
     void gameStatePayloadParsesPlayerInfoList() throws Exception {
         TestContext ctx = createContext();
+        ctx.state().setUsername("Alice");
 
         ctx.fxClient().onMessage(new Message(
                 Message.Type.GAME_STATE,
@@ -830,13 +831,15 @@ class FxNetworkClientTest {
 
         assertEquals("Alice", infos.get(0).name());
         assertEquals(5, infos.get(0).handSize());
-        assertEquals("", infos.get(0).color());
+        assertEquals("red", infos.get(0).color());
 
         assertEquals("Bob", infos.get(1).name());
         assertEquals(3, infos.get(1).handSize());
+        assertEquals("green", infos.get(1).color());
 
         assertEquals("Charlie", infos.get(2).name());
         assertEquals(7, infos.get(2).handSize());
+        assertEquals("blue", infos.get(2).color());
     }
 
     /**

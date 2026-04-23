@@ -6,9 +6,12 @@ import ch.unibas.dmi.dbis.cs108.example.service.Message;
 import javafx.application.Platform;
 
 import java.io.IOException;
+import ch.unibas.dmi.dbis.cs108.example.client.ui.PlayerColorAssigner;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import ch.unibas.dmi.dbis.cs108.example.model.game.CardColor;
 import java.util.function.Consumer;
@@ -697,7 +700,8 @@ public class FxNetworkClient implements ClientMessageHandler {
 
         if (playersIndex >= 0) {
             String playersSuffix = payload.substring(playersIndex + ",players:".length());
-            List<ClientState.PlayerInfo> infos = new ArrayList<>();
+            List<String> names = new ArrayList<>();
+            List<Integer> handSizes = new ArrayList<>();
             for (String token : playersSuffix.split(",")) {
                 String[] parts = token.split(":", 3);
                 if (parts.length < 2) {
@@ -709,7 +713,14 @@ public class FxNetworkClient implements ClientMessageHandler {
                     handSize = Integer.parseInt(parts[1].trim());
                 } catch (NumberFormatException ignored) {
                 }
-                infos.add(new ClientState.PlayerInfo(name, handSize, ""));
+                names.add(name);
+                handSizes.add(handSize);
+            }
+            Map<String, String> colors = PlayerColorAssigner.assign(names, state.getUsername());
+            List<ClientState.PlayerInfo> infos = new ArrayList<>(names.size());
+            for (int i = 0; i < names.size(); i++) {
+                infos.add(new ClientState.PlayerInfo(names.get(i), handSizes.get(i),
+                        colors.getOrDefault(names.get(i), "")));
             }
             state.getPlayerInfoList().setAll(infos);
         }

@@ -546,3 +546,24 @@
     -fx-font-size: 16px;
     -fx-text-fill: #ead6c6;
 }
+
+/* =========================
+   Card backside
+   ========================= */
+
+.card-backside {
+    -fx-background-color: #ffffff;
+}
+
+/* =========================
+   Player colors
+   ========================= */
+
+.player-color-red    { -fx-fill: #e74c3c; }
+.player-color-green  { -fx-fill: #2ecc71; }
+.player-color-blue   { -fx-fill: #3498db; }
+.player-color-yellow { -fx-fill: #f1c40f; }
+.player-color-purple { -fx-fill: #9b59b6; }
+.player-color-pink   { -fx-fill: #e91e8c; }
+.player-color-orange { -fx-fill: #e67e22; }
+.player-color-teal   { -fx-fill: #1abc9c; }
