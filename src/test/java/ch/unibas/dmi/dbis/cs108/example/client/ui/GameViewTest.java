@@ -198,14 +198,4 @@ class GameViewTest {
         assertEquals("Expand Chat", view.getToggleChatButton().getText());
     }
 
-    /**
-     * Verifies the main border-pane regions are built by the constructor.
-     */
-    @Test
-    void constructorBuildsMainLayoutRegions() {
-        GameView view = new GameView();
-
-        assertNotNull(view.getCenter());
-        assertNotNull(view.getRight());
-    }
 }

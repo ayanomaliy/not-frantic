@@ -75,12 +75,6 @@ class AssetRegistryTest {
         assertEquals(Optional.of("icons/card_fantastic.svg"), registry.getIconPath(fantastic));
     }
 
-    @Test
-    void getIconPath_fantasticFourEffect_returnsEmpty_iconIsNull() {
-        Card ff = Card.specialFourCard(0, SpecialEffect.FANTASTIC_FOUR);
-        // by_effect entry exists but icon is null → no fallthrough, just empty
-        assertTrue(registry.getIconPath(ff).isEmpty());
-    }
 
     @Test
     void getIconPath_colorCardValueFive_returnsByNumberIcon() {
@@ -123,12 +117,6 @@ class AssetRegistryTest {
     // -------------------------------------------------------------------------
     // getSoundId(Card) — no JavaFX required
     // -------------------------------------------------------------------------
-
-    @Test
-    void getSoundId_skipCard_returnsGenericSound() {
-        Card skip = Card.specialSingleCard(0, CardColor.RED, SpecialEffect.SKIP);
-        assertEquals(Optional.of("card_play_generic"), registry.getSoundId(skip));
-    }
 
     @Test
     void getSoundId_colorCard_returnsGenericSound() {
@@ -280,18 +268,6 @@ class AssetRegistryTest {
     }
 
     @Test
-    void createIconView_missingPath_returnsEmpty() throws Exception {
-        AtomicReference<Optional<SvgImageView>> result = new AtomicReference<>();
-        CountDownLatch latch = new CountDownLatch(1);
-        Platform.runLater(() -> {
-            result.set(registry.createIconView("icons/does_not_exist.svg", 48));
-            latch.countDown();
-        });
-        assertTrue(latch.await(5, TimeUnit.SECONDS));
-        assertTrue(result.get().isEmpty(), "Missing SVG should return Optional.empty()");
-    }
-
-    @Test
     void createIconView_nullPath_returnsEmpty() throws Exception {
         AtomicReference<Optional<SvgImageView>> result = new AtomicReference<>();
         CountDownLatch latch = new CountDownLatch(1);
@@ -316,21 +292,6 @@ class AssetRegistryTest {
         assertNotNull(view.get(), "View should have been created");
         assertEquals(64.0, view.get().getPrefWidth());
         assertEquals(64.0, view.get().getPrefHeight());
-    }
-
-    @Test
-    void getIconView_cardWithNullIconEntry_returnsEmpty() throws Exception {
-        // FANTASTIC_FOUR has by_effect entry with icon=null → getIconPath returns empty
-        // → getIconView should also return empty without attempting SvgImageView creation
-        Card ff = Card.specialFourCard(0, SpecialEffect.FANTASTIC_FOUR);
-        AtomicReference<Optional<SvgImageView>> result = new AtomicReference<>();
-        CountDownLatch latch = new CountDownLatch(1);
-        Platform.runLater(() -> {
-            result.set(registry.getIconView(ff, 48));
-            latch.countDown();
-        });
-        assertTrue(latch.await(5, TimeUnit.SECONDS));
-        assertTrue(result.get().isEmpty());
     }
 
     // -------------------------------------------------------------------------

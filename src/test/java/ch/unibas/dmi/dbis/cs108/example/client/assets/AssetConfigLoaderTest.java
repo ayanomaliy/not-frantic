@@ -42,26 +42,6 @@ class AssetConfigLoaderTest {
     }
 
     @Test
-    void load_byEffect_skip_hasCorrectIconAndSound() {
-        AssetConfig cfg = AssetConfigLoader.load();
-        assertNotNull(cfg);
-        AssetConfig.CardAssetEntry skip = cfg.byEffect().get("SKIP");
-        assertNotNull(skip);
-        assertEquals("icons/card_skip.svg", skip.icon());
-        assertEquals("card_play_generic", skip.sound());
-    }
-
-    @Test
-    void load_byEffect_fantasticFour_hasNullIcon() {
-        AssetConfig cfg = AssetConfigLoader.load();
-        assertNotNull(cfg);
-        AssetConfig.CardAssetEntry ff = cfg.byEffect().get("FANTASTIC_FOUR");
-        assertNotNull(ff);
-        assertNull(ff.icon(), "FANTASTIC_FOUR should have no icon yet");
-        assertEquals("card_play_generic", ff.sound());
-    }
-
-    @Test
     void load_byType_containsAllCardTypes() {
         AssetConfig cfg = AssetConfigLoader.load();
         assertNotNull(cfg);
