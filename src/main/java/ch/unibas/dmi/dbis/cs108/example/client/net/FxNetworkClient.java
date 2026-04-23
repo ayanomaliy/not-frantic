@@ -6,6 +6,7 @@ import ch.unibas.dmi.dbis.cs108.example.service.Message;
 import javafx.application.Platform;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -693,6 +694,25 @@ public class FxNetworkClient implements ClientMessageHandler {
                 }
             }
         }
+
+        if (playersIndex >= 0) {
+            String playersSuffix = payload.substring(playersIndex + ",players:".length());
+            List<ClientState.PlayerInfo> infos = new ArrayList<>();
+            for (String token : playersSuffix.split(",")) {
+                String[] parts = token.split(":", 3);
+                if (parts.length < 2) {
+                    continue;
+                }
+                String name = parts[0].trim();
+                int handSize = 0;
+                try {
+                    handSize = Integer.parseInt(parts[1].trim());
+                } catch (NumberFormatException ignored) {
+                }
+                infos.add(new ClientState.PlayerInfo(name, handSize, ""));
+            }
+            state.getPlayerInfoList().setAll(infos);
+        }
     }
 
     private boolean isRenderableDiscardCard(int cardId) {
@@ -713,6 +733,7 @@ public class FxNetworkClient implements ClientMessageHandler {
         state.setCurrentPhase("WAITING");
         state.setTopCardText("-");
         state.getCurrentHandCards().clear();
+        state.getPlayerInfoList().clear();
         state.setTopCardId("");
         state.setPreviousRenderableTopCardId("");
         state.setRequestedColor("");
@@ -741,6 +762,7 @@ public class FxNetworkClient implements ClientMessageHandler {
             state.getAllPlayers().clear();
             state.getLobbies().clear();
             state.getCurrentHandCards().clear();
+            state.getPlayerInfoList().clear();
 
             state.setCurrentPlayer("Unknown");
             state.setCurrentPhase("WAITING");

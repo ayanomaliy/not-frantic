@@ -17,6 +17,9 @@ import javafx.collections.ObservableList;
  */
 public class ClientState {
 
+    /** Public per-player state derived from each {@code GAME_STATE} broadcast. */
+    public record PlayerInfo(String name, int handSize, String color) {}
+
     private final BooleanProperty connected = new SimpleBooleanProperty(false);
     private final StringProperty username = new SimpleStringProperty("");
     private final StringProperty statusText = new SimpleStringProperty("Not connected");
@@ -73,6 +76,9 @@ public class ClientState {
     private final StringProperty pendingEffectRequest = new SimpleStringProperty("");
 
     private final StringProperty previousRenderableTopCardId = new SimpleStringProperty("");
+
+    /** Ordered player list from the most recent {@code GAME_STATE} broadcast. */
+    private final ObservableList<PlayerInfo> playerInfoList = FXCollections.observableArrayList();
 
 
     /**
@@ -447,5 +453,14 @@ public class ClientState {
 
     public void setPreviousRenderableTopCardId(String value) {
         previousRenderableTopCardId.set(value == null ? "" : value);
+    }
+
+    /**
+     * Returns the ordered list of players from the most recent {@code GAME_STATE} broadcast.
+     *
+     * @return the player info list
+     */
+    public ObservableList<PlayerInfo> getPlayerInfoList() {
+        return playerInfoList;
     }
 }
