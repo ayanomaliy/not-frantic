@@ -221,20 +221,21 @@ class EffectResolverTest {
 
         state.getPendingEffects().push(SpecialEffect.FANTASTIC_FOUR);
         EffectResolver.resolve(SpecialEffect.FANTASTIC_FOUR, state, "Alice",
-                EffectArgs.withColorAndNumber(CardColor.YELLOW, 3));
+                EffectArgs.withTargetsAndColorOrNumber(
+                        List.of("Bob", "Charlie", "Bob", "Charlie"),
+                        CardColor.YELLOW,
+                        null
+                ));
 
-        // Total hand cards should have increased by 4
         int totalAfter = state.getPlayer("Alice").getHandSize()
                 + state.getPlayer("Bob").getHandSize()
                 + state.getPlayer("Charlie").getHandSize();
         assertEquals(aliceBefore + bobBefore + charlieBefore + 4, totalAfter);
 
-        // Draw pile should have shrunk by 4
         assertEquals(drawBefore - 4, state.getDrawPile().size());
 
-        // Request set
         assertEquals(CardColor.YELLOW, state.getRequestedColor());
-        assertEquals(3, state.getRequestedNumber());
+        assertNull(state.getRequestedNumber());
     }
 
     @Test
@@ -305,47 +306,45 @@ class EffectResolverTest {
 
     @Test
     void counterattack_redirectsPendingEffectToNewTarget() {
-        // Original state: SKIP pending, targeting "Bob"
         state.getPendingEffects().push(SpecialEffect.SKIP);
         state.setPendingEffectTarget("Bob");
 
-        // Bob plays COUNTERATTACK → push it on top
         state.getPendingEffects().push(SpecialEffect.COUNTERATTACK);
 
         EffectResolver.resolve(SpecialEffect.COUNTERATTACK, state, "Bob",
-                EffectArgs.withTarget("Charlie"));
+                EffectArgs.of("Charlie", CardColor.RED, null, null));
 
-        // COUNTERATTACK popped; SKIP still in stack; target changed to Charlie
         assertEquals(1, state.getPendingEffects().size());
         assertEquals(SpecialEffect.SKIP, state.getPendingEffects().peek());
         assertEquals("Charlie", state.getPendingEffectTarget());
 
-        // Phase still RESOLVING_EFFECT (SKIP must still be resolved)
+        assertEquals(CardColor.RED, state.getRequestedColor());
+        assertNull(state.getRequestedNumber());
+
         assertEquals(GamePhase.RESOLVING_EFFECT, state.getPhase());
     }
 
     @Test
     void counterattack_chain_twoCounterattacksCancelAndReapplyToOriginalTarget() {
-        // Original: SKIP targeting "Bob"
         state.getPendingEffects().push(SpecialEffect.SKIP);
         state.setPendingEffectTarget("Bob");
 
-        // Bob counters → target becomes Charlie
         state.getPendingEffects().push(SpecialEffect.COUNTERATTACK);
         EffectResolver.resolve(SpecialEffect.COUNTERATTACK, state, "Bob",
-                EffectArgs.withTarget("Charlie"));
+                EffectArgs.of("Charlie", CardColor.RED, null, null));
 
         assertEquals("Charlie", state.getPendingEffectTarget());
+        assertEquals(CardColor.RED, state.getRequestedColor());
 
-        // Charlie counters → target becomes Bob again
         state.getPendingEffects().push(SpecialEffect.COUNTERATTACK);
         EffectResolver.resolve(SpecialEffect.COUNTERATTACK, state, "Charlie",
-                EffectArgs.withTarget("Bob"));
+                EffectArgs.of("Bob", CardColor.BLUE, null, null));
 
-        // Back to Bob; SKIP still in stack
         assertEquals("Bob", state.getPendingEffectTarget());
         assertEquals(1, state.getPendingEffects().size());
         assertEquals(SpecialEffect.SKIP, state.getPendingEffects().peek());
+        assertEquals(CardColor.BLUE, state.getRequestedColor());
+        assertNull(state.getRequestedNumber());
     }
 
     // =========================================================================
