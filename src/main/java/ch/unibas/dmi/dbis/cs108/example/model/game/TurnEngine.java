@@ -190,6 +190,11 @@ public class TurnEngine {
         List<GameEvent> events = new ArrayList<>();
         PlayerGameState current = state.getCurrentPlayer();
 
+        if (!current.hasPlayedThisTurn() && !current.hasDrawnThisTurn()) {
+            events.add(GameEvent.error("You must play or draw before ending your turn."));
+            return events;
+        }
+
         if (endRoundIfAnyPlayerHasNoCards(state, events)) {
             return events;
         }

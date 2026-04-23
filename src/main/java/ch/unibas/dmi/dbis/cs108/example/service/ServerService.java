@@ -1440,9 +1440,26 @@ public class ServerService {
             return;
         }
 
+        PlayerGameState current = state.getCurrentPlayer();
+
+        if (!current.hasDrawnThisTurn()) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "You may end your turn only after drawing a card."
+            ).encode());
+            return;
+        }
+
         List<GameEvent> events = TurnEngine.endTurn(state);
         broadcastEvents(lobby, events);
-        TurnEngine.startTurn(state);
+
+        if (state.getPhase() == GamePhase.ROUND_END) {
+            handleRoundEnd(lobby);
+            return;
+        }
+
+        List<GameEvent> turnEvents = TurnEngine.startTurn(state);
+        broadcastEvents(lobby, turnEvents);
         broadcastGameState(lobby);
     }
 
