@@ -1036,11 +1036,11 @@ class ServerServiceTest {
     }
 
     /**
-     * Verifies that a real server-side round end initializes the next round
-     * with a fresh game state and newly dealt hands.
+     * Verifies that a server-side round end currently finishes the whole match
+     * instead of initializing a next round.
      */
     @Test
-    void handlePlayCardAtRoundEndInitializesNextRound() throws ReflectiveOperationException {
+    void handlePlayCardAtRoundEndEndsGameAndMarksLobbyFinished() throws ReflectiveOperationException {
         ServerService service = new ServerService();
         TestClientSession alice = new TestClientSession();
         TestClientSession bob = new TestClientSession();
@@ -1066,39 +1066,33 @@ class ServerServiceTest {
 
         service.handleMessage(alice, new Message(Message.Type.PLAY_CARD, "1"));
 
-        GameState nextRound = lobby.getGameState();
-        assertNotNull(nextRound, "Server should replace the finished round with a new game state.");
-        assertNotSame(scriptedRound, nextRound, "Next round must be a freshly initialized state object.");
-        assertEquals(2, lobby.getCurrentRound(), "Server should advance from round 1 to round 2.");
-        assertEquals(GamePhase.AWAITING_PLAY, nextRound.getPhase(),
-                "New round should already be started and waiting for the first play.");
-
-        assertEquals(0, nextRound.getPlayer("Alice").getTotalScore(),
-                "Alice emptied her hand and should carry 0 points into round 2.");
-        assertEquals(7, nextRound.getPlayer("Bob").getTotalScore(),
-                "Bob should carry his round-1 hand value into round 2.");
-
-        for (PlayerGameState player : nextRound.getPlayerOrder()) {
-            assertEquals(7, player.getHandSize(),
-                    player.getPlayerName() + " should receive a fresh 7-card hand in the next round.");
-        }
+        assertNull(lobby.getGameState(), "Server should clear the game state after ending the match.");
+        assertFalse(lobby.isGameStarted(), "Lobby should no longer be marked as started.");
+        assertEquals(ch.unibas.dmi.dbis.cs108.example.model.LobbyStatus.FINISHED, lobby.getLobbyStatus(),
+                "Lobby should be marked as FINISHED after round-end handling.");
+        assertEquals(1, lobby.getCurrentRound(),
+                "Current implementation does not initialize a second round automatically.");
 
         assertTrue(alice.containsSentMessage("ROUND_END|"),
-                "Server should broadcast the round-end summary before starting the next round.");
+                "Server should broadcast the round-end summary.");
         assertTrue(bob.containsSentMessage("ROUND_END|"),
                 "All players should receive the round-end summary.");
 
-        assertTrue(alice.countMessagesContaining("HAND_UPDATE|") >= 2,
-                "Round-end handling should broadcast one final hand update and one fresh next-round hand.");
-        assertTrue(bob.countMessagesContaining("HAND_UPDATE|") >= 2,
-                "Every player should receive fresh next-round cards.");
+        assertTrue(alice.containsSentMessage("GAME_END|"),
+                "Server should broadcast the game-end message.");
+        assertTrue(bob.containsSentMessage("GAME_END|"),
+                "All players should receive the game-end message.");
 
-        assertTrue(alice.countMessagesContaining("GAME_STATE|") >= 2,
-                "Round-end handling should broadcast both the finished-round and next-round public states.");
-        assertTrue(bob.countMessagesContaining("GAME_STATE|") >= 2,
-                "All players should see the new round state.");
+        assertTrue(alice.countMessagesContaining("HAND_UPDATE|") >= 1,
+                "Players should receive the final hand update for the finished round.");
+        assertTrue(bob.countMessagesContaining("HAND_UPDATE|") >= 1,
+                "Players should receive the final hand update for the finished round.");
+
+        assertTrue(alice.countMessagesContaining("GAME_STATE|") >= 1,
+                "Server should broadcast the final public game state before ending the match.");
+        assertTrue(bob.countMessagesContaining("GAME_STATE|") >= 1,
+                "All players should see the final public game state.");
     }
-
     /**
      * Verifies that GET_HAND reports no active game when none exists.
      */
