@@ -11,7 +11,7 @@ import java.util.ArrayDeque;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Tests for {@link GameStateSerializer}.
@@ -52,7 +52,7 @@ class GameStateSerializerTest {
         String payload = GameStateSerializer.serializePublicState(state);
 
         assertEquals(
-                "phase:AWAITING_PLAY,currentPlayer:Alice,discardTop:42,drawPileSize:2,players:Alice:2:5,Bob:1:12",
+                "phase:AWAITING_PLAY,currentPlayer:Alice,requestedColor:none,requestedNumber:none,discardTop:42,drawPileSize:2,players:Alice:2:5,Bob:1:12",
                 payload
         );
     }
@@ -83,7 +83,7 @@ class GameStateSerializerTest {
         String payload = GameStateSerializer.serializePublicState(state);
 
         assertEquals(
-                "phase:TURN_START,currentPlayer:Alice,discardTop:none,drawPileSize:1,players:Alice:0:0,Bob:0:0",
+                "phase:TURN_START,currentPlayer:Alice,requestedColor:none,requestedNumber:none,discardTop:none,drawPileSize:1,players:Alice:0:0,Bob:0:0",
                 payload
         );
     }

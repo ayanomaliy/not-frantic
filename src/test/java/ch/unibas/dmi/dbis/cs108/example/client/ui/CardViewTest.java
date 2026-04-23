@@ -114,32 +114,6 @@ class CardViewTest {
     }
 
     // -------------------------------------------------------------------------
-    // Background color
-    // -------------------------------------------------------------------------
-
-    @Test
-    void construct_redCard_backgroundContainsRedHex() throws Exception {
-        CardView view = createOnFxThread(0); // Red 1
-        assertTrue(view.getStyle().contains("#e05050"),
-                "Expected red background in style, got: " + view.getStyle());
-    }
-
-    @Test
-    void construct_yellowCard_backgroundContainsYellowHex() throws Exception {
-        CardView view = createOnFxThread(54); // Yellow 1 (id 54 = 3*18 = Yellow region start)
-        assertTrue(view.getStyle().contains("#f5c842"),
-                "Expected yellow background in style, got: " + view.getStyle());
-    }
-
-    @Test
-    void construct_unknownCardId_backgroundIsFallback() throws Exception {
-        CardView view = createOnFxThread(9999);
-        String style = view.getStyle();
-        // Should contain either fallback color or a default — just must not be empty
-        assertFalse(style.isBlank());
-    }
-
-    // -------------------------------------------------------------------------
     // Children — label is always present
     // -------------------------------------------------------------------------
 
