@@ -787,7 +787,10 @@ class FxNetworkClientTest {
 
         assertEquals("AWAITING_PLAY", ctx.state().getCurrentPhase());
         assertEquals("Alice", ctx.state().getCurrentPlayer());
-        assertEquals("Card #42", ctx.state().getTopCardText());
+        assertEquals(
+                ch.unibas.dmi.dbis.cs108.example.client.CardTextFormatter.formatCardLabelWithId(42),
+                ctx.state().getTopCardText()
+        );
         assertEquals(1, calls.get());
         assertEquals(1, ctx.state().getGameMessages().size());
 
