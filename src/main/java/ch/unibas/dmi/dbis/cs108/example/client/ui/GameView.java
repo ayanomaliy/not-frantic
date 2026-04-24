@@ -67,7 +67,7 @@ public class GameView extends BorderPane {
     private final StackPane discardPilePane = new StackPane();
 
     private final Button endTurnButton = new Button("End Turn");
-    private final Button drawCardButton = new Button("Draw Card");
+
 
     private final FlowPane playerHandPane = new FlowPane();
     private Pane handFanPane;
@@ -136,7 +136,6 @@ public class GameView extends BorderPane {
         discardPilePane.setFocusTraversable(false);
 
         endTurnButton.getStyleClass().addAll("frantic-button", "secondary-button");
-        drawCardButton.getStyleClass().addAll("frantic-button", "primary-button");
         leaveButton.getStyleClass().addAll("frantic-button", "danger-button");
 
         sendButton.getStyleClass().addAll("frantic-button", "primary-button");
@@ -361,12 +360,12 @@ public class GameView extends BorderPane {
         HBox statusRow = new HBox(20, currentPlayerLabel, phaseLabel, discardTopLabel);
         statusRow.setAlignment(Pos.CENTER);
 
-        HBox buttonRow = new HBox(12, drawCardButton, endTurnButton);
+        HBox buttonRow = new HBox(endTurnButton);
         buttonRow.setAlignment(Pos.CENTER);
-        buttonRow.setMaxWidth(Double.MAX_VALUE);
 
         VBox centerWrapper = new VBox(24, pilesBox, statusRow, buttonRow);
         centerWrapper.setAlignment(Pos.CENTER);
+        centerWrapper.setMaxWidth(Double.MAX_VALUE);
 
         circularTablePane = new CircularTablePane(centerWrapper);
         centerTablePane.getChildren().add(circularTablePane);
@@ -632,14 +631,6 @@ public class GameView extends BorderPane {
         return endTurnButton;
     }
 
-    /**
-     * Returns the draw-card button.
-     *
-     * @return the draw-card button
-     */
-    public Button getDrawCardButton() {
-        return drawCardButton;
-    }
 
     /**
      * Returns the legacy flow-pane field (kept for backward compatibility).

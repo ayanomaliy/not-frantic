@@ -297,15 +297,6 @@ public class MainController {
             }
         });
 
-        view.getDrawCardButton().setOnAction(e -> {
-            registry.getSoundId("CARD_DRAWN").ifPresent(soundManager::play);
-            if (isSecondChanceActiveForMe()) {
-                networkClient.resolveSecondChanceDrawPenalty();
-                clearPendingEffectIfSecondChance();
-            } else {
-                networkClient.drawCard();
-            }
-        });
         view.getEndTurnButton().setOnAction(e -> networkClient.endTurn());
         view.getLeaveButton().setOnAction(e -> leaveCurrentLobbyAndShowLobbyView());
 
