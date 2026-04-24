@@ -360,14 +360,30 @@ public class EventResolver {
 
     /**
      * Sets a color request matching the color of the current discard-pile top.
-     * Falls back to {@link CardColor#RED} if the top card has no color.
+     * Falls back to {@link CardColor#RED} if the top card has no playable color.
      */
     private static List<GameEvent> handleWildRequest(GameState state) {
         Card top = state.peekDiscardPile();
-        CardColor color = (top != null && top.color() != null) ? top.color() : CardColor.RED;
+
+        CardColor color = null;
+        if (top != null) {
+            CardColor topColor = top.color();
+            if (topColor != null && topColor != CardColor.BLACK) {
+                color = topColor;
+            }
+        }
+
+        if (color == null) {
+            color = CardColor.RED;
+        }
+
         state.setRequestedColor(color);
-        return List.of(new GameEvent(GameEvent.EventType.EFFECT_TRIGGERED,
-                "WILD_REQUEST:" + color));
+        state.setRequestedNumber(null);
+
+        return List.of(new GameEvent(
+                GameEvent.EventType.EFFECT_TRIGGERED,
+                "WILD_REQUEST:" + color
+        ));
     }
 
     /**

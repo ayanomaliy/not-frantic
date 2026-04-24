@@ -53,6 +53,8 @@ public class GameState {
      */
     private boolean doubleScoringActive = false;
 
+    private Integer forcedEventCardIdOnBlack;
+
     /**
      * Creates a new game state for one round.
      *
@@ -347,4 +349,28 @@ public class GameState {
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Player not found: " + name));
     }
+
+    /**
+     * Returns the dev-mode forced event card id that should be used whenever
+     * a black card is played, or {@code null} if normal event drawing is active.
+     *
+     * @return the forced event card id, or {@code null}
+     */
+    public Integer getForcedEventCardIdOnBlack() {
+        return forcedEventCardIdOnBlack;
+    }
+
+    /**
+     * Sets the dev-mode forced event card id that should be triggered whenever
+     * a black card is played.
+     *
+     * <p>This is intended for development and testing only. When {@code null},
+     * black cards use the normal event pile.</p>
+     *
+     * @param forcedEventCardIdOnBlack the forced event card id, or {@code null}
+     */
+    public void setForcedEventCardIdOnBlack(Integer forcedEventCardIdOnBlack) {
+        this.forcedEventCardIdOnBlack = forcedEventCardIdOnBlack;
+    }
+
 }

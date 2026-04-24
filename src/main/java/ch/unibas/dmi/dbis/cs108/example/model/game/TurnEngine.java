@@ -110,11 +110,21 @@ public class TurnEngine {
         switch (card.type()) {
             case BLACK -> {
                 state.setSpecialsBlocked(false);
-                Card eventCard = state.drawFromEventPile();
+
+                Card eventCard;
+                Integer forcedEventId = state.getForcedEventCardIdOnBlack();
+
+                if (forcedEventId != null) {
+                    eventCard = Card.eventCard(forcedEventId);
+                } else {
+                    eventCard = state.drawFromEventPile();
+                }
+
                 if (eventCard != null) {
                     state.setActiveEventCard(eventCard);
                     events.add(GameEvent.eventCardFlipped(eventCard.id()));
                 }
+
                 state.setPhase(GamePhase.RESOLVING_EFFECT);
             }
             case SPECIAL_SINGLE, SPECIAL_FOUR -> {

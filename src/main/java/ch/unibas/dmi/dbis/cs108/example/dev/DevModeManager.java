@@ -148,6 +148,7 @@ public final class DevModeManager {
         applyRequestedNumber(state, properties);
         applyPendingEffects(state, properties);
         applyPendingEffectTarget(state, properties);
+        applyForcedEventCardIdOnBlack(state, properties);
     }
 
     /**
@@ -179,6 +180,7 @@ public final class DevModeManager {
         state.setRequestedColor(null);
         state.setRequestedNumber(null);
         state.setActiveEventCard(null);
+        state.setForcedEventCardIdOnBlack(null);
     }
 
     /**
@@ -200,6 +202,34 @@ public final class DevModeManager {
 
         state.getDiscardPile().clear();
         state.getDiscardPile().push(card);
+    }
+
+    /**
+     * Applies a dev-only forced event card id for all black-card plays.
+     *
+     * <p>Property key: {@code forceEventCardIdOnBlack}</p>
+     *
+     * <p>When set, every played black card will trigger this event card id
+     * instead of drawing from the normal event pile.</p>
+     *
+     * @param state the game state to modify
+     * @param properties the scenario properties
+     */
+    private static void applyForcedEventCardIdOnBlack(GameState state, Properties properties) {
+        String rawValue = properties.getProperty("forceEventCardIdOnBlack");
+        if (rawValue == null || rawValue.isBlank()) {
+            return;
+        }
+
+        int eventCardId = parseRequiredInt(rawValue, "forceEventCardIdOnBlack");
+
+        if (eventCardId < 0 || eventCardId > 19) {
+            throw new IllegalArgumentException(
+                    "forceEventCardIdOnBlack must be between 0 and 19, but was: " + eventCardId
+            );
+        }
+
+        state.setForcedEventCardIdOnBlack(eventCardId);
     }
 
     /**
