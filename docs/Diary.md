@@ -833,6 +833,10 @@ Today, I focused on stabilizing the test suite and aligning existing tests with 
   - Removed **brittle tests** that depended on UI or assets.
   - Improved overall test reliability and maintainability.
 
+## DateL April 24, 2026
+
+Yesterday I rewoked the GUI to visually display the players as if they are sitting at a table. This involves color assigment, a function calculating player seat locations, new graphics (object, areas and svg loaded onto them). Today I merged all this onto main, resolving all the conflicts (naturally, in my favor).
+
 #### Future Plans
 - Continue ensuring that all tests reflect the actual game logic and remain stable over time.
 - Add additional edge case tests for turn handling and special card effects.
