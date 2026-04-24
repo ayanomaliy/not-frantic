@@ -607,6 +607,7 @@ class MainControllerTest {
         state.setCurrentPhase("AWAITING_PLAY");
         state.setTopCardText("Card #42");
         state.getCurrentHandCards().addAll("7", "18", "not-a-number");
+
         FakeFxNetworkClient network = new FakeFxNetworkClient(state);
         Stage stage = createStageOnFxThread();
         MainController controller = new MainController(stage, state, network);
@@ -619,7 +620,7 @@ class MainControllerTest {
         assertEquals("Phase: AWAITING_PLAY", view.getPhaseLabel().getText());
         assertEquals("Top Card: Card #42", view.getDiscardTopLabel().getText());
 
-        assertEquals(2, view.getPlayerHandPane().getChildren().size());
+        assertEquals(2, view.getHandFanPane().getChildren().size());
         assertEquals(1, network.requestHandCount);
     }
 
@@ -632,6 +633,7 @@ class MainControllerTest {
     void renderedHandButtonsPlayCards() throws Exception {
         ClientState state = new ClientState();
         state.getCurrentHandCards().add("42");
+
         FakeFxNetworkClient network = new FakeFxNetworkClient(state);
         Stage stage = createStageOnFxThread();
         MainController controller = new MainController(stage, state, network);
@@ -639,7 +641,10 @@ class MainControllerTest {
         runOnFxAndWait(() -> {
             controller.showGameView();
             GameView view = (GameView) stage.getScene().getRoot();
-            CardView cardView = (CardView) view.getPlayerHandPane().getChildren().get(0);
+
+            assertEquals(1, view.getHandFanPane().getChildren().size());
+
+            CardView cardView = (CardView) view.getHandFanPane().getChildren().get(0);
             cardView.fireEvent(new MouseEvent(
                     MouseEvent.MOUSE_CLICKED, 0, 0, 0, 0,
                     MouseButton.PRIMARY, 1,
