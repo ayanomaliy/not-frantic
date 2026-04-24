@@ -18,11 +18,15 @@ public class GameEndView extends BorderPane {
     private final Label winnerLabel;
 
     private final ListView<String> rankingList;
+    private final ListView<String> leaderboardList;
 
     private final Button leaveLobbyButton;
 
     private final VBox centerBox;
     private final HBox buttonBox;
+    private final HBox listsBox;
+    private final VBox localBox;
+    private final VBox globalBox;
 
     public GameEndView() {
         getStyleClass().addAll("screen", "game-end-screen");
@@ -60,19 +64,42 @@ public class GameEndView extends BorderPane {
             }
         });
 
+        leaderboardList = new ListView<>();
+        leaderboardList.setItems(FXCollections.observableArrayList());
+        leaderboardList.getStyleClass().add("frantic-list-view");
+        leaderboardList.setPlaceholder(new Label("No stored high scores yet"));
+
         leaveLobbyButton = new Button("Leave Lobby");
         leaveLobbyButton.getStyleClass().add("danger-button");
 
         buttonBox = new HBox(10, leaveLobbyButton);
         buttonBox.getStyleClass().add("button-box");
 
-        centerBox = new VBox(15,
-                titleLabel,
+        localBox = new VBox(
+                10,
                 winnerLabel,
-                new Label("Ranking"),
-                rankingList,
+                new Label("This Game"),
+                rankingList
+        );
+
+        globalBox = new VBox(
+                10,
+                new Label("Global Leaderboard"),
+                leaderboardList
+        );
+
+        listsBox = new HBox(20, localBox, globalBox);
+
+        centerBox = new VBox(
+                15,
+                titleLabel,
+                listsBox,
                 buttonBox
         );
+
+        centerBox.setFillWidth(false);
+        centerBox.setMaxWidth(javafx.scene.layout.Region.USE_PREF_SIZE);
+        centerBox.setAlignment(javafx.geometry.Pos.CENTER);
 
         centerBox.getStyleClass().add("center-box");
 
@@ -87,6 +114,10 @@ public class GameEndView extends BorderPane {
         rankingList.setItems(FXCollections.observableArrayList(players));
     }
 
+    public void setLeaderboard(java.util.List<String> rows) {
+        leaderboardList.setItems(FXCollections.observableArrayList(rows));
+    }
+
     public Label getTitleLabel() {
         return titleLabel;
     }
@@ -97,6 +128,10 @@ public class GameEndView extends BorderPane {
 
     public ListView<String> getRankingList() {
         return rankingList;
+    }
+
+    public ListView<String> getLeaderboardList() {
+        return leaderboardList;
     }
 
     public Button getLeaveLobbyButton() {
@@ -110,5 +145,4 @@ public class GameEndView extends BorderPane {
     public HBox getButtonBox() {
         return buttonBox;
     }
-
 }

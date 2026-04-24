@@ -804,9 +804,13 @@ public class MainController {
         view.setWinner(state.getWinnerName());
         view.setRanking(state.getFinalScoreRows());
 
+        ch.unibas.dmi.dbis.cs108.example.service.HighScoreHistory highScoreHistory =
+                new ch.unibas.dmi.dbis.cs108.example.service.HighScoreHistory(java.nio.file.Path.of("highscores.txt"));
+        view.setLeaderboard(highScoreHistory.buildLeaderboardDisplayRows());
+
         view.getLeaveLobbyButton().setOnAction(e -> leaveCurrentLobbyAndShowLobbyView());
 
-        Scene scene = createStyledScene(view, 900, 700);
+        Scene scene = createStyledScene(view, 1000, 700);
         stage.setScene(scene);
         new FadeIn(view).play();
     }
