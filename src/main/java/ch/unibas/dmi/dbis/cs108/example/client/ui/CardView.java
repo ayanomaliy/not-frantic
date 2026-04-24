@@ -12,6 +12,11 @@ import javafx.scene.control.Label;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.StackPane;
 
+import javafx.animation.ScaleTransition;
+import javafx.animation.TranslateTransition;
+import javafx.animation.ParallelTransition;
+import javafx.util.Duration;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,6 +39,10 @@ public class CardView extends StackPane {
     private static final double CARD_WIDTH = 90;
     private static final double CARD_HEIGHT = 130;
     private static final double ICON_SIZE = 54;
+
+    private static final double HOVER_SCALE = 1.10;
+    private static final double HOVER_LIFT_Y = -22;
+    private static final Duration HOVER_ANIMATION_DURATION = Duration.millis(140);
 
     private static volatile Map<Integer, Card> cardById;
 
@@ -89,6 +98,8 @@ public class CardView extends StackPane {
                 }
             });
         }
+
+        installHoverAnimation();
     }
 
     private void applyCardSurfaceClass(Card card) {
@@ -153,5 +164,31 @@ public class CardView extends StackPane {
             }
         }
         return cardById.get(id);
+    }
+
+    private void installHoverAnimation() {
+        setOnMouseEntered(e -> {
+            toFront();
+
+            ScaleTransition scaleUp = new ScaleTransition(HOVER_ANIMATION_DURATION, this);
+            scaleUp.setToX(HOVER_SCALE);
+            scaleUp.setToY(HOVER_SCALE);
+
+            TranslateTransition liftUp = new TranslateTransition(HOVER_ANIMATION_DURATION, this);
+            liftUp.setToY(HOVER_LIFT_Y);
+
+            new ParallelTransition(scaleUp, liftUp).play();
+        });
+
+        setOnMouseExited(e -> {
+            ScaleTransition scaleDown = new ScaleTransition(HOVER_ANIMATION_DURATION, this);
+            scaleDown.setToX(1.0);
+            scaleDown.setToY(1.0);
+
+            TranslateTransition dropDown = new TranslateTransition(HOVER_ANIMATION_DURATION, this);
+            dropDown.setToY(0);
+
+            new ParallelTransition(scaleDown, dropDown).play();
+        });
     }
 }

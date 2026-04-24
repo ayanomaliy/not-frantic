@@ -43,6 +43,9 @@ public class MainController {
     private ListChangeListener<ClientState.PlayerInfo> playerInfoListener;
     private boolean peekActive = false;
 
+
+    private static final double HAND_VERTICAL_LIFT = 40.0;
+
     /**
      * Creates a new main controller using assets loaded from the classpath.
      *
@@ -453,10 +456,13 @@ public class MainController {
                 continue;
             }
 
-            double angle = (n > 1) ? -FAN_SPREAD_DEGREES / 2 + i * (FAN_SPREAD_DEGREES / (n - 1)) : 0.0;
-            double rad   = Math.toRadians(angle);
-            double x     = cx + FAN_ARC_RADIUS * Math.sin(rad);
-            double y     = paneH + FAN_ARC_RADIUS * (1 - Math.cos(rad));
+            double angle = (n > 1)
+                    ? -FAN_SPREAD_DEGREES / 2 + i * (FAN_SPREAD_DEGREES / (n - 1))
+                    : 0.0;
+
+            double rad = Math.toRadians(angle);
+            double x = cx + FAN_ARC_RADIUS * Math.sin(rad);
+            double y = paneH - HAND_VERTICAL_LIFT + FAN_ARC_RADIUS * (1 - Math.cos(rad));
 
             final int cid = cardId;
             CardView cardView = new CardView(cid, registry, () -> {
@@ -472,6 +478,7 @@ public class MainController {
             cardView.setRotate(angle);
             cardView.setLayoutX(x - CardBacksideView.CARD_WIDTH / 2);
             cardView.setLayoutY(y - CardBacksideView.CARD_HEIGHT);
+
             fanPane.getChildren().add(cardView);
         }
     }

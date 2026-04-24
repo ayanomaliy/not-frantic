@@ -317,11 +317,6 @@
     -fx-cursor: hand;
 }
 
-.game-card-button:hover {
-    -fx-border-color: border-accent;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.28), 16, 0.18, 0, 4);
-    -fx-translate-y: -1;
-}
 
 .game-card-button:pressed {
     -fx-background-color: surface-soft;
