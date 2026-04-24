@@ -54,6 +54,10 @@ public class CardView extends StackPane {
      * @param onPlay called when the user clicks the card; may be {@code null}
      */
     public CardView(int cardId, AssetRegistry registry, Runnable onPlay) {
+        this(cardId, registry, onPlay, true);
+    }
+
+    public CardView(int cardId, AssetRegistry registry, Runnable onPlay, boolean hoverEnabled) {
         getStyleClass().addAll("game-card-button", "card-view");
         setPrefSize(CARD_WIDTH, CARD_HEIGHT);
         setMinSize(CARD_WIDTH, CARD_HEIGHT);
@@ -99,7 +103,9 @@ public class CardView extends StackPane {
             });
         }
 
-        installHoverAnimation();
+        if (hoverEnabled) {
+            installHoverAnimation();
+        }
     }
 
     private void applyCardSurfaceClass(Card card) {

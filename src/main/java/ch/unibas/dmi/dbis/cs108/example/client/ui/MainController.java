@@ -852,7 +852,7 @@ public class MainController {
             return;
         }
 
-        CardView discardCardView = new CardView(cardId, registry, null);
+        CardView discardCardView = new CardView(cardId, registry, null, false);
         view.getDiscardPilePane().getChildren().add(discardCardView);
     }
 

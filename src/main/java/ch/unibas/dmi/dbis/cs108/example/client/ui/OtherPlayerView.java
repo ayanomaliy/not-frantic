@@ -28,8 +28,10 @@ import java.util.List;
 public class OtherPlayerView extends Group {
 
     static final double ICON_SIZE = 60;
-    static final double CARD_OFFSET_X = 18;
+    static final double CARD_OFFSET_X = 14;
     static final double CARD_ROTATION_STEP = 4.0;
+
+    static final double OPPONENT_CARD_SCALE = 0.68;
 
     private static final String PLAYER_ICON_PATH = "/icons/player.svg";
 
@@ -118,12 +120,16 @@ public class OtherPlayerView extends Group {
             return;
         }
 
-        double totalWidth = (n - 1) * CARD_OFFSET_X + CardBacksideView.CARD_WIDTH;
+        double totalWidth = (n - 1) * CARD_OFFSET_X + CardBacksideView.CARD_WIDTH * OPPONENT_CARD_SCALE;
         double centerIndex = (n - 1) / 2.0;
 
         for (int i = 0; i < n; i++) {
             CardBacksideView card = new CardBacksideView();
             double rotation = (i - centerIndex) * CARD_ROTATION_STEP;
+
+            card.setScaleX(OPPONENT_CARD_SCALE);
+            card.setScaleY(OPPONENT_CARD_SCALE);
+
             card.setLayoutX(i * CARD_OFFSET_X);
             card.setLayoutY(0);
             card.setRotate(rotation);
@@ -131,7 +137,7 @@ public class OtherPlayerView extends Group {
         }
 
         fanPane.setPrefWidth(totalWidth);
-        fanPane.setPrefHeight(CardBacksideView.CARD_HEIGHT);
+        fanPane.setPrefHeight(CardBacksideView.CARD_HEIGHT * OPPONENT_CARD_SCALE);
     }
 
     /** Rebuilds the card fan with a new hand size. */
@@ -159,6 +165,10 @@ public class OtherPlayerView extends Group {
         for (int i = 0; i < n; i++) {
             CardView card = new CardView(cardIds.get(i), registry, null);
             double rotation = (i - centerIndex) * CARD_ROTATION_STEP;
+
+            card.setScaleX(OPPONENT_CARD_SCALE);
+            card.setScaleY(OPPONENT_CARD_SCALE);
+
             card.setLayoutX(i * CARD_OFFSET_X);
             card.setLayoutY(0);
             card.setRotate(rotation);
