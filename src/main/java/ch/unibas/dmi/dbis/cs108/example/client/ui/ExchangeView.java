@@ -92,7 +92,7 @@ public class ExchangeView extends StackPane {
         cardPane.getChildren().clear();
 
         for (Integer cardId : availableCardIds) {
-            CardView cardView = new CardView(cardId, registry, null);
+            CardView cardView = new CardView(cardId, registry, null, false);
 
             if (selectedCardIds.contains(cardId)) {
                 cardView.getStyleClass().add("effect-response-selected-card");
