@@ -10,6 +10,14 @@ import javafx.scene.layout.VBox;
 
 import java.util.function.Consumer;
 
+/**
+ * Overlay view used to resolve the Counterattack effect in the GUI.
+ *
+ * <p>This dialog lets the affected player choose the follow-up color and
+ * submit the selection without relying on manual slash commands. It is shown
+ * on top of the current {@link GameView} as a modal-style effect response
+ * panel.</p>
+ */
 public class CounterattackView extends StackPane {
 
     private CardColor selectedColor;

@@ -12,7 +12,14 @@ import javafx.scene.layout.VBox;
 
 import java.util.List;
 import java.util.function.BiConsumer;
-
+/**
+ * Overlay view used to resolve the Equality effect in the GUI.
+ *
+ * <p>This dialog allows the acting player to select both a target player and
+ * a requested next color. It appears as an effect response overlay on top of
+ * the current {@link GameView} and replaces manual command-based resolution
+ * for this effect.</p>
+ */
 public class EqualityView extends StackPane {
 
     private CardColor selectedColor;

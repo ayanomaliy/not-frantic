@@ -9,7 +9,13 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
 import java.util.function.BiConsumer;
-
+/**
+ * Overlay view used to resolve the Fantastic effect in the GUI.
+ *
+ * <p>This dialog allows the acting player to choose either a color or a
+ * number for the next requested play. It is displayed on top of the current
+ * {@link GameView} and sends the result as a structured protocol response.</p>
+ */
 public class FantasticView extends StackPane {
 
     private CardColor selectedColor;

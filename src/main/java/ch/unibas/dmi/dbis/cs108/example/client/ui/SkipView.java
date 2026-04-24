@@ -10,7 +10,14 @@ import javafx.scene.layout.VBox;
 
 import java.util.List;
 import java.util.function.Consumer;
-
+/**
+ * Overlay view used to resolve the Skip effect in the GUI.
+ *
+ * <p>This dialog lets the acting player choose which player should be skipped
+ * next. It is displayed as a modal-style overlay on top of the
+ * {@link GameView} and sends the selected target as a structured effect
+ * response.</p>
+ */
 public class SkipView extends StackPane {
 
     private String selectedPlayer;

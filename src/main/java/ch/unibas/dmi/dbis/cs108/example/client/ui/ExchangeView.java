@@ -13,7 +13,13 @@ import javafx.scene.layout.VBox;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
-
+/**
+ * Overlay view used to resolve the Exchange effect in the GUI.
+ *
+ * <p>This dialog lets the acting player choose the cards to exchange and the
+ * target player to exchange with. It displays the selectable hand cards
+ * graphically and submits the result as a structured effect response.</p>
+ */
 public class ExchangeView extends StackPane {
 
     private final List<Integer> selectedCardIds = new ArrayList<>();

@@ -14,7 +14,14 @@ import javafx.scene.layout.VBox;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
-
+/**
+ * Multi-step overlay view used to resolve the Fantastic Four effect in the GUI.
+ *
+ * <p>This dialog first lets the player choose either a color or a number and
+ * then assign the four resulting cards to target players. It is shown as a
+ * modal-style overlay on top of the {@link GameView} so the full effect can
+ * be resolved graphically instead of through text commands.</p>
+ */
 public class FantasticFourView extends StackPane {
 
     public static final class Result {

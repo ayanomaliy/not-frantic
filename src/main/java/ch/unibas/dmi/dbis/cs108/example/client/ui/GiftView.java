@@ -13,7 +13,13 @@ import javafx.scene.layout.VBox;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
-
+/**
+ * Overlay view used to resolve the Gift effect in the GUI.
+ *
+ * <p>This dialog lets the acting player choose the cards to gift and the
+ * player who should receive them. It displays the current hand graphically
+ * and submits the selected result without requiring manual command input.</p>
+ */
 public class GiftView extends StackPane {
 
     private final List<Integer> selectedCardIds = new ArrayList<>();

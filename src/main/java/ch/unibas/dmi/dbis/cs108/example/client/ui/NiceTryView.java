@@ -10,7 +10,14 @@ import javafx.scene.layout.VBox;
 
 import java.util.List;
 import java.util.function.Consumer;
-
+/**
+ * Overlay view used to resolve the Nice Try effect in the GUI.
+ *
+ * <p>This dialog lets the acting player choose which player should receive
+ * the penalty cards. It appears as an effect response overlay on top of the
+ * current {@link GameView} and replaces manual slash-command resolution for
+ * this effect.</p>
+ */
 public class NiceTryView extends StackPane {
 
     private String selectedPlayer;
