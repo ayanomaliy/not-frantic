@@ -36,7 +36,9 @@ import java.util.Map;
  */
 public class CircularTablePane extends Pane {
 
-    static final double RADIUS_FACTOR = 0.38;
+    static final double RADIUS_FACTOR = 0.46;
+    private static final double TOP_SLOT_LIFT = 26.0;
+    private static final double SIDE_SLOT_PUSH = 18.0;
     private static final String TABLE_ASSET_PATH = "/icons/table.svg";
 
     private ImageView backgroundImageView;
@@ -102,7 +104,7 @@ public class CircularTablePane extends Pane {
                 double angle = (240 + (i + 1) * interval) % 360;
 
                 OtherPlayerView slot = new OtherPlayerView(info.name(), info.handSize(), info.color(), registry);
-                slot.setFanRotation(angle + 180);
+                slot.setSeatAngle(angle);
 
                 slots.add(slot);
                 slotAngles.add(angle);
@@ -141,19 +143,18 @@ public class CircularTablePane extends Pane {
             OtherPlayerView slot = slots.get(i);
             double angle = slotAngles.get(i);
             double rad = Math.toRadians(angle);
+
             double anchorX = cx + radius * Math.sin(rad);
             double anchorY = cy - radius * Math.cos(rad);
 
-            Bounds sb = slot.getBoundsInLocal();
-            double sw = sb.getWidth();
-            double sh = sb.getHeight();
-            if (sw > 0) {
-                slot.setLayoutX(anchorX - sw / 2);
-                slot.setLayoutY(anchorY - sh / 2);
-            } else {
-                slot.setLayoutX(anchorX);
-                slot.setLayoutY(anchorY);
-            }
+            double topness = Math.max(0, Math.cos(rad));
+            anchorY -= topness * TOP_SLOT_LIFT;
+
+            double sideness = Math.abs(Math.sin(rad));
+            anchorX += Math.signum(Math.sin(rad)) * sideness * SIDE_SLOT_PUSH;
+
+            slot.setLayoutX(anchorX);
+            slot.setLayoutY(anchorY);
         }
     }
 

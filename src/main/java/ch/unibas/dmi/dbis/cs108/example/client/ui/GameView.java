@@ -366,6 +366,7 @@ public class GameView extends BorderPane {
         VBox centerWrapper = new VBox(24, pilesBox, statusRow, buttonRow);
         centerWrapper.setAlignment(Pos.CENTER);
         centerWrapper.setMaxWidth(Double.MAX_VALUE);
+        centerWrapper.setTranslateY(36);
 
         circularTablePane = new CircularTablePane(centerWrapper);
         centerTablePane.getChildren().add(circularTablePane);

@@ -402,6 +402,43 @@
     -fx-border-width: 1;
 }
 
+
+.player-icon {
+    -fx-fill: #72505b;
+}
+
+.player-color-red {
+    -fx-fill: #e74c3c;
+}
+
+.player-color-green {
+    -fx-fill: #2ecc71;
+}
+
+.player-color-blue {
+    -fx-fill: #3498db;
+}
+
+.player-color-yellow {
+    -fx-fill: #f1c40f;
+}
+
+.player-color-purple {
+    -fx-fill: #9b59b6;
+}
+
+.player-color-pink {
+    -fx-fill: #e91e8c;
+}
+
+.player-color-orange {
+    -fx-fill: #e67e22;
+}
+
+.player-color-teal {
+    -fx-fill: #1abc9c;
+}
+
 /* =========================
    Turn overlay
    ========================= */
