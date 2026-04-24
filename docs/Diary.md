@@ -833,7 +833,7 @@ Today, I focused on stabilizing the test suite and aligning existing tests with 
   - Removed **brittle tests** that depended on UI or assets.
   - Improved overall test reliability and maintainability.
 
-## DateL April 24, 2026
+## Date April 24, 2026 (Denys)
 
 Yesterday I rewoked the GUI to visually display the players as if they are sitting at a table. This involves color assigment, a function calculating player seat locations, new graphics (object, areas and svg loaded onto them). Today I merged all this onto main, resolving all the conflicts (naturally, in my favor).
 
@@ -841,3 +841,36 @@ Yesterday I rewoked the GUI to visually display the players as if they are sitti
 - Continue ensuring that all tests reflect the actual game logic and remain stable over time.
 - Add additional edge case tests for turn handling and special card effects.
 - Strengthen synchronization between server logic and client-side state.
+
+
+## Date: April 24, 2026
+
+### Final GUI Polish, High Score Integration, and Endgame / Rule Bug Fixes (Aiysha)
+
+#### What did we do today?
+
+Today, I focused on final polishing for the milestone hand-in. The main areas were fixing remaining gameplay edge cases, improving the circular in-game table layout, integrating a persistent global high score display into the endscreen, and making sure the GUI now covers as much gameplay interaction as possible without relying on commands.
+
+#### Work Summary
+
+* Fixed several turn-flow and rule-enforcement edge cases, especially around ending turns, draw/play requirements, and black-card / event interactions.
+* Investigated a bug where certain request states after black-card events could leave the discard pile visually unclear and make follow-up plays effectively invalid.
+* Confirmed that the discard pile rendering itself updates correctly from `topCardId`, `requestedColor`, and `requestedNumber`, and that the real problem was invalid server-side request state rather than missing GUI refresh logic.
+* Reviewed the `WILD_REQUEST` event behavior and clarified that, in the current design, it should be resolved automatically by the server instead of opening a Fantastic-style chooser in the GUI.
+* Prepared and discussed a dev-mode extension to force a specific event card for black-card testing, so problematic event interactions such as `WILD_REQUEST` can be reproduced more reliably.
+* Reworked the circular table layout for opponent players so the visual seating arrangement looks more natural and no longer clashes as much with the draw pile, discard pile, and the center controls.
+* Adjusted opponent placement logic, opponent hand size, spacing, and card scaling so the table view is cleaner and easier to read.
+* Improved hover behavior and layering of local hand cards, while also making sure hover effects are disabled where they caused problems, such as in effect-response views and on discard rendering.
+* Moved and refined the center game controls so draw pile, discard pile, and End Turn no longer visually interfere as much with player hands.
+* Added a persistent global leaderboard to the win endscreen in addition to the local round/game ranking.
+* Completed `HighScoreHistory` so stored game results are not only appended to file but can also be read back and aggregated into a leaderboard.
+* Extended the `GameEndView` so it now shows both the current game result and previously stored high scores side by side.
+* Fixed a mistake during this integration where the endscreen class was temporarily overwritten with the wrong code and restored the correct `GameEndView`.
+* Improved the layout of the endscreen so the result panels are centered properly instead of being pushed to the left.
+* Reviewed the current milestone achievements and assessed which ones are likely fulfilled based on the present source state and GUI completeness.
+
+#### Future Plans
+
+* Run one final full end-to-end GUI test before presentation.
+* Keep the remaining focus on stability rather than new features.
+* If time allows, clean up any last small UI inconsistencies and verify Linux/JAR behavior once more.
