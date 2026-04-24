@@ -20,6 +20,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
@@ -66,8 +67,10 @@ public class GameView extends BorderPane {
     private final StackPane discardPilePane = new StackPane();
 
     private final Button endTurnButton = new Button("End Turn");
+    private final Button drawCardButton = new Button("Draw Card");
 
     private final FlowPane playerHandPane = new FlowPane();
+    private Pane handFanPane;
 
     private final VBox sideBar = new VBox(12);
 
@@ -93,6 +96,8 @@ public class GameView extends BorderPane {
     private final VBox eventPanel = new VBox(18);
     private final Label eventTitleLabel = new Label();
     private final Label eventDescriptionLabel = new Label();
+
+    private CircularTablePane circularTablePane;
 
     private VBox playersBox;
     private VBox infoBox;
@@ -131,6 +136,7 @@ public class GameView extends BorderPane {
         discardPilePane.setFocusTraversable(false);
 
         endTurnButton.getStyleClass().addAll("frantic-button", "secondary-button");
+        drawCardButton.getStyleClass().addAll("frantic-button", "primary-button");
         leaveButton.getStyleClass().addAll("frantic-button", "danger-button");
 
         sendButton.getStyleClass().addAll("frantic-button", "primary-button");
@@ -355,42 +361,31 @@ public class GameView extends BorderPane {
         HBox statusRow = new HBox(20, currentPlayerLabel, phaseLabel, discardTopLabel);
         statusRow.setAlignment(Pos.CENTER);
 
-        HBox buttonRow = new HBox(10, endTurnButton);
+        HBox buttonRow = new HBox(12, drawCardButton, endTurnButton);
+        buttonRow.setAlignment(Pos.CENTER);
+        buttonRow.setMaxWidth(Double.MAX_VALUE);
 
         VBox centerWrapper = new VBox(24, pilesBox, statusRow, buttonRow);
         centerWrapper.setAlignment(Pos.CENTER);
-        centerWrapper.setMaxWidth(Double.MAX_VALUE);
 
-        centerTablePane.getChildren().add(centerWrapper);
+        circularTablePane = new CircularTablePane(centerWrapper);
+        centerTablePane.getChildren().add(circularTablePane);
     }
 
     /**
-     * Builds the bottom hand section.
+     * Builds the bottom hand section with a fan arc layout.
      *
-     * <p>The player's hand is placed inside its own scroll pane so that many
-     * cards remain accessible without breaking the overall layout.</p>
+     * <p>Cards are positioned by {@link ch.unibas.dmi.dbis.cs108.example.client.ui.MainController}
+     * using a circular arc formula so the hand curves up from the bottom center.</p>
      */
     private void buildBottomHandArea() {
-        playerHandPane.setHgap(12);
-        playerHandPane.setVgap(12);
-
-        /*
-         * Make the wrapping width adapt to the current window width instead
-         * of relying on a fixed number.
-         */
-        playerHandPane.prefWrapLengthProperty().bind(widthProperty().multiply(0.60));
-
-        ScrollPane handScrollPane = new ScrollPane(playerHandPane);
-        handScrollPane.setFitToWidth(true);
-        handScrollPane.setPannable(true);
-        handScrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        handScrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        handScrollPane.setPrefViewportHeight(180);
-        handScrollPane.setMinHeight(150);
+        handFanPane = new Pane();
+        handFanPane.setPrefHeight(180);
+        handFanPane.prefWidthProperty().bind(widthProperty().multiply(0.60));
 
         handSection.getChildren().addAll(
                 createSectionTitle("Your Hand"),
-                handScrollPane
+                handFanPane
         );
     }
 
@@ -638,12 +633,30 @@ public class GameView extends BorderPane {
     }
 
     /**
-     * Returns the hand pane used for the current player's cards.
+     * Returns the draw-card button.
      *
-     * @return the hand pane
+     * @return the draw-card button
+     */
+    public Button getDrawCardButton() {
+        return drawCardButton;
+    }
+
+    /**
+     * Returns the legacy flow-pane field (kept for backward compatibility).
+     *
+     * @return the player hand flow pane (not used in the fan layout)
      */
     public FlowPane getPlayerHandPane() {
         return playerHandPane;
+    }
+
+    /**
+     * Returns the fan-arc pane where the local player's hand cards are rendered.
+     *
+     * @return the hand fan pane
+     */
+    public Pane getHandFanPane() {
+        return handFanPane;
     }
 
     /**
@@ -815,6 +828,15 @@ public class GameView extends BorderPane {
 
     public StackPane getRootStack() {
         return rootStack;
+    }
+
+    /**
+     * Returns the circular table pane that manages opponent player slots.
+     *
+     * @return the circular table pane
+     */
+    public CircularTablePane getCircularTablePane() {
+        return circularTablePane;
     }
 
 }

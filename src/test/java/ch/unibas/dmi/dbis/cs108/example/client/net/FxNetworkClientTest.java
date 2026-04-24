@@ -298,6 +298,7 @@ class FxNetworkClientTest {
         assertTrue(ctx.state().getLobbyChatMessages().isEmpty());
         assertTrue(ctx.state().getWhisperChatMessages().isEmpty());
         assertTrue(ctx.state().getGameMessages().isEmpty());
+        assertTrue(ctx.state().getPlayerInfoList().isEmpty());
 
         assertEquals("Unknown", ctx.state().getCurrentPlayer());
         assertEquals("WAITING", ctx.state().getCurrentPhase());
@@ -804,6 +805,66 @@ class FxNetworkClientTest {
         assertEquals("Bob", ctx.state().getCurrentPlayer());
         assertEquals("-", ctx.state().getTopCardText());
         assertEquals(1, calls.get());
+
+        // player info list reflects the second state
+        assertEquals(1, ctx.state().getPlayerInfoList().size());
+        assertEquals("Bob", ctx.state().getPlayerInfoList().get(0).name());
+        assertEquals(2, ctx.state().getPlayerInfoList().get(0).handSize());
+    }
+
+    /**
+     * Verifies that GAME_STATE populates playerInfoList with name and hand size for every
+     * player in the players section, in order.
+     *
+     * @throws Exception if the test fails
+     */
+    @Test
+    void gameStatePayloadParsesPlayerInfoList() throws Exception {
+        TestContext ctx = createContext();
+        ctx.state().setUsername("Alice");
+
+        ctx.fxClient().onMessage(new Message(
+                Message.Type.GAME_STATE,
+                "phase:AWAITING_PLAY,currentPlayer:Alice,discardTop:none,players:Alice:5:12,Bob:3:8,Charlie:7:0"
+        ));
+        flushFx();
+
+        List<ClientState.PlayerInfo> infos = ctx.state().getPlayerInfoList();
+        assertEquals(3, infos.size());
+
+        assertEquals("Alice", infos.get(0).name());
+        assertEquals(5, infos.get(0).handSize());
+        assertEquals("red", infos.get(0).color());
+
+        assertEquals("Bob", infos.get(1).name());
+        assertEquals(3, infos.get(1).handSize());
+        assertEquals("green", infos.get(1).color());
+
+        assertEquals("Charlie", infos.get(2).name());
+        assertEquals(7, infos.get(2).handSize());
+        assertEquals("blue", infos.get(2).color());
+    }
+
+    /**
+     * Verifies that playerInfoList is cleared when the game resets (empty PLAYERS message).
+     *
+     * @throws Exception if the test fails
+     */
+    @Test
+    void emptyPlayersMessageClearsPlayerInfoList() throws Exception {
+        TestContext ctx = createContext();
+
+        ctx.fxClient().onMessage(new Message(
+                Message.Type.GAME_STATE,
+                "phase:AWAITING_PLAY,currentPlayer:Alice,discardTop:none,players:Alice:5:0,Bob:3:0"
+        ));
+        flushFx();
+        assertEquals(2, ctx.state().getPlayerInfoList().size());
+
+        ctx.fxClient().onMessage(new Message(Message.Type.PLAYERS, ""));
+        flushFx();
+
+        assertTrue(ctx.state().getPlayerInfoList().isEmpty());
     }
 
     /**

@@ -30,6 +30,9 @@ public class MainController {
 
     private static final String THEME_STYLESHEET = "/css/frantic-theme.css";
 
+    private static final double FAN_SPREAD_DEGREES = 60.0;
+    private static final double FAN_ARC_RADIUS    = 500.0;
+
     private final Stage stage;
     private final ClientState state;
     private final FxNetworkClient networkClient;
@@ -37,6 +40,8 @@ public class MainController {
     private final SoundManager soundManager;
 
     private ListChangeListener<String> handCardsListener;
+    private ListChangeListener<ClientState.PlayerInfo> playerInfoListener;
+    private boolean peekActive = false;
 
     /**
      * Creates a new main controller using assets loaded from the classpath.
@@ -240,6 +245,22 @@ public class MainController {
         state.getCurrentHandCards().addListener(handCardsListener);
         renderHand(view);
 
+        view.getHandFanPane().widthProperty().addListener((obs, oldW, newW) -> {
+            if (newW.doubleValue() > 0) renderHand(view);
+        });
+
+        view.getCircularTablePane().setRegistry(registry);
+
+        if (playerInfoListener != null) {
+            state.getPlayerInfoList().removeListener(playerInfoListener);
+        }
+        playerInfoListener = change -> {
+            peekActive = false;
+            refreshOtherPlayers(view);
+        };
+        state.getPlayerInfoList().addListener(playerInfoListener);
+        refreshOtherPlayers(view);
+
         state.topCardIdProperty().addListener((obs, oldValue, newValue) -> renderDiscardPile(view));
         state.requestedColorProperty().addListener((obs, oldValue, newValue) -> renderDiscardPile(view));
         state.requestedNumberProperty().addListener((obs, oldValue, newValue) -> renderDiscardPile(view));
@@ -276,6 +297,15 @@ public class MainController {
             }
         });
 
+        view.getDrawCardButton().setOnAction(e -> {
+            registry.getSoundId("CARD_DRAWN").ifPresent(soundManager::play);
+            if (isSecondChanceActiveForMe()) {
+                networkClient.resolveSecondChanceDrawPenalty();
+                clearPendingEffectIfSecondChance();
+            } else {
+                networkClient.drawCard();
+            }
+        });
         view.getEndTurnButton().setOnAction(e -> networkClient.endTurn());
         view.getLeaveButton().setOnAction(e -> leaveCurrentLobbyAndShowLobbyView());
 
@@ -406,14 +436,25 @@ public class MainController {
     }
 
     /**
-     * Renders the current hand from {@link ClientState#getCurrentHandCards()}.
+     * Renders the current hand from {@link ClientState#getCurrentHandCards()} into the
+     * fan-arc pane. Cards are positioned on a circular arc so the hand curves upward from
+     * the bottom center of the pane.
      *
-     * @param view the game view whose hand area should be refreshed
+     * @param view the game view whose hand fan pane should be refreshed
      */
     private void renderHand(GameView view) {
-        view.getPlayerHandPane().getChildren().clear();
+        javafx.scene.layout.Pane fanPane = view.getHandFanPane();
+        fanPane.getChildren().clear();
 
-        for (String cardIdText : state.getCurrentHandCards()) {
+        int n = state.getCurrentHandCards().size();
+        if (n == 0) return;
+
+        double paneW = fanPane.getWidth() > 0 ? fanPane.getWidth() : fanPane.getPrefWidth();
+        double paneH = fanPane.getHeight() > 0 ? fanPane.getHeight() : fanPane.getPrefHeight();
+        double cx = paneW / 2;
+
+        for (int i = 0; i < n; i++) {
+            String cardIdText = state.getCurrentHandCards().get(i);
             int cardId;
             try {
                 cardId = Integer.parseInt(cardIdText);
@@ -421,19 +462,41 @@ public class MainController {
                 continue;
             }
 
-            CardView cardView = new CardView(cardId, registry, () -> {
-                registry.getSoundId(CardView.lookupCard(cardId)).ifPresent(soundManager::play);
+            double angle = (n > 1) ? -FAN_SPREAD_DEGREES / 2 + i * (FAN_SPREAD_DEGREES / (n - 1)) : 0.0;
+            double rad   = Math.toRadians(angle);
+            double x     = cx + FAN_ARC_RADIUS * Math.sin(rad);
+            double y     = paneH + FAN_ARC_RADIUS * (1 - Math.cos(rad));
 
+            final int cid = cardId;
+            CardView cardView = new CardView(cid, registry, () -> {
+                registry.getSoundId(CardView.lookupCard(cid)).ifPresent(soundManager::play);
                 if (isSecondChanceActiveForMe()) {
-                    networkClient.resolveSecondChance(cardId);
+                    networkClient.resolveSecondChance(cid);
                     clearPendingEffectIfSecondChance();
                 } else {
-                    networkClient.playCard(cardId);
+                    networkClient.playCard(cid);
                 }
             });
 
-            view.getPlayerHandPane().getChildren().add(cardView);
+            cardView.setRotate(angle);
+            cardView.setLayoutX(x - CardBacksideView.CARD_WIDTH / 2);
+            cardView.setLayoutY(y - CardBacksideView.CARD_HEIGHT);
+            fanPane.getChildren().add(cardView);
         }
+    }
+
+    /**
+     * Pushes the current {@link ClientState#getPlayerInfoList()} to the circular table,
+     * excluding the local player so only opponents are shown.
+     *
+     * @param view the game view whose circular table should be refreshed
+     */
+    private void refreshOtherPlayers(GameView view) {
+        String username = state.getUsername();
+        java.util.List<ClientState.PlayerInfo> others = state.getPlayerInfoList().stream()
+                .filter(p -> !p.name().equals(username))
+                .toList();
+        view.getCircularTablePane().setPlayerSlots(others, username);
     }
 
     /**
@@ -565,6 +628,8 @@ public class MainController {
     /**
      * Executes the game-view command input as a client command.
      *
+     * <p>{@code /peek} is handled locally and never forwarded to the server.</p>
+     *
      * @param view the game view containing the command input field
      */
     private void sendCommand(GameView view) {
@@ -573,11 +638,42 @@ public class MainController {
             return;
         }
 
+        if ("/peek".equalsIgnoreCase(command)) {
+            togglePeek(view);
+            view.getCommandInput().clear();
+            return;
+        }
+
         boolean disconnected = networkClient.sendCommand(command);
         view.getCommandInput().clear();
 
         if (disconnected) {
             showConnectView();
+        }
+    }
+
+    /**
+     * Toggles the PEEK mode: reveals opponent cards on first call, hides them on the next.
+     * Placeholder sequential card IDs (0…handSize-1) are used because the server does not
+     * yet send opponent card IDs to other clients.
+     */
+    private void togglePeek(GameView view) {
+        peekActive = !peekActive;
+        CircularTablePane table = view.getCircularTablePane();
+        if (peekActive) {
+            String username = state.getUsername();
+            for (ClientState.PlayerInfo info : state.getPlayerInfoList()) {
+                if (info.name().equals(username)) continue;
+                OtherPlayerView slot = table.getPlayerSlots().get(info.name());
+                if (slot == null) continue;
+                java.util.List<Integer> ids = new java.util.ArrayList<>();
+                for (int i = 0; i < info.handSize(); i++) ids.add(i);
+                slot.revealCards(ids);
+            }
+            state.getGameMessages().add("[CLIENT] PEEK on — showing placeholder cards.");
+        } else {
+            table.getPlayerSlots().values().forEach(OtherPlayerView::hideCards);
+            state.getGameMessages().add("[CLIENT] PEEK off.");
         }
     }
 

@@ -749,6 +749,208 @@ class MainControllerTest {
         assertTrue(stage.getScene().getRoot() instanceof GameView);
     }
 
+    /**
+     * Verifies that opponents already in playerInfoList are placed in CircularTablePane
+     * immediately when showGameView is called.
+     */
+    @Test
+    void showGameView_playerInfoListPopulated_setsSlots() throws Exception {
+        ClientState state = new ClientState();
+        state.setUsername("Alice");
+        state.getPlayerInfoList().addAll(
+                new ClientState.PlayerInfo("Alice", 5, "red"),
+                new ClientState.PlayerInfo("Bob",   3, "green"),
+                new ClientState.PlayerInfo("Charlie", 4, "blue")
+        );
+        FakeFxNetworkClient network = new FakeFxNetworkClient(state);
+        Stage stage = createStageOnFxThread();
+        MainController controller = new MainController(stage, state, network);
+
+        runOnFxAndWait(() -> controller.showGameView());
+
+        GameView view = (GameView) stage.getScene().getRoot();
+        var slots = view.getCircularTablePane().getPlayerSlots();
+        assertEquals(2, slots.size());
+        assertTrue(slots.containsKey("Bob"));
+        assertTrue(slots.containsKey("Charlie"));
+        assertFalse(slots.containsKey("Alice"));
+    }
+
+    /**
+     * Verifies that changing playerInfoList after showGameView updates the circular table.
+     */
+    @Test
+    void showGameView_playerInfoListChangesAfterShow_updatesSlots() throws Exception {
+        ClientState state = new ClientState();
+        state.setUsername("Alice");
+        FakeFxNetworkClient network = new FakeFxNetworkClient(state);
+        Stage stage = createStageOnFxThread();
+        MainController controller = new MainController(stage, state, network);
+
+        runOnFxAndWait(() -> controller.showGameView());
+
+        GameView view = (GameView) stage.getScene().getRoot();
+        assertTrue(view.getCircularTablePane().getPlayerSlots().isEmpty());
+
+        runOnFxAndWait(() -> state.getPlayerInfoList().addAll(
+                new ClientState.PlayerInfo("Alice", 5, "red"),
+                new ClientState.PlayerInfo("Bob",   3, "green")
+        ));
+
+        var slots = view.getCircularTablePane().getPlayerSlots();
+        assertEquals(1, slots.size());
+        assertTrue(slots.containsKey("Bob"));
+    }
+
+    /**
+     * Verifies that replacing playerInfoList clears and re-populates slots correctly.
+     */
+    @Test
+    void showGameView_playerInfoListReplaced_slotsReflectNewList() throws Exception {
+        ClientState state = new ClientState();
+        state.setUsername("Alice");
+        state.getPlayerInfoList().addAll(
+                new ClientState.PlayerInfo("Alice", 5, "red"),
+                new ClientState.PlayerInfo("Bob",   3, "green")
+        );
+        FakeFxNetworkClient network = new FakeFxNetworkClient(state);
+        Stage stage = createStageOnFxThread();
+        MainController controller = new MainController(stage, state, network);
+
+        runOnFxAndWait(() -> controller.showGameView());
+
+        GameView view = (GameView) stage.getScene().getRoot();
+        assertEquals(1, view.getCircularTablePane().getPlayerSlots().size());
+
+        runOnFxAndWait(() -> {
+            state.getPlayerInfoList().setAll(
+                    new ClientState.PlayerInfo("Alice",   5, "red"),
+                    new ClientState.PlayerInfo("Charlie", 7, "blue"),
+                    new ClientState.PlayerInfo("Dave",    2, "yellow")
+            );
+        });
+
+        var slots = view.getCircularTablePane().getPlayerSlots();
+        assertEquals(2, slots.size());
+        assertTrue(slots.containsKey("Charlie"));
+        assertTrue(slots.containsKey("Dave"));
+        assertFalse(slots.containsKey("Bob"));
+    }
+
+    /**
+     * Verifies that an empty playerInfoList results in no slots (edge case).
+     */
+    @Test
+    void showGameView_emptyPlayerInfoList_noSlots() throws Exception {
+        ClientState state = new ClientState();
+        state.setUsername("Alice");
+        FakeFxNetworkClient network = new FakeFxNetworkClient(state);
+        Stage stage = createStageOnFxThread();
+        MainController controller = new MainController(stage, state, network);
+
+        runOnFxAndWait(() -> controller.showGameView());
+
+        GameView view = (GameView) stage.getScene().getRoot();
+        assertTrue(view.getCircularTablePane().getPlayerSlots().isEmpty());
+    }
+
+    /**
+     * Verifies that /peek is handled locally: cards become face-up and the command
+     * is never forwarded to the network client.
+     */
+    @Test
+    void peekCommand_revealsOpponentCards_andDoesNotForwardToServer() throws Exception {
+        ClientState state = new ClientState();
+        state.setUsername("Alice");
+        state.getPlayerInfoList().addAll(
+                new ClientState.PlayerInfo("Alice", 5, "red"),
+                new ClientState.PlayerInfo("Bob",   3, "green")
+        );
+        FakeFxNetworkClient network = new FakeFxNetworkClient(state);
+        Stage stage = createStageOnFxThread();
+        MainController controller = new MainController(stage, state, network);
+
+        runOnFxAndWait(() -> {
+            controller.showGameView();
+            GameView view = (GameView) stage.getScene().getRoot();
+            view.getCommandInput().setText("/peek");
+            view.getCommandButton().fire();
+        });
+
+        GameView view = (GameView) stage.getScene().getRoot();
+        OtherPlayerView bobSlot = view.getCircularTablePane().getPlayerSlots().get("Bob");
+        assertNotNull(bobSlot);
+        assertTrue(bobSlot.hasFaceUpCards(), "Bob's cards should be face-up after /peek");
+        assertFalse(network.commands.contains("/peek"), "/peek must not be forwarded to the server");
+        assertTrue(state.getGameMessages().stream().anyMatch(m -> m.contains("PEEK on")));
+    }
+
+    /**
+     * Verifies that a second /peek hides the cards again.
+     */
+    @Test
+    void peekCommand_twice_hidesCards() throws Exception {
+        ClientState state = new ClientState();
+        state.setUsername("Alice");
+        state.getPlayerInfoList().addAll(
+                new ClientState.PlayerInfo("Alice", 5, "red"),
+                new ClientState.PlayerInfo("Bob",   3, "green")
+        );
+        FakeFxNetworkClient network = new FakeFxNetworkClient(state);
+        Stage stage = createStageOnFxThread();
+        MainController controller = new MainController(stage, state, network);
+
+        runOnFxAndWait(() -> {
+            controller.showGameView();
+            GameView view = (GameView) stage.getScene().getRoot();
+            view.getCommandInput().setText("/peek");
+            view.getCommandButton().fire();
+            view.getCommandInput().setText("/peek");
+            view.getCommandButton().fire();
+        });
+
+        GameView view = (GameView) stage.getScene().getRoot();
+        OtherPlayerView bobSlot = view.getCircularTablePane().getPlayerSlots().get("Bob");
+        assertNotNull(bobSlot);
+        assertFalse(bobSlot.hasFaceUpCards(), "Bob's cards should be hidden after second /peek");
+        assertTrue(state.getGameMessages().stream().anyMatch(m -> m.contains("PEEK off")));
+    }
+
+    /**
+     * Verifies that a playerInfoList change (simulating a new GAME_STATE) resets peek:
+     * slots are rebuilt with backsides even though /peek was active.
+     */
+    @Test
+    void peekCommand_resetsOnPlayerInfoListChange() throws Exception {
+        ClientState state = new ClientState();
+        state.setUsername("Alice");
+        state.getPlayerInfoList().addAll(
+                new ClientState.PlayerInfo("Alice", 5, "red"),
+                new ClientState.PlayerInfo("Bob",   3, "green")
+        );
+        FakeFxNetworkClient network = new FakeFxNetworkClient(state);
+        Stage stage = createStageOnFxThread();
+        MainController controller = new MainController(stage, state, network);
+
+        runOnFxAndWait(() -> {
+            controller.showGameView();
+            GameView view = (GameView) stage.getScene().getRoot();
+            view.getCommandInput().setText("/peek");
+            view.getCommandButton().fire();
+        });
+
+        // Simulate a new GAME_STATE arriving: update the player list
+        runOnFxAndWait(() -> state.getPlayerInfoList().setAll(
+                new ClientState.PlayerInfo("Alice", 4, "red"),
+                new ClientState.PlayerInfo("Bob",   2, "green")
+        ));
+
+        GameView view = (GameView) stage.getScene().getRoot();
+        OtherPlayerView bobSlot = view.getCircularTablePane().getPlayerSlots().get("Bob");
+        assertNotNull(bobSlot);
+        assertFalse(bobSlot.hasFaceUpCards(), "Slots should be rebuilt with backsides after game-state update");
+    }
+
     private static Stage createStageOnFxThread() throws Exception {
         final Stage[] stageRef = new Stage[1];
         runOnFxAndWait(() -> stageRef[0] = new Stage());
