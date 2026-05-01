@@ -53,6 +53,7 @@ public class GameStateSerializer {
                 .collect(Collectors.joining(","));
 
         return "phase:" + state.getPhase().name()
+                + ",round:" + state.getRoundNumber()
                 + ",currentPlayer:" + state.getCurrentPlayer().getPlayerName()
                 + ",requestedColor:" + requestedColor
                 + ",requestedNumber:" + requestedNumber

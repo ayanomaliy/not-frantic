@@ -132,8 +132,58 @@ class ScoreCalculatorTest {
     }
 
     // =========================================================================
+    // calculateRoundScores — double scoring overload
+    // =========================================================================
+
+    @Test
+    void calculateRoundScores_withDoubleScoringActive_doublesScore() {
+        PlayerGameState alice = new PlayerGameState("Alice");
+        alice.addCard(Card.colorCard(1, CardColor.RED, 5)); // base value 5, doubled = 10
+
+        GameState state = GameInitializer.initialize(List.of("Alice", "Bob"), 1, null, new Random(42));
+        state.setDoubleScoringActive(true);
+
+        Map<String, Integer> scores = ScoreCalculator.calculateRoundScores(List.of(alice), state);
+
+        assertEquals(10, scores.get("Alice"), "Score must be doubled when doubleScoringActive is true.");
+        assertEquals(10, alice.getTotalScore(), "Total score must reflect the doubled amount.");
+    }
+
+    @Test
+    void calculateRoundScores_withoutDoubleScoring_scoresNotDoubled() {
+        PlayerGameState alice = new PlayerGameState("Alice");
+        alice.addCard(Card.colorCard(1, CardColor.RED, 5));
+
+        GameState state = GameInitializer.initialize(List.of("Alice", "Bob"), 1, null, new Random(42));
+        state.setDoubleScoringActive(false);
+
+        Map<String, Integer> scores = ScoreCalculator.calculateRoundScores(List.of(alice), state);
+
+        assertEquals(5, scores.get("Alice"), "Score must not be doubled when doubleScoringActive is false.");
+    }
+
+    @Test
+    void calculateRoundScores_doubleScoringFlagConsumedAfterCall() {
+        PlayerGameState alice = new PlayerGameState("Alice");
+
+        GameState state = GameInitializer.initialize(List.of("Alice", "Bob"), 1, null, new Random(42));
+        state.setDoubleScoringActive(true);
+
+        ScoreCalculator.calculateRoundScores(List.of(alice), state);
+
+        assertFalse(state.isDoubleScoringActive(),
+                "The doubleScoringActive flag must be cleared after calculateRoundScores.");
+    }
+
+    // =========================================================================
     // isGameOver
     // =========================================================================
+
+    @Test
+    void isGameOver_emptyScoreMap_returnsFalse() {
+        assertFalse(ScoreCalculator.isGameOver(Map.of(), 100),
+                "An empty score map has no player at or above maxScore.");
+    }
 
     @Test
     void isGameOver_falseWhenAllScoresBelowMax() {

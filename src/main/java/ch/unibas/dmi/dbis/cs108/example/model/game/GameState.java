@@ -26,6 +26,9 @@ public class GameState {
 
     private final int maxScore;
 
+    /** The round number this state was created for (1-based). */
+    private final int roundNumber;
+
     /** Color requested by Fantastic / Fantastic Four / Equality, or {@code null}. */
     private CardColor requestedColor;
 
@@ -63,12 +66,14 @@ public class GameState {
      * @param discardPile the initial discard pile (containing the starter card)
      * @param eventPile   the shuffled event card pile
      * @param maxScore    the score threshold at which the game ends
+     * @param roundNumber the 1-based round number
      */
     public GameState(List<PlayerGameState> playerOrder,
                      Deque<Card> drawPile,
                      Deque<Card> discardPile,
                      Deque<Card> eventPile,
-                     int maxScore) {
+                     int maxScore,
+                     int roundNumber) {
         this.playerOrder = playerOrder;
         this.currentPlayerIndex = 0;
         this.phase = GamePhase.TURN_START;
@@ -76,6 +81,7 @@ public class GameState {
         this.discardPile = discardPile;
         this.eventPile = eventPile;
         this.maxScore = maxScore;
+        this.roundNumber = roundNumber;
         this.pendingEffects = new ArrayDeque<>();
     }
 
@@ -234,6 +240,15 @@ public class GameState {
      */
     public int getMaxScore() {
         return maxScore;
+    }
+
+    /**
+     * Returns the 1-based round number this state was created for.
+     *
+     * @return the round number
+     */
+    public int getRoundNumber() {
+        return roundNumber;
     }
 
     /**

@@ -987,6 +987,116 @@ class FxNetworkClientTest {
     }
 
     /**
+     * Reads the private {@code gameViewShown} flag from the client under test.
+     *
+     * @param fxClient the client whose flag to read
+     * @return the current value of {@code gameViewShown}
+     * @throws Exception if reflection fails
+     */
+    private static boolean readGameViewShown(FxNetworkClient fxClient) throws Exception {
+        Field field = FxNetworkClient.class.getDeclaredField("gameViewShown");
+        field.setAccessible(true);
+        return (boolean) field.get(fxClient);
+    }
+
+    /**
+     * Verifies that {@code ROUND_END} resets {@code gameViewShown} to {@code false}.
+     *
+     * @throws Exception if the test fails
+     */
+    @Test
+    void onMessage_ROUND_END_resetsGameViewShownFlag() throws Exception {
+        TestContext ctx = createContext();
+
+        ctx.fxClient().onMessage(new Message(Message.Type.GAME_STATE,
+                "phase:AWAITING_PLAY,currentPlayer:Alice,discardTop:none,players:Alice:5:0"));
+        flushFx();
+        assertTrue(readGameViewShown(ctx.fxClient()), "gameViewShown should be true after GAME_STATE");
+
+        ctx.fxClient().onMessage(new Message(Message.Type.ROUND_END, "Alice:10:10"));
+        flushFx();
+
+        assertFalse(readGameViewShown(ctx.fxClient()), "ROUND_END must reset gameViewShown to false");
+    }
+
+    /**
+     * Verifies that {@code ROUND_END} fires the registered {@code roundEndListener} exactly once.
+     *
+     * @throws Exception if the test fails
+     */
+    @Test
+    void onMessage_ROUND_END_firesRoundEndListener() throws Exception {
+        TestContext ctx = createContext();
+        AtomicInteger calls = new AtomicInteger();
+        ctx.fxClient().setRoundEndListener(calls::incrementAndGet);
+
+        ctx.fxClient().onMessage(new Message(Message.Type.ROUND_END, "Alice:10:10,Bob:5:8"));
+        flushFx();
+
+        assertEquals(1, calls.get(), "roundEndListener must fire exactly once on ROUND_END");
+    }
+
+    /**
+     * Verifies that {@code NEXT_ROUND} updates {@code ClientState.currentRound} from the payload.
+     *
+     * @throws Exception if the test fails
+     */
+    @Test
+    void onMessage_NEXT_ROUND_updatesClientStateCurrentRound() throws Exception {
+        TestContext ctx = createContext();
+        assertEquals(1, ctx.state().getCurrentRound(), "default currentRound should be 1");
+
+        ctx.fxClient().onMessage(new Message(Message.Type.NEXT_ROUND, "3"));
+        flushFx();
+
+        assertEquals(3, ctx.state().getCurrentRound());
+    }
+
+    /**
+     * Verifies that {@code NEXT_ROUND} fires the registered {@code nextRoundListener} exactly once.
+     *
+     * @throws Exception if the test fails
+     */
+    @Test
+    void onMessage_NEXT_ROUND_firesNextRoundListener() throws Exception {
+        TestContext ctx = createContext();
+        AtomicInteger calls = new AtomicInteger();
+        ctx.fxClient().setNextRoundListener(calls::incrementAndGet);
+
+        ctx.fxClient().onMessage(new Message(Message.Type.NEXT_ROUND, "2"));
+        flushFx();
+
+        assertEquals(1, calls.get(), "nextRoundListener must fire exactly once on NEXT_ROUND");
+    }
+
+    /**
+     * Verifies that {@code GAME_STATE} fires the {@code gameStartListener} only while
+     * {@code gameViewShown} is {@code false}.
+     *
+     * <p>A second {@code GAME_STATE} received before any round-end or next-round reset must
+     * not re-fire the listener, because {@code gameViewShown} has already been set to
+     * {@code true} by the first {@code GAME_STATE}.</p>
+     *
+     * @throws Exception if the test fails
+     */
+    @Test
+    void onMessage_GAME_STATE_onlyFiresGameStartListenerIfGameViewNotShown() throws Exception {
+        TestContext ctx = createContext();
+        AtomicInteger calls = new AtomicInteger();
+        ctx.fxClient().setGameStartListener(calls::incrementAndGet);
+
+        ctx.fxClient().onMessage(new Message(Message.Type.GAME_STATE,
+                "phase:AWAITING_PLAY,currentPlayer:Alice,discardTop:none,players:Alice:5:0"));
+        flushFx();
+        assertEquals(1, calls.get(), "Listener must fire on first GAME_STATE");
+
+        ctx.fxClient().onMessage(new Message(Message.Type.GAME_STATE,
+                "phase:TURN_START,currentPlayer:Alice,discardTop:none,players:Alice:4:0"));
+        flushFx();
+        assertEquals(1, calls.get(), "Listener must not fire again while gameViewShown is true");
+    }
+
+    /**
      * Verifies local-message handling.
      *
      * @throws Exception if the test fails

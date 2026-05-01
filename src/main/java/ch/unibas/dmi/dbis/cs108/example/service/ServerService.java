@@ -192,6 +192,14 @@ public class ServerService {
      * <p>If the client is currently inside a lobby, the centralized lobby-leave
      * helper is used so that player lists and lobby lists stay consistent.</p>
      *
+     * <p>If a game is active when the client disconnects:</p>
+     * <ul>
+     *   <li>Fewer than 2 players remain — the game is aborted and the lobby
+     *       is marked finished.</li>
+     *   <li>The disconnected player was the current player — the turn is
+     *       auto-advanced so the game is not stuck.</li>
+     * </ul>
+     *
      * @param session the client session to unregister
      */
     public synchronized void unregisterClient(ClientSession session) {
@@ -208,8 +216,50 @@ public class ServerService {
         log("Client disconnected: " + session.getPlayerName()
                 + ". Leaving lobby " + lobby.getLobbyId());
 
+        // Capture whether the disconnecting player was the active player before
+        // leaveCurrentLobby() removes the session from the lobby.
+        boolean wasCurrentPlayer = false;
+        if (lobby.isGameStarted() && lobby.getGameState() != null) {
+            GameState state = lobby.getGameState();
+            GamePhase phase = state.getPhase();
+            if (phase == GamePhase.AWAITING_PLAY || phase == GamePhase.TURN_START) {
+                wasCurrentPlayer = state.getCurrentPlayer().getPlayerName()
+                        .equals(session.getPlayerName());
+            }
+        }
+
         leaveCurrentLobby(session, "disconnected.");
         broadcastAllPlayersListToAllClients();
+
+        // Handle game disruption caused by the disconnect.
+        if (lobby.isGameStarted() && lobby.getGameState() != null) {
+            GameState state = lobby.getGameState();
+            if (lobby.getPlayerCount() < 2) {
+                // Not enough players to continue — abort the game.
+                broadcastToLobby(lobby, new Message(
+                        Message.Type.ERROR, "Game aborted: a player disconnected."));
+                lobby.setGameState(null);
+                lobby.setGameStarted(false);
+                lobby.setLobbyStatus(LobbyStatus.FINISHED);
+                broadcastLobbyListToAllClients();
+            } else if (wasCurrentPlayer) {
+                // Auto-advance past the disconnected player's turn so the game
+                // is not stuck waiting for input from a player who is gone.
+                PlayerGameState current = state.getCurrentPlayer();
+                if (!current.hasPlayedThisTurn() && !current.hasDrawnThisTurn()) {
+                    current.setHasDrawnThisTurn(true);
+                }
+                List<GameEvent> events = TurnEngine.endTurn(state);
+                broadcastEvents(lobby, events);
+                if (state.getPhase() == GamePhase.ROUND_END) {
+                    handleRoundEnd(lobby);
+                } else {
+                    List<GameEvent> turnEvents = TurnEngine.startTurn(state);
+                    broadcastEvents(lobby, turnEvents);
+                    broadcastGameState(lobby);
+                }
+            }
+        }
     }
 
     /**
@@ -520,7 +570,9 @@ public class ServerService {
                         + session.getPlayerName() + ": " + message.type());
             }
 
-            case GAME_STATE, HAND_UPDATE, EFFECT_REQUEST, ROUND_END, GAME_END ->
+            case START_NEXT_ROUND -> handleStartNextRound(session);
+
+            case GAME_STATE, HAND_UPDATE, EFFECT_REQUEST, ROUND_END, GAME_END, NEXT_ROUND ->
                     session.send(new Message(
                             Message.Type.ERROR,
                             "Client may not send server-only message types."
@@ -1567,6 +1619,7 @@ public class ServerService {
      */
     private void handleRoundEnd(Lobby lobby) {
         GameState state = lobby.getGameState();
+        if (state.getPhase() != GamePhase.ROUND_END) return;
 
         Map<String, Integer> roundScores =
                 ScoreCalculator.calculateRoundScores(state.getPlayerOrder(), state);
@@ -1575,12 +1628,22 @@ public class ServerService {
             lobby.getCumulativeScores().put(p.getPlayerName(), p.getTotalScore());
         }
 
-        String roundEndPayload = GameStateSerializer.serializeRoundEnd(
-                roundScores, state.getPlayerOrder());
+        broadcastToLobby(lobby, new Message(Message.Type.ROUND_END,
+                GameStateSerializer.serializeRoundEnd(roundScores, state.getPlayerOrder())));
 
-        broadcastToLobby(lobby, new Message(Message.Type.ROUND_END, roundEndPayload));
+        if (ScoreCalculator.isGameOver(lobby.getCumulativeScores(), state.getMaxScore())) {
+            endGame(lobby);
+        }
+        // Otherwise stay in ROUND_END phase; a player must send START_NEXT_ROUND to continue.
+    }
 
-        // End the whole game immediately after this round
+    /**
+     * Ends the game, records the result, and broadcasts the winner.
+     *
+     * @param lobby the lobby whose game ended
+     */
+    private void endGame(Lobby lobby) {
+        GameState state = lobby.getGameState();
         String winner = ScoreCalculator.getWinner(lobby.getCumulativeScores());
 
         highScoreHistory.appendFinishedGame(
@@ -1599,6 +1662,54 @@ public class ServerService {
         broadcastLobbyListToAllClients();
 
         log("Game over in lobby " + lobby.getLobbyId() + ". Winner: " + winner);
+    }
+
+    /**
+     * Handles a {@code START_NEXT_ROUND} message from a client.
+     *
+     * <p>Any player in the lobby may send this after a round ends. The first
+     * message received triggers the next round; subsequent ones are ignored
+     * because the phase is no longer {@link GamePhase#ROUND_END}.</p>
+     *
+     * @param session the client session that sent the request
+     */
+    private void handleStartNextRound(ClientSession session) {
+        Lobby lobby = getLobbyOf(session);
+        if (lobby == null || lobby.getGameState() == null) return;
+
+        GameState state = lobby.getGameState();
+        if (state.getPhase() != GamePhase.ROUND_END) {
+            session.send(new Message(Message.Type.ERROR,
+                    "No round is waiting to start.").encode());
+            return;
+        }
+
+        startNextRound(lobby);
+    }
+
+    /**
+     * Initializes and broadcasts the next round for the given lobby.
+     *
+     * @param lobby the lobby to advance to the next round
+     */
+    private void startNextRound(Lobby lobby) {
+        int nextRound = lobby.nextRound();
+
+        List<String> playerNames = new ArrayList<>();
+        for (Player p : lobby.getPlayers()) {
+            playerNames.add(p.name());
+        }
+
+        GameState nextState = GameInitializer.initialize(
+                playerNames, nextRound, lobby.getCumulativeScores(), new Random());
+        lobby.setGameState(nextState);
+
+        broadcastToLobby(lobby, new Message(Message.Type.NEXT_ROUND, String.valueOf(nextRound)));
+        broadcastAllHands(lobby);
+        TurnEngine.startTurn(nextState);
+        broadcastGameState(lobby);
+
+        log("Round " + nextRound + " started in lobby " + lobby.getLobbyId() + ".");
     }
 
     /**

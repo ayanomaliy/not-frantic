@@ -226,6 +226,16 @@ class GameInitializerTest {
         assertEquals(0, state.getCurrentPlayerIndex());
     }
 
+    @Test
+    void roundNumber_isStoredOnGameState() {
+        GameState round1 = GameInitializer.initialize(List.of("Alice", "Bob"), 1, null, new Random(42));
+        assertEquals(1, round1.getRoundNumber());
+
+        GameState round3 = GameInitializer.initialize(List.of("Alice", "Bob"), 3,
+                Map.of("Alice", 10, "Bob", 20), new Random(42));
+        assertEquals(3, round3.getRoundNumber());
+    }
+
     // --- Helpers ---
 
     private GameState initialize(List<String> names) {

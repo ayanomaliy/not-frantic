@@ -44,6 +44,12 @@ public class FxNetworkClient implements ClientMessageHandler {
 
     private Runnable gameEndListener;
 
+    /** Callback invoked when the server signals a round has ended (ROUND_END). */
+    private Runnable roundEndListener;
+
+    /** Callback invoked when the server signals a new round is starting (NEXT_ROUND). */
+    private Runnable nextRoundListener;
+
     private Consumer<String> effectRequestListener;
 
     private Consumer<Integer> eventCardFlippedListener;
@@ -347,6 +353,34 @@ public class FxNetworkClient implements ClientMessageHandler {
     }
 
     /**
+     * Registers a callback that is invoked when the server signals a round has ended
+     * by sending a {@code ROUND_END} message.
+     *
+     * @param roundEndListener the callback to invoke
+     */
+    public void setRoundEndListener(Runnable roundEndListener) {
+        this.roundEndListener = roundEndListener;
+    }
+
+    /**
+     * Registers a callback invoked when the server sends {@code NEXT_ROUND},
+     * meaning a new round is about to start.
+     *
+     * @param nextRoundListener the callback to invoke
+     */
+    public void setNextRoundListener(Runnable nextRoundListener) {
+        this.nextRoundListener = nextRoundListener;
+    }
+
+    /**
+     * Sends a {@code START_NEXT_ROUND} request to the server.
+     * Any player in the lobby may call this after a round ends to begin the next round.
+     */
+    public void sendStartNextRound() {
+        protocolClient.send(new Message(Message.Type.START_NEXT_ROUND, ""));
+    }
+
+    /**
      * Parses and executes a raw terminal-style command for the GUI command field.
      *
      * <p>This method supports the same slash commands as the terminal client
@@ -547,6 +581,7 @@ public class FxNetworkClient implements ClientMessageHandler {
             case ROUND_END -> Platform.runLater(() -> {
                 state.getGameMessages().add("[ROUND_END] Round over! Scores: " + message.content());
                 state.setCurrentPhase("ROUND_END");
+                gameViewShown = false;
 
                 state.getFinalScoreRows().clear();
 
@@ -563,6 +598,22 @@ public class FxNetworkClient implements ClientMessageHandler {
                             );
                         }
                     }
+                }
+
+                if (roundEndListener != null) {
+                    roundEndListener.run();
+                }
+            });
+
+            case NEXT_ROUND -> Platform.runLater(() -> {
+                try {
+                    state.setCurrentRound(Integer.parseInt(message.content()));
+                } catch (NumberFormatException ignored) {
+                }
+                state.getGameMessages().add("[NEXT_ROUND] Round " + message.content() + " starting.");
+                gameViewShown = false; // allow GAME_STATE to re-trigger the game view for the new round
+                if (nextRoundListener != null) {
+                    nextRoundListener.run();
                 }
             });
 
@@ -651,6 +702,13 @@ public class FxNetworkClient implements ClientMessageHandler {
 
             switch (key) {
                 case "phase" -> state.setCurrentPhase(value);
+
+                case "round" -> {
+                    try {
+                        state.setCurrentRound(Integer.parseInt(value));
+                    } catch (NumberFormatException ignored) {
+                    }
+                }
 
                 case "currentPlayer" -> state.setCurrentPlayer(value);
 
@@ -749,6 +807,7 @@ public class FxNetworkClient implements ClientMessageHandler {
         state.setPreviousRenderableTopCardId("");
         state.setRequestedColor("");
         state.setRequestedNumber("");
+        state.setCurrentRound(1);
     }
 
     /**
@@ -763,6 +822,7 @@ public class FxNetworkClient implements ClientMessageHandler {
         state.setPreviousRenderableTopCardId("");
         state.setRequestedColor("");
         state.setRequestedNumber("");
+        state.setCurrentRound(1);
 
         Platform.runLater(() -> {
             state.setConnected(false);

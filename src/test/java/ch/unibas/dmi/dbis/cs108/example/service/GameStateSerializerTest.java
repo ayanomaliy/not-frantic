@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests for {@link GameStateSerializer}.
@@ -45,14 +46,15 @@ class GameStateSerializerTest {
                 drawPile,
                 discardPile,
                 eventPile,
-                100
+                100,
+                1
         );
         state.setPhase(GamePhase.AWAITING_PLAY);
 
         String payload = GameStateSerializer.serializePublicState(state);
 
         assertEquals(
-                "phase:AWAITING_PLAY,currentPlayer:Alice,requestedColor:none,requestedNumber:none,discardTop:42,drawPileSize:2,players:Alice:2:5,Bob:1:12",
+                "phase:AWAITING_PLAY,round:1,currentPlayer:Alice,requestedColor:none,requestedNumber:none,discardTop:42,drawPileSize:2,players:Alice:2:5,Bob:1:12",
                 payload
         );
     }
@@ -76,16 +78,43 @@ class GameStateSerializerTest {
                 drawPile,
                 discardPile,
                 eventPile,
-                100
+                100,
+                1
         );
         state.setPhase(GamePhase.TURN_START);
 
         String payload = GameStateSerializer.serializePublicState(state);
 
         assertEquals(
-                "phase:TURN_START,currentPlayer:Alice,requestedColor:none,requestedNumber:none,discardTop:none,drawPileSize:1,players:Alice:0:0,Bob:0:0",
+                "phase:TURN_START,round:1,currentPlayer:Alice,requestedColor:none,requestedNumber:none,discardTop:none,drawPileSize:1,players:Alice:0:0,Bob:0:0",
                 payload
         );
+    }
+
+    /**
+     * Verifies that the round number in the payload reflects the value passed to
+     * the GameState constructor (not hardcoded).
+     */
+    @Test
+    void serializePublicStateIncludesCorrectRoundNumber() {
+        PlayerGameState alice = new PlayerGameState("Alice");
+        ArrayDeque<Card> drawPile = new ArrayDeque<>();
+        ArrayDeque<Card> discardPile = new ArrayDeque<>();
+        discardPile.push(Card.colorCard(1, CardColor.RED, 5));
+        ArrayDeque<Card> eventPile = new ArrayDeque<>();
+
+        GameState state = new GameState(
+                List.of(alice),
+                drawPile,
+                discardPile,
+                eventPile,
+                100,
+                2
+        );
+
+        String payload = GameStateSerializer.serializePublicState(state);
+
+        assertTrue(payload.contains("round:2"), "Payload must contain round:2 for round-2 state.");
     }
 
     /**

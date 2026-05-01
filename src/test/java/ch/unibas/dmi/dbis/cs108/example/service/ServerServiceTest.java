@@ -113,18 +113,19 @@ class ServerServiceTest {
 
     /**
      * Creates a minimal round state where Alice can end the round immediately
-     * by playing her final card.
+     * by playing her final card. maxScore=100, so neither player will trigger
+     * game-over after one round (Alice=0, Bob=7).
      */
     private static GameState createRoundEndingState() {
         PlayerGameState alice = new PlayerGameState("Alice");
-        PlayerGameState bob = new PlayerGameState("Bob");
+        PlayerGameState bob   = new PlayerGameState("Bob");
 
         alice.addCard(Card.colorCard(1, CardColor.RED, 5));
         bob.addCard(Card.colorCard(2, CardColor.BLUE, 7));
 
-        ArrayDeque<Card> drawPile = new ArrayDeque<>();
+        ArrayDeque<Card> drawPile    = new ArrayDeque<>();
         ArrayDeque<Card> discardPile = new ArrayDeque<>();
-        ArrayDeque<Card> eventPile = new ArrayDeque<>();
+        ArrayDeque<Card> eventPile   = new ArrayDeque<>();
 
         discardPile.push(Card.colorCard(99, CardColor.RED, 9));
 
@@ -133,7 +134,37 @@ class ServerServiceTest {
                 drawPile,
                 discardPile,
                 eventPile,
-                100
+                100,
+                1
+        );
+        state.setPhase(GamePhase.AWAITING_PLAY);
+        return state;
+    }
+
+    /**
+     * Creates a minimal round state where Alice's play ends the round AND Bob's
+     * remaining hand pushes the cumulative score over maxScore=5, triggering game-over.
+     */
+    private static GameState createRoundEndingStateForGameOver() {
+        PlayerGameState alice = new PlayerGameState("Alice");
+        PlayerGameState bob   = new PlayerGameState("Bob");
+
+        alice.addCard(Card.colorCard(1, CardColor.RED, 5));
+        bob.addCard(Card.colorCard(2, CardColor.BLUE, 7)); // value 7 >= maxScore 5
+
+        ArrayDeque<Card> drawPile    = new ArrayDeque<>();
+        ArrayDeque<Card> discardPile = new ArrayDeque<>();
+        ArrayDeque<Card> eventPile   = new ArrayDeque<>();
+
+        discardPile.push(Card.colorCard(99, CardColor.RED, 9));
+
+        GameState state = new GameState(
+                new ArrayList<>(List.of(alice, bob)),
+                drawPile,
+                discardPile,
+                eventPile,
+                5,  // maxScore=5; Bob's round score 7 >= 5 → game over
+                1
         );
         state.setPhase(GamePhase.AWAITING_PLAY);
         return state;
@@ -1036,63 +1067,190 @@ class ServerServiceTest {
     }
 
     /**
-     * Verifies that a server-side round end currently finishes the whole match
-     * instead of initializing a next round.
+     * Verifies that when no player's score exceeds maxScore after a round,
+     * the server broadcasts ROUND_END and waits. The next round only starts
+     * once a client sends START_NEXT_ROUND.
      */
     @Test
-    void handlePlayCardAtRoundEndEndsGameAndMarksLobbyFinished() throws ReflectiveOperationException {
+    void handlePlayCard_roundEnd_noGameOver_startsNextRound() throws ReflectiveOperationException {
         ServerService service = new ServerService();
         TestClientSession alice = new TestClientSession();
-        TestClientSession bob = new TestClientSession();
+        TestClientSession bob   = new TestClientSession();
 
         service.registerClient(alice);
         service.registerClient(bob);
 
         service.handleMessage(alice, new Message(Message.Type.NAME, "Alice"));
-        service.handleMessage(bob, new Message(Message.Type.NAME, "Bob"));
+        service.handleMessage(bob,   new Message(Message.Type.NAME, "Bob"));
         service.handleMessage(alice, new Message(Message.Type.CREATE, "Lobby1"));
-        service.handleMessage(bob, new Message(Message.Type.JOIN, "Lobby1"));
-        service.handleMessage(alice, new Message(Message.Type.START, ""));
+        service.handleMessage(bob,   new Message(Message.Type.JOIN,   "Lobby1"));
+        service.handleMessage(alice, new Message(Message.Type.START,  ""));
 
         Lobby lobby = getLobby(service, "Lobby1");
-        assertNotNull(lobby, "Lobby should exist after creation.");
-        assertEquals(1, lobby.getCurrentRound(), "A successful game start must create round 1.");
+        assertNotNull(lobby);
+        assertEquals(1, lobby.getCurrentRound(), "Game start must initialise round 1.");
 
-        GameState scriptedRound = createRoundEndingState();
-        lobby.setGameState(scriptedRound);
-
+        // Replace with scripted state: Alice plays her last card → round ends.
+        // maxScore=100; Alice scores 0, Bob scores 7 → no player reaches 100 → next round.
+        lobby.setGameState(createRoundEndingState());
         alice.getSentMessages().clear();
         bob.getSentMessages().clear();
 
         service.handleMessage(alice, new Message(Message.Type.PLAY_CARD, "1"));
 
-        assertNull(lobby.getGameState(), "Server should clear the game state after ending the match.");
-        assertFalse(lobby.isGameStarted(), "Lobby should no longer be marked as started.");
-        assertEquals(ch.unibas.dmi.dbis.cs108.example.model.LobbyStatus.FINISHED, lobby.getLobbyStatus(),
-                "Lobby should be marked as FINISHED after round-end handling.");
-        assertEquals(1, lobby.getCurrentRound(),
-                "Current implementation does not initialize a second round automatically.");
+        // Round-end summary must be broadcast.
+        assertTrue(alice.containsSentMessage("ROUND_END|"));
+        assertTrue(bob.containsSentMessage("ROUND_END|"));
 
-        assertTrue(alice.containsSentMessage("ROUND_END|"),
-                "Server should broadcast the round-end summary.");
-        assertTrue(bob.containsSentMessage("ROUND_END|"),
-                "All players should receive the round-end summary.");
+        // Game must NOT have ended.
+        assertFalse(alice.containsSentMessage("GAME_END|"), "GAME_END must not be sent when game continues.");
+        assertFalse(bob.containsSentMessage("GAME_END|"),   "GAME_END must not be sent when game continues.");
 
-        assertTrue(alice.containsSentMessage("GAME_END|"),
-                "Server should broadcast the game-end message.");
-        assertTrue(bob.containsSentMessage("GAME_END|"),
-                "All players should receive the game-end message.");
+        // Server is waiting: round is still 1, game state still present.
+        assertEquals(1, lobby.getCurrentRound(), "Round must not advance until START_NEXT_ROUND is sent.");
+        assertNotNull(lobby.getGameState(), "GameState must exist while server waits for START_NEXT_ROUND.");
 
-        assertTrue(alice.countMessagesContaining("HAND_UPDATE|") >= 1,
-                "Players should receive the final hand update for the finished round.");
-        assertTrue(bob.countMessagesContaining("HAND_UPDATE|") >= 1,
-                "Players should receive the final hand update for the finished round.");
+        // Player triggers the next round.
+        alice.getSentMessages().clear();
+        bob.getSentMessages().clear();
+        service.handleMessage(alice, new Message(Message.Type.START_NEXT_ROUND, ""));
 
-        assertTrue(alice.countMessagesContaining("GAME_STATE|") >= 1,
-                "Server should broadcast the final public game state before ending the match.");
-        assertTrue(bob.countMessagesContaining("GAME_STATE|") >= 1,
-                "All players should see the final public game state.");
+        // NEXT_ROUND must be broadcast with the new round number.
+        assertTrue(alice.containsSentMessage("NEXT_ROUND|2"), "NEXT_ROUND|2 must be broadcast.");
+        assertTrue(bob.containsSentMessage("NEXT_ROUND|2"),   "NEXT_ROUND|2 must be broadcast.");
+
+        // Lobby must now be in round 2.
+        assertEquals(2, lobby.getCurrentRound(), "Server must advance to round 2.");
+        assertNotNull(lobby.getGameState(), "A new GameState must be created for round 2.");
+        assertTrue(lobby.isGameStarted(),   "Game must still be marked as started.");
+        assertEquals(ch.unibas.dmi.dbis.cs108.example.model.LobbyStatus.PLAYING,
+                lobby.getLobbyStatus(), "Lobby status must remain PLAYING.");
+
+        // Both players must receive new hands and a new game state.
+        assertTrue(alice.countMessagesContaining("HAND_UPDATE|") >= 1);
+        assertTrue(bob.countMessagesContaining("HAND_UPDATE|") >= 1);
+        assertTrue(alice.countMessagesContaining("GAME_STATE|") >= 1);
+        assertTrue(bob.countMessagesContaining("GAME_STATE|") >= 1);
+
+        // Each player must have 7 cards in the new round.
+        assertEquals(7, lobby.getGameState().getPlayer("Alice").getHandSize());
+        assertEquals(7, lobby.getGameState().getPlayer("Bob").getHandSize());
     }
+
+    /**
+     * Verifies cumulative scores are set immediately when a round ends and are
+     * carried into the next round's player states once START_NEXT_ROUND is sent.
+     */
+    @Test
+    void handlePlayCard_roundEnd_noGameOver_cumulativeScoresAccumulated() throws ReflectiveOperationException {
+        ServerService service = new ServerService();
+        TestClientSession alice = new TestClientSession();
+        TestClientSession bob   = new TestClientSession();
+
+        service.registerClient(alice);
+        service.registerClient(bob);
+
+        service.handleMessage(alice, new Message(Message.Type.NAME, "Alice"));
+        service.handleMessage(bob,   new Message(Message.Type.NAME, "Bob"));
+        service.handleMessage(alice, new Message(Message.Type.CREATE, "Lobby1"));
+        service.handleMessage(bob,   new Message(Message.Type.JOIN,   "Lobby1"));
+        service.handleMessage(alice, new Message(Message.Type.START,  ""));
+
+        Lobby lobby = getLobby(service, "Lobby1");
+
+        // Alice plays last card (value 5, but removed from hand → 0 round score).
+        // Bob keeps BLUE/7 → round score 7.
+        lobby.setGameState(createRoundEndingState());
+        service.handleMessage(alice, new Message(Message.Type.PLAY_CARD, "1"));
+
+        // Cumulative scores must be recorded immediately when the round ends.
+        assertEquals(0, lobby.getCumulativeScores().get("Alice"),
+                "Alice emptied her hand; her round score is 0.");
+        assertEquals(7, lobby.getCumulativeScores().get("Bob"),
+                "Bob held BLUE/7; his round score is 7.");
+
+        // Advance to the next round and verify score carry-over.
+        service.handleMessage(alice, new Message(Message.Type.START_NEXT_ROUND, ""));
+
+        assertEquals(0, lobby.getGameState().getPlayer("Alice").getTotalScore());
+        assertEquals(7, lobby.getGameState().getPlayer("Bob").getTotalScore());
+    }
+
+    /**
+     * Verifies that when a player's cumulative score reaches or exceeds maxScore
+     * after a round, the server ends the game, broadcasts GAME_END, and marks
+     * the lobby as FINISHED.
+     */
+    @Test
+    void handlePlayCard_roundEnd_gameOver_endsGameAndBroadcastsWinner() throws ReflectiveOperationException {
+        ServerService service = new ServerService();
+        TestClientSession alice = new TestClientSession();
+        TestClientSession bob   = new TestClientSession();
+
+        service.registerClient(alice);
+        service.registerClient(bob);
+
+        service.handleMessage(alice, new Message(Message.Type.NAME, "Alice"));
+        service.handleMessage(bob,   new Message(Message.Type.NAME, "Bob"));
+        service.handleMessage(alice, new Message(Message.Type.CREATE, "Lobby1"));
+        service.handleMessage(bob,   new Message(Message.Type.JOIN,   "Lobby1"));
+        service.handleMessage(alice, new Message(Message.Type.START,  ""));
+
+        Lobby lobby = getLobby(service, "Lobby1");
+
+        // maxScore=5; Alice scores 0, Bob scores 7 (7 >= 5) → game over.
+        // Alice is the winner (lowest score: 0 < 7).
+        lobby.setGameState(createRoundEndingStateForGameOver());
+        alice.getSentMessages().clear();
+        bob.getSentMessages().clear();
+
+        service.handleMessage(alice, new Message(Message.Type.PLAY_CARD, "1"));
+
+        // Round-end summary must be broadcast before game-end.
+        assertTrue(alice.containsSentMessage("ROUND_END|"));
+        assertTrue(bob.containsSentMessage("ROUND_END|"));
+
+        // Game-end must be broadcast with Alice as winner.
+        assertTrue(alice.containsSentMessage("GAME_END|Alice"),
+                "GAME_END must name Alice (lowest score).");
+        assertTrue(bob.containsSentMessage("GAME_END|Alice"));
+
+        // No next round must be started.
+        assertNull(lobby.getGameState(),  "GameState must be cleared after game over.");
+        assertFalse(lobby.isGameStarted(), "Lobby must not be marked as started.");
+        assertEquals(ch.unibas.dmi.dbis.cs108.example.model.LobbyStatus.FINISHED,
+                lobby.getLobbyStatus(), "Lobby must be FINISHED.");
+    }
+
+    /**
+     * Verifies that START_NEXT_ROUND is rejected with an ERROR when the game
+     * is not in ROUND_END phase (e.g. still mid-turn).
+     */
+    @Test
+    void handleStartNextRound_rejectedWhenNotInRoundEndPhase() throws ReflectiveOperationException {
+        ServerService service = new ServerService();
+        TestClientSession alice = new TestClientSession();
+        TestClientSession bob   = new TestClientSession();
+
+        service.registerClient(alice);
+        service.registerClient(bob);
+
+        service.handleMessage(alice, new Message(Message.Type.NAME, "Alice"));
+        service.handleMessage(bob,   new Message(Message.Type.NAME, "Bob"));
+        service.handleMessage(alice, new Message(Message.Type.CREATE, "Lobby1"));
+        service.handleMessage(bob,   new Message(Message.Type.JOIN,   "Lobby1"));
+        service.handleMessage(alice, new Message(Message.Type.START,  ""));
+
+        // Game is in TURN_START / AWAITING_PLAY — not ROUND_END.
+        alice.getSentMessages().clear();
+        service.handleMessage(alice, new Message(Message.Type.START_NEXT_ROUND, ""));
+
+        assertTrue(alice.containsSentMessage("ERROR|"),
+                "Server must respond with ERROR when phase is not ROUND_END.");
+        assertFalse(alice.containsSentMessage("NEXT_ROUND|"),
+                "NEXT_ROUND must not be broadcast when request is rejected.");
+    }
+
     /**
      * Verifies that GET_HAND reports no active game when none exists.
      */

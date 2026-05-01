@@ -869,6 +869,18 @@ Today, I focused on final polishing for the milestone hand-in. The main areas we
 * Improved the layout of the endscreen so the result panels are centered properly instead of being pushed to the left.
 * Reviewed the current milestone achievements and assessed which ones are likely fulfilled based on the present source state and GUI completeness.
 
+## Date: May 1, 2026
+
+Reworked the round lifecycle, since the game was incorrectly ending after the first round. Split the round-end logic into clear phases: compute round scores, check if the game is over, otherwise wait for an explicit next-round trigger. Added proper game termination handling and ensured cumulative scores persist across rounds.
+
+Improved robustness around player disconnects so the game no longer stalls if someone leaves mid-turn. Introduced new message types (NEXT_ROUND, START_NEXT_ROUND) to separate initial game start from subsequent rounds and give players control over when to continue.
+
+Extended the game state with a roundNumber and propagated it through serialization and client state, enabling the UI to reactively display the current round. Updated the initializer to carry over scores and reorder players accordingly.
+
+On the client side, added handling for round transitions, including listeners and a new round-results overlay that shows scores and lets players proceed or exit. Integrated this into the main controller and game view.
+
+Rounded it off with targeted tests covering round transitions, scoring edge cases, state serialization, and a full multi-round flow.
+
 #### Future Plans
 
 * Run one final full end-to-end GUI test before presentation.

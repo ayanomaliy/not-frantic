@@ -9,6 +9,7 @@ import javafx.animation.PauseTransition;
 import javafx.animation.Timeline;
 import javafx.animation.FadeTransition;
 import javafx.animation.SequentialTransition;
+import javafx.collections.ObservableList;
 import javafx.scene.effect.GaussianBlur;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -108,6 +109,7 @@ public class GameView extends BorderPane {
 
     // Fade in animation
     private final StackPane rootStack = new StackPane();
+    private RoundResultsOverlay currentRoundResultsOverlay;
     private final ScrollPane outerScrollPane = new ScrollPane();
     private final StackPane turnOverlay = new StackPane();
     private final Label turnOverlayLabel = new Label();
@@ -829,6 +831,43 @@ public class GameView extends BorderPane {
      */
     public CircularTablePane getCircularTablePane() {
         return circularTablePane;
+    }
+
+    /**
+     * Shows the round-results overlay on top of the game board.
+     *
+     * <p>Any previously shown overlay is dismissed first. The overlay fills the
+     * root stack and fades in automatically.</p>
+     *
+     * @param scoreRows        the score rows to display
+     * @param onStartNextRound callback invoked when the user clicks "Next Round"
+     * @param onLeaveLobby     callback invoked when the user clicks "Leave Lobby"
+     */
+    public void showRoundResults(ObservableList<String> scoreRows,
+                                 Runnable onStartNextRound,
+                                 Runnable onLeaveLobby) {
+        hideRoundResults();
+
+        currentRoundResultsOverlay = new RoundResultsOverlay(scoreRows, onStartNextRound, onLeaveLobby);
+        currentRoundResultsOverlay.prefWidthProperty().bind(rootStack.widthProperty());
+        currentRoundResultsOverlay.prefHeightProperty().bind(rootStack.heightProperty());
+        currentRoundResultsOverlay.maxWidthProperty().bind(rootStack.widthProperty());
+        currentRoundResultsOverlay.maxHeightProperty().bind(rootStack.heightProperty());
+
+        rootStack.getChildren().add(currentRoundResultsOverlay);
+    }
+
+    /**
+     * Fades out and removes the round-results overlay, if one is currently shown.
+     */
+    public void hideRoundResults() {
+        if (currentRoundResultsOverlay == null) {
+            return;
+        }
+
+        RoundResultsOverlay overlay = currentRoundResultsOverlay;
+        currentRoundResultsOverlay = null;
+        overlay.dismiss(() -> rootStack.getChildren().remove(overlay));
     }
 
 }

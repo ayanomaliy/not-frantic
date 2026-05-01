@@ -112,6 +112,15 @@ public record Message(Type type, String content) {
         /** Server broadcasts the game-over result. Payload: winner name. */
         GAME_END,
 
+        /**
+         * Client requests to start the next round after a round has ended.
+         * No payload. Any player in the lobby may send this.
+         */
+        START_NEXT_ROUND,
+
+        /** Server notifies all clients that a new round is starting. Payload: round number (integer). */
+        NEXT_ROUND,
+
         /** Message used to enable or configure dev mode for the current lobby. */
         DEV,
 
@@ -215,6 +224,7 @@ public record Message(Type type, String content) {
                 case "/dev" -> new Message(Type.DEV, payload);
 
                 case "/highscores", "/scores" -> new Message(Type.GET_HIGHSCORES, "");
+                case "/nextround" -> new Message(Type.START_NEXT_ROUND, "");
 
                 default -> new Message(Type.UNKNOWN, trimmed);
             };
@@ -261,6 +271,8 @@ public record Message(Type type, String content) {
             case "EFFECT_REQUEST" -> Type.EFFECT_REQUEST;
             case "ROUND_END" -> Type.ROUND_END;
             case "GAME_END" -> Type.GAME_END;
+            case "START_NEXT_ROUND" -> Type.START_NEXT_ROUND;
+            case "NEXT_ROUND" -> Type.NEXT_ROUND;
             case "BROADCAST" -> Type.BROADCAST;
             case "CHEATWIN" -> Type.CHEATWIN;
             case "DEV" -> Type.DEV;
@@ -289,9 +301,10 @@ public record Message(Type type, String content) {
             case NAME, GLOBALCHAT, LOBBYCHAT, WHISPERCHAT, PLAYERS, ALLPLAYERS,
                  INFO, ERROR, GAME, CREATE, LOBBIES, JOIN,
                  PLAY_CARD, EFFECT_RESPONSE, DEV,
-                 GAME_STATE, HAND_UPDATE, EFFECT_REQUEST, ROUND_END, GAME_END, BROADCAST -> true;
+                 GAME_STATE, HAND_UPDATE, EFFECT_REQUEST, ROUND_END, GAME_END, NEXT_ROUND, BROADCAST -> true;
             case START, QUIT, LEAVE, DRAW_CARD, END_TURN, GET_HAND,
-                 GET_GAME_STATE, GET_ROUND_END, GET_GAME_END, PING, PONG, CHEATWIN, HIGHSCORES, GET_HIGHSCORES, UNKNOWN -> false;
+                 GET_GAME_STATE, GET_ROUND_END, GET_GAME_END, PING, PONG, CHEATWIN,
+                 HIGHSCORES, GET_HIGHSCORES, START_NEXT_ROUND, UNKNOWN -> false;
         };
     }
 
@@ -311,11 +324,13 @@ public record Message(Type type, String content) {
 
         return switch (type) {
             case START, QUIT, LEAVE, DRAW_CARD, END_TURN, GET_HAND,
-                 GET_GAME_STATE, GET_ROUND_END, GET_GAME_END, PING, PONG, CHEATWIN -> safe(content).isBlank();
+                 GET_GAME_STATE, GET_ROUND_END, GET_GAME_END, PING, PONG, CHEATWIN,
+                 START_NEXT_ROUND -> safe(content).isBlank();
             case NAME, GLOBALCHAT, LOBBYCHAT, WHISPERCHAT, PLAYERS, ALLPLAYERS,
                  INFO, ERROR, GAME, CREATE, LOBBIES, JOIN,
                  PLAY_CARD, EFFECT_RESPONSE, DEV,
-                 GAME_STATE, HAND_UPDATE, EFFECT_REQUEST, ROUND_END, GAME_END, HIGHSCORES, GET_HIGHSCORES,BROADCAST -> true;
+                 GAME_STATE, HAND_UPDATE, EFFECT_REQUEST, ROUND_END, GAME_END,
+                 NEXT_ROUND, HIGHSCORES, GET_HIGHSCORES, BROADCAST -> true;
             case UNKNOWN -> false;
         };
     }

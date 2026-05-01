@@ -79,7 +79,7 @@ public class GameInitializer {
         discardPile.push(drawValidStarterCard(drawPile));
 
         // 7. Build and return GameState (phase defaults to TURN_START)
-        return new GameState(players, drawPile, discardPile, eventPile, maxScore);
+        return new GameState(players, drawPile, discardPile, eventPile, maxScore, roundNumber);
     }
 
     /**

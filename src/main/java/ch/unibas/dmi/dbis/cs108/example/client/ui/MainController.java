@@ -83,6 +83,20 @@ public class MainController {
                 showGameView();
             }
         });
+
+        this.networkClient.setRoundEndListener(() -> {
+            if (stage.getScene().getRoot() instanceof GameView gv) {
+                gv.showRoundResults(state.getFinalScoreRows(),
+                        networkClient::sendStartNextRound,
+                        this::leaveCurrentLobbyAndShowLobbyView);
+            }
+        });
+
+        this.networkClient.setNextRoundListener(() -> {
+            if (stage.getScene().getRoot() instanceof GameView gv) {
+                gv.hideRoundResults();
+            }
+        });
     }
 
     /** Shows the connect screen using the default host, port, and username values. */

@@ -1,7 +1,9 @@
 package ch.unibas.dmi.dbis.cs108.example.client;
 
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
@@ -79,6 +81,9 @@ public class ClientState {
 
     /** Ordered player list from the most recent {@code GAME_STATE} broadcast. */
     private final ObservableList<PlayerInfo> playerInfoList = FXCollections.observableArrayList();
+
+    /** Current round number, updated from each {@code GAME_STATE} and {@code NEXT_ROUND} message. */
+    private final IntegerProperty currentRound = new SimpleIntegerProperty(1);
 
 
     /**
@@ -462,5 +467,17 @@ public class ClientState {
      */
     public ObservableList<PlayerInfo> getPlayerInfoList() {
         return playerInfoList;
+    }
+
+    public IntegerProperty currentRoundProperty() {
+        return currentRound;
+    }
+
+    public int getCurrentRound() {
+        return currentRound.get();
+    }
+
+    public void setCurrentRound(int round) {
+        currentRound.set(round);
     }
 }

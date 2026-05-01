@@ -14,6 +14,11 @@ import java.util.Map;
  * <p>A lobby stores its connected client sessions, tracks the lifecycle state
  * of the game (waiting, playing, finished), and maintains cumulative scores
  * across rounds.</p>
+ *
+ * <p>The lifecycle status progresses through {@link LobbyStatus#WAITING} →
+ * {@link LobbyStatus#PLAYING} → {@link LobbyStatus#FINISHED}. {@code FINISHED}
+ * is a terminal state: the server rejects further join and start requests for
+ * this lobby. To play another game, players must create a new lobby.</p>
  */
 public class Lobby {
 
