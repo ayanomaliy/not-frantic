@@ -4,467 +4,7 @@
     <meta charset="UTF-8">
     <title>Frantic^-1</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <style>
-        :root {
-            --bg: #bfc5ff;
-            --bg-soft: #d7dbff;
-            --bg-soft-2: #e6e8ff;
-
-            --deep: #404255;
-            --mid: #7f83aa;
-
-            --accent: #aa7f83;
-            --accent-dark: #554042;
-
-            --text: #27293a;
-            --text-soft: #5d6078;
-            --white-soft: rgba(255, 255, 255, 0.72);
-
-            --shadow: rgba(64, 66, 85, 0.20);
-            --nav-bg: rgba(230, 232, 255, 0.78);
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
-        body {
-            margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-            background:
-                    radial-gradient(circle at top left, rgba(255, 255, 255, 0.75), transparent 36rem),
-                    radial-gradient(circle at top right, rgba(170, 127, 131, 0.22), transparent 32rem),
-                    var(--bg);
-            color: var(--text);
-        }
-
-        a {
-            color: inherit;
-        }
-
-        /* =========================
-           Top Navigation
-           ========================= */
-
-        .top-nav {
-            position: sticky;
-            top: 0;
-            z-index: 50;
-
-            height: 58px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            background: var(--nav-bg);
-            backdrop-filter: blur(18px);
-            -webkit-backdrop-filter: blur(18px);
-            border-bottom: 1px solid rgba(64, 66, 85, 0.14);
-        }
-
-        .nav-inner {
-            width: min(1180px, calc(100% - 32px));
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 24px;
-        }
-
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            text-decoration: none;
-            font-weight: 750;
-            letter-spacing: -0.03em;
-            color: var(--deep);
-            white-space: nowrap;
-        }
-
-        .brand img {
-            width: 30px;
-            height: 30px;
-            object-fit: contain;
-            border-radius: 8px;
-        }
-
-        .nav-links {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 24px;
-            font-size: 0.92rem;
-            color: var(--text-soft);
-        }
-
-        .nav-links a {
-            text-decoration: none;
-        }
-
-        .nav-links a:hover {
-            color: var(--deep);
-        }
-
-        .nav-download {
-            padding: 0.55rem 0.95rem;
-            border-radius: 999px;
-            background: var(--accent);
-            color: white;
-            text-decoration: none;
-            font-size: 0.9rem;
-            font-weight: 700;
-            box-shadow: 0 8px 22px rgba(170, 127, 131, 0.26);
-        }
-
-        .nav-download:hover {
-            background: var(--accent-dark);
-        }
-
-        /* =========================
-           Global Layout
-           ========================= */
-
-        main {
-            overflow: hidden;
-        }
-
-        section {
-            scroll-margin-top: 80px;
-        }
-
-        .page-section {
-            width: min(1180px, calc(100% - 36px));
-            margin: 0 auto;
-            padding: 72px 0;
-        }
-
-        .section-eyebrow {
-            margin: 0 0 12px;
-            color: var(--accent-dark);
-            font-weight: 800;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            font-size: 0.78rem;
-        }
-
-        .section-title {
-            margin: 0;
-            font-size: clamp(2.2rem, 5vw, 4.8rem);
-            line-height: 0.96;
-            letter-spacing: -0.07em;
-            color: var(--deep);
-        }
-
-        .section-lead {
-            max-width: 760px;
-            margin: 22px 0 0;
-            color: var(--text-soft);
-            font-size: clamp(1.1rem, 2vw, 1.45rem);
-            line-height: 1.45;
-            letter-spacing: -0.025em;
-        }
-
-        /* =========================
-           Hero
-           ========================= */
-
-        .hero {
-            min-height: calc(100vh - 58px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 64px 18px 48px;
-            text-align: center;
-        }
-
-        .hero-inner {
-            width: min(1120px, 100%);
-        }
-
-        .hero-logo {
-            width: 128px;
-            height: 128px;
-            object-fit: contain;
-            margin-bottom: 24px;
-            filter: drop-shadow(0 16px 30px rgba(64, 66, 85, 0.24));
-        }
-
-        .hero h1 {
-            margin: 0;
-            font-size: clamp(4rem, 13vw, 9.5rem);
-            line-height: 0.88;
-            letter-spacing: -0.1em;
-            color: var(--deep);
-        }
-
-        .hero-subtitle {
-            margin: 24px auto 0;
-            max-width: 760px;
-            color: var(--text-soft);
-            font-size: clamp(1.25rem, 2.3vw, 1.85rem);
-            line-height: 1.35;
-            letter-spacing: -0.035em;
-        }
-
-        .hero-actions {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 14px;
-            margin-top: 34px;
-        }
-
-        .primary-button,
-        .secondary-button {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 46px;
-            padding: 0.75rem 1.15rem;
-            border-radius: 999px;
-            text-decoration: none;
-            font-weight: 750;
-            letter-spacing: -0.02em;
-        }
-
-        .primary-button {
-            background: var(--accent);
-            color: white;
-            box-shadow: 0 12px 30px rgba(170, 127, 131, 0.28);
-        }
-
-        .primary-button:hover {
-            background: var(--accent-dark);
-        }
-
-        .secondary-button {
-            background: rgba(255, 255, 255, 0.56);
-            color: var(--deep);
-            border: 1px solid rgba(64, 66, 85, 0.14);
-        }
-
-        .secondary-button:hover {
-            background: rgba(255, 255, 255, 0.78);
-        }
-
-        .hero-note {
-            margin-top: 18px;
-            color: var(--text-soft);
-            font-size: 0.95rem;
-        }
-
-        /* =========================
-           Showcase Media
-           ========================= */
-
-        .showcase {
-            padding: 38px 0 76px;
-        }
-
-        .media-frame {
-            width: min(1180px, calc(100% - 36px));
-            margin: 0 auto;
-            padding: 18px;
-            border-radius: 36px;
-            background: rgba(255, 255, 255, 0.42);
-            border: 1px solid rgba(255, 255, 255, 0.55);
-            box-shadow:
-                    0 30px 80px rgba(64, 66, 85, 0.22),
-                    inset 0 1px 0 rgba(255, 255, 255, 0.42);
-        }
-
-        .media-frame img,
-        .media-frame video {
-            display: block;
-            width: 100%;
-            border-radius: 24px;
-            box-shadow: 0 12px 40px rgba(64, 66, 85, 0.18);
-            background: rgba(255, 255, 255, 0.55);
-        }
-
-        .media-caption {
-            max-width: 900px;
-            margin: 22px auto 0;
-            text-align: center;
-            color: var(--text-soft);
-            font-size: 1.1rem;
-            line-height: 1.45;
-        }
-
-        /* =========================
-           Split Features
-           ========================= */
-
-        .feature-grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 22px;
-            margin-top: 36px;
-        }
-
-        .feature-card {
-            min-height: 260px;
-            padding: 34px;
-            border-radius: 32px;
-            background: rgba(255, 255, 255, 0.52);
-            box-shadow: 0 18px 48px rgba(64, 66, 85, 0.14);
-            border: 1px solid rgba(255, 255, 255, 0.45);
-        }
-
-        .feature-card.large {
-            grid-column: span 2;
-            min-height: 340px;
-            display: grid;
-            grid-template-columns: 1.05fr 0.95fr;
-            align-items: center;
-            gap: 34px;
-        }
-
-        .feature-card h3 {
-            margin: 0;
-            color: var(--deep);
-            font-size: clamp(1.8rem, 3vw, 3.2rem);
-            line-height: 1;
-            letter-spacing: -0.06em;
-        }
-
-        .feature-card p {
-            margin: 18px 0 0;
-            color: var(--text-soft);
-            font-size: 1.08rem;
-            line-height: 1.55;
-        }
-
-        .feature-card ul {
-            margin: 20px 0 0;
-            padding-left: 1.2rem;
-            color: var(--text-soft);
-            line-height: 1.75;
-            font-size: 1.05rem;
-        }
-
-        .mini-terminal {
-            background: rgba(64, 66, 85, 0.92);
-            color: #f5e8de;
-            border-radius: 22px;
-            padding: 22px;
-            box-shadow: 0 18px 50px rgba(64, 66, 85, 0.24);
-            overflow-x: auto;
-        }
-
-        .mini-terminal code {
-            font-family: Consolas, Monaco, monospace;
-            font-size: 0.98rem;
-            line-height: 1.8;
-            white-space: pre;
-        }
-
-        /* =========================
-           Documents
-           ========================= */
-
-        .document-row {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 18px;
-            margin-top: 34px;
-        }
-
-        .doc-link {
-            display: block;
-            padding: 28px;
-            min-height: 160px;
-            border-radius: 28px;
-            background: rgba(255, 255, 255, 0.54);
-            text-decoration: none;
-            box-shadow: 0 16px 44px rgba(64, 66, 85, 0.13);
-            border: 1px solid rgba(255, 255, 255, 0.48);
-            transition: transform 160ms ease, box-shadow 160ms ease;
-        }
-
-        .doc-link:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 22px 54px rgba(64, 66, 85, 0.18);
-        }
-
-        .doc-link strong {
-            display: block;
-            color: var(--deep);
-            font-size: 1.35rem;
-            letter-spacing: -0.04em;
-        }
-
-        .doc-link span {
-            display: block;
-            margin-top: 12px;
-            color: var(--text-soft);
-            line-height: 1.45;
-        }
-
-        /* =========================
-           Footer
-           ========================= */
-
-        footer {
-            width: min(1180px, calc(100% - 36px));
-            margin: 0 auto;
-            padding: 48px 0 58px;
-            color: var(--text-soft);
-            border-top: 1px solid rgba(64, 66, 85, 0.14);
-            display: flex;
-            justify-content: space-between;
-            gap: 24px;
-            flex-wrap: wrap;
-        }
-
-        footer strong {
-            color: var(--deep);
-        }
-
-        /* =========================
-           Responsive
-           ========================= */
-
-        @media (max-width: 860px) {
-            .nav-links {
-                display: none;
-            }
-
-            .hero {
-                min-height: auto;
-                padding-top: 78px;
-            }
-
-            .feature-grid,
-            .document-row {
-                grid-template-columns: 1fr;
-            }
-
-            .feature-card.large {
-                grid-column: span 1;
-                grid-template-columns: 1fr;
-            }
-
-            .feature-card {
-                padding: 26px;
-            }
-
-            .media-frame {
-                padding: 10px;
-                border-radius: 24px;
-            }
-
-            .media-frame img,
-            .media-frame video {
-                border-radius: 18px;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="main.css">
 </head>
 
 <body>
@@ -479,9 +19,11 @@
         <div class="nav-links">
             <a href="#game">Game</a>
             <a href="#trailer">Trailer</a>
-            <a href="#features">Features</a>
-            <a href="#play">Play</a>
-            <a href="#documents">Docs</a>
+            <a href="#play">How to Play</a>
+            <a href="#cards">Cards</a>
+            <a href="#events">Events</a>
+            <a href="#scoring">Scoring</a>
+            <a href="#about">About</a>
         </div>
 
         <a class="nav-download" href="not-frantic.jar" download>Download</a>
@@ -497,14 +39,14 @@
             <h1>Frantic^-1</h1>
 
             <p class="hero-subtitle">
-                A chaotic multiplayer card game where every turn can become a trap,
-                a comeback, a betrayal, or a very questionable tactical decision.
+                A chaotic multiplayer card game about questionable tactics,
+                sudden betrayals, and pretending it was all part of the plan.
             </p>
 
             <div class="hero-actions">
                 <a class="primary-button" href="not-frantic.jar" download>Download not-frantic.jar</a>
                 <a class="secondary-button" href="#trailer">Watch gameplay</a>
-                <a class="secondary-button" href="manual.pdf">Read manual</a>
+                <a class="secondary-button" href="#play">Read manual</a>
             </div>
 
             <p class="hero-note">
@@ -529,7 +71,7 @@
 
     <section class="page-section">
         <p class="section-eyebrow">The table is never calm</p>
-        <h2 class="section-title">Simple to start. Chaotic to survive.</h2>
+        <h2 class="section-title">Easy to learn. Unsafe for friendships.</h2>
         <p class="section-lead">
             Frantic^-1 starts like a familiar card game: match, play, draw.
             Then the special cards arrive. Gift cards away, exchange hands,
@@ -544,112 +86,539 @@
         </div>
     </section>
 
-    <section class="page-section" id="features">
-        <p class="section-eyebrow">Game features</p>
-        <h2 class="section-title">A full multiplayer game, not just a prototype.</h2>
-
-        <div class="feature-grid">
-            <article class="feature-card large">
-                <div>
-                    <h3>Everything playable through the GUI.</h3>
-                    <p>
-                        Players can connect, create or join lobbies, chat, start the match,
-                        play cards, draw, resolve special effects and view the game end
-                        screen without relying on terminal commands.
-                    </p>
-                </div>
-
-                <div class="mini-terminal">
-                    <code>java -jar not-frantic.jar server
-                        java -jar not-frantic.jar client
-                        java -jar not-frantic.jar cli localhost:5555 Alice</code>
-                </div>
-            </article>
-
-            <article class="feature-card">
-                <h3>Special cards.</h3>
-                <p>
-                    Skip, Gift, Exchange, Equality, Counterattack, Nice Try,
-                    Fantastic, Fantastic Four and Second Chance create direct
-                    player interaction and tactical chaos.
-                </p>
-            </article>
-
-            <article class="feature-card">
-                <h3>Persistent scores.</h3>
-                <p>
-                    Finished games are written to a persistent high score history
-                    and displayed again at the end of the match.
-                </p>
-            </article>
-
-            <article class="feature-card">
-                <h3>Client-server architecture.</h3>
-                <p>
-                    The game uses a server, multiple clients, a human-readable
-                    protocol and shared parsing between GUI and terminal client.
-                </p>
-            </article>
-
-            <article class="feature-card">
-                <h3>Polished presentation.</h3>
-                <p>
-                    JavaFX views, themed cards, animations, sound hooks, lobby
-                    flow and a game-end view make the final demo presentation-ready.
-                </p>
-            </article>
-        </div>
-    </section>
-
     <section class="page-section" id="play">
         <p class="section-eyebrow">How to play</p>
-        <h2 class="section-title">Start a server. Join a lobby. Empty your hand.</h2>
+        <h2 class="section-title">Start a server. Destroy friendships.</h2>
+        <p class="section-lead">
+            The game is played through the GUI. Start the server, connect with one or more clients,
+            create or join a lobby, then start the match.
+        </p>
 
-        <div class="feature-grid">
-            <article class="feature-card">
-                <h3>1. Start</h3>
+        <div class="content-grid">
+            <article class="content-card large">
+                <h3>1. Starting the game</h3>
+                <p>
+                    Frantic^-1 uses a server-client system. One person starts the server.
+                    Every player starts a GUI client and connects to that server.
+                </p>
+
+                <div class="command-card">
+                    <div class="command-line">
+                        <span>Server</span>
+                        <code>java -jar not-frantic.jar server</code>
+                    </div>
+
+                    <div class="command-line">
+                        <span>GUI Client</span>
+                        <code>java -jar not-frantic.jar client</code>
+                    </div>
+
+                    <div class="command-line">
+                        <span>With Name</span>
+                        <code>java -jar not-frantic.jar client localhost:5555 Alice</code>
+                    </div>
+                </div>
+            </article>
+
+            <article class="content-card">
+                <h3>2. Connecting</h3>
+                <p>In the connect screen, enter host, port and username.</p>
                 <ul>
-                    <li>Start the server.</li>
-                    <li>Open one or more GUI clients.</li>
-                    <li>Choose a username.</li>
-                    <li>Create or join a lobby.</li>
+                    <li>For a local game, use host <strong>localhost</strong>.</li>
+                    <li>The default port is <strong>5555</strong>.</li>
+                    <li>Then click <strong>Connect</strong>.</li>
                 </ul>
             </article>
 
-            <article class="feature-card">
-                <h3>2. Play</h3>
-                <ul>
-                    <li>Play a matching card or draw.</li>
-                    <li>Resolve special card effects.</li>
-                    <li>React to wishes and event cards.</li>
-                    <li>Try to get rid of all cards first.</li>
-                </ul>
+            <article class="content-card">
+                <h3>3. Starting a match</h3>
+                <ol>
+                    <li>One player clicks <strong>Create New Lobby</strong>.</li>
+                    <li>Other players select the lobby and click <strong>Join Selected Lobby</strong>.</li>
+                    <li>When everyone is ready, click <strong>Start Game</strong>.</li>
+                </ol>
+            </article>
+
+            <article class="content-card">
+                <h3>4. Game screen</h3>
+                <p>
+                    The game screen shows the draw pile, discard pile, current player,
+                    current phase, your hand, other players, Game / Info log and chat.
+                </p>
+                <p>
+                    Click a card to play it. Click the draw pile to draw.
+                    Click <strong>End Turn</strong> when ending your turn is allowed.
+                </p>
+            </article>
+
+            <article class="content-card">
+                <h3>5. Goal</h3>
+                <p>
+                    The goal is to get rid of all cards in your hand.
+                    A round ends when one player has no cards left.
+                    At the end of a round, players receive penalty points for cards still in their hand.
+                </p>
+                <p>The player with the <strong>lowest total score</strong> wins the match.</p>
+            </article>
+
+            <article class="content-card large">
+                <h3>6. How a turn works</h3>
+                <p>On your turn, you normally do one of these:</p>
+                <ol>
+                    <li>Play a legal card.</li>
+                    <li>Draw a card.</li>
+                    <li>End your turn when the game allows it.</li>
+                </ol>
+                <p>
+                    You usually cannot end your turn without first playing or drawing.
+                    If something is not allowed, the Game / Info log shows an error.
+                </p>
             </article>
         </div>
     </section>
 
-    <section class="page-section" id="documents">
-        <p class="section-eyebrow">Project documents</p>
-        <h2 class="section-title">Manual, protocol and QA.</h2>
+    <section class="page-section" id="cards">
+        <p class="section-eyebrow">Cards</p>
+        <h2 class="section-title">Every card is a problem.</h2>
         <p class="section-lead">
-            The written project material is available directly from the website.
+            Some cards are simple. Some cards ruin turns. Some cards ruin friendships.
+            Here is what each card type does in the current game.
         </p>
 
-        <div class="document-row">
-            <a class="doc-link" href="manual.pdf">
-                <strong>Manual</strong>
-                <span>Rules, setup instructions and gameplay explanation.</span>
-            </a>
+        <div class="card-showcase">
 
-            <a class="doc-link" href="protocol.md">
-                <strong>Network Protocol</strong>
-                <span>Human-readable final protocol documentation.</span>
-            </a>
+            <article class="card-showcase-row">
+                <div class="card-visual">
+                    <div class="demo-card" style="--card-color: #5d8fd6;">
+                        <div class="demo-card-top">BLUE</div>
+                        <div class="demo-card-center">7<span>Normal</span></div>
+                        <div class="demo-card-bottom">7</div>
+                    </div>
+                </div>
 
-            <a class="doc-link" href="qa-report.pdf">
-                <strong>QA Report</strong>
-                <span>Quality assurance goals, methods, results and lessons learned.</span>
-            </a>
+                <div class="card-copy">
+                    <h3>Normal cards</h3>
+                    <p>
+                        Normal cards have a color and a number. They can be played if they match
+                        the current color, current number or active request.
+                    </p>
+                    <div class="score-pill">Score value: face value</div>
+                </div>
+            </article>
+
+            <article class="card-showcase-row reverse">
+                <div class="card-visual">
+                    <div class="demo-card black-demo">
+                        <div class="demo-card-top">BLACK</div>
+                        <div class="demo-card-center">5<span>Trigger event</span></div>
+                        <div class="demo-card-bottom">Score ×2</div>
+                    </div>
+                </div>
+
+                <div class="card-copy">
+                    <h3>Black cards</h3>
+                    <p>
+                        Black cards have a number but no normal color. If the number matches,
+                        they can be played to trigger a random event card automatically.
+                        One black card can reverse the order, block special cards, force draws,
+                        swap hands, or end the round immediately.
+                    </p>
+
+                    <div class="event-chip-row">
+                        <span class="event-chip">Triggers events</span>
+                        <span class="event-chip">No normal color</span>
+                        <span class="event-chip">Number match</span>
+                        <span class="event-chip">Score ×2</span>
+                    </div>
+
+                    <div class="score-pill">Score value: face value × 2</div>
+                </div>
+            </article>
+
+            <article class="card-showcase-row">
+                <div class="card-visual">
+                    <div class="demo-card" style="--card-color: #b57a63;">
+                        <div class="demo-card-top">SPECIAL</div>
+                        <div class="demo-card-center">↻<span>Second Chance</span></div>
+                        <div class="demo-card-bottom">10</div>
+                    </div>
+                </div>
+
+                <div class="card-copy">
+                    <h3>Second Chance</h3>
+                    <p>
+                        Lets the player immediately play another card. If no card is played,
+                        the player draws instead.
+                    </p>
+                    <div class="score-pill">Score value: 10 points</div>
+                </div>
+            </article>
+
+            <article class="card-showcase-row reverse">
+                <div class="card-visual">
+                    <div class="demo-card" style="--card-color: #5d8fd6;">
+                        <div class="demo-card-top">SPECIAL</div>
+                        <div class="demo-card-center">⏭<span>Skip</span></div>
+                        <div class="demo-card-bottom">10</div>
+                    </div>
+                </div>
+
+                <div class="card-copy">
+                    <h3>Skip</h3>
+                    <p>
+                        Choose one player. That player's next turn is skipped.
+                        Simple, direct and extremely annoying.
+                    </p>
+                    <div class="score-pill">Score value: 10 points</div>
+                </div>
+            </article>
+
+            <article class="card-showcase-row">
+                <div class="card-visual">
+                    <div class="demo-card" style="--card-color: #7d5444;">
+                        <div class="demo-card-top">SPECIAL</div>
+                        <div class="demo-card-center">🎁<span>Gift</span></div>
+                        <div class="demo-card-bottom">10</div>
+                    </div>
+                </div>
+
+                <div class="card-copy">
+                    <h3>Gift</h3>
+                    <p>
+                        Choose cards from your hand and give them to another player.
+                        It is called a gift. It is probably not a nice one.
+                    </p>
+                    <div class="score-pill">Score value: 10 points</div>
+                </div>
+            </article>
+
+            <article class="card-showcase-row reverse">
+                <div class="card-visual">
+                    <div class="demo-card" style="--card-color: #2a2f39;">
+                        <div class="demo-card-top">SPECIAL</div>
+                        <div class="demo-card-center">⇄<span>Exchange</span></div>
+                        <div class="demo-card-bottom">10</div>
+                    </div>
+                </div>
+
+                <div class="card-copy">
+                    <h3>Exchange</h3>
+                    <p>
+                        Choose cards from your hand and exchange them with cards from another
+                        player's hand.
+                    </p>
+                    <div class="score-pill">Score value: 10 points</div>
+                </div>
+            </article>
+
+            <article class="card-showcase-row">
+                <div class="card-visual">
+                    <div class="demo-card" style="--card-color: #b57a63;">
+                        <div class="demo-card-top">FOUR COLOR</div>
+                        <div class="demo-card-center">★<span>Fantastic</span></div>
+                        <div class="demo-card-bottom">20</div>
+                    </div>
+                </div>
+
+                <div class="card-copy">
+                    <h3>Fantastic</h3>
+                    <p>
+                        Choose one color or one number. That choice becomes the active request
+                        for the next play.
+                    </p>
+                    <div class="score-pill">Score value: 20 points</div>
+                </div>
+            </article>
+
+            <article class="card-showcase-row reverse">
+                <div class="card-visual">
+                    <div class="demo-card" style="--card-color: #5d8fd6;">
+                        <div class="demo-card-top">FOUR COLOR</div>
+                        <div class="demo-card-center">4<span>Fantastic Four</span></div>
+                        <div class="demo-card-bottom">20</div>
+                    </div>
+                </div>
+
+                <div class="card-copy">
+                    <h3>Fantastic Four</h3>
+                    <p>
+                        Choose a requested color or number. Then assign four drawn cards
+                        to players. The same player can receive multiple cards.
+                    </p>
+                    <div class="score-pill">Score value: 20 points</div>
+                </div>
+            </article>
+
+            <article class="card-showcase-row">
+                <div class="card-visual">
+                    <div class="demo-card" style="--card-color: #7d5444;">
+                        <div class="demo-card-top">FOUR COLOR</div>
+                        <div class="demo-card-center">=<span>Equality</span></div>
+                        <div class="demo-card-bottom">20</div>
+                    </div>
+                </div>
+
+                <div class="card-copy">
+                    <h3>Equality</h3>
+                    <p>
+                        Choose a player and a color. The chosen player draws until their
+                        hand size reaches your hand size.
+                    </p>
+                    <div class="score-pill">Score value: 20 points</div>
+                </div>
+            </article>
+
+            <article class="card-showcase-row reverse">
+                <div class="card-visual">
+                    <div class="demo-card" style="--card-color: #2a2f39;">
+                        <div class="demo-card-top">FOUR COLOR</div>
+                        <div class="demo-card-center">↯<span>Counterattack</span></div>
+                        <div class="demo-card-bottom">20</div>
+                    </div>
+                </div>
+
+                <div class="card-copy">
+                    <h3>Counterattack</h3>
+                    <p>
+                        Choose a color. The chosen color becomes the active request.
+                        In some situations, Counterattack can also redirect a pending effect.
+                    </p>
+                    <div class="score-pill">Score value: 20 points</div>
+                </div>
+            </article>
+
+            <article class="card-showcase-row">
+                <div class="card-visual">
+                    <div class="demo-card" style="--card-color: #b57a63;">
+                        <div class="demo-card-top">FOUR COLOR</div>
+                        <div class="demo-card-center">✋<span>Nice Try</span></div>
+                        <div class="demo-card-bottom">20</div>
+                    </div>
+                </div>
+
+                <div class="card-copy">
+                    <h3>Nice Try</h3>
+                    <p>
+                        Stops a player from safely ending the round. The chosen player
+                        draws up to three cards, so the round can continue.
+                    </p>
+                    <div class="score-pill">Score value: 20 points</div>
+                </div>
+            </article>
+
+            <article class="card-showcase-row reverse">
+                <div class="card-visual">
+                    <div class="demo-card" style="--card-color: #7d5444;">
+                        <div class="demo-card-top">UNIQUE</div>
+                        <div class="demo-card-center">!<span>Fuck You</span></div>
+                        <div class="demo-card-bottom">69</div>
+                    </div>
+                </div>
+
+                <div class="card-copy">
+                    <h3>Fuck You</h3>
+                    <p>
+                        A unique card. It can only be played when the current player
+                        has exactly 10 cards in hand.
+                    </p>
+                    <div class="score-pill">Score value: 69 points</div>
+                </div>
+            </article>
+
+        </div>
+    </section>
+
+    <section class="page-section" id="events">
+        <p class="section-eyebrow">Black-card events</p>
+        <h2 class="section-title">Events change the round.</h2>
+        <p class="section-lead">
+            Event cards are triggered automatically when a black card is played.
+            Players do not choose them manually. In the GUI, the game announces them
+            with a dramatic black banner across the screen.
+        </p>
+
+        <div class="event-full-bleed">
+            <div class="event-demo-stage">
+                <div class="event-banner-demo">
+                    <strong>Event Cards</strong>
+                    <span>Triggered automatically by black cards.</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="event-grid">
+            <article class="event-card">
+                <h3>All Draw Two</h3>
+                <p>Everyone draws two cards.</p>
+            </article>
+
+            <article class="event-card">
+                <h3>All Draw One</h3>
+                <p>Everyone draws one card.</p>
+            </article>
+
+            <article class="event-card">
+                <h3>All Skip</h3>
+                <p>Everybody except the triggering player gets skipped once.</p>
+            </article>
+
+            <article class="event-card">
+                <h3>Instant Round End</h3>
+                <p>The round ends immediately.</p>
+            </article>
+
+            <article class="event-card">
+                <h3>Reverse Order</h3>
+                <p>The turn order is reversed.</p>
+            </article>
+
+            <article class="event-card">
+                <h3>Steal From Next</h3>
+                <p>The current player steals from the next player.</p>
+            </article>
+
+            <article class="event-card">
+                <h3>Steal From Previous</h3>
+                <p>The current player steals from the previous player.</p>
+            </article>
+
+            <article class="event-card">
+                <h3>Discard Highest</h3>
+                <p>Highest-value cards are discarded.</p>
+            </article>
+
+            <article class="event-card">
+                <h3>Discard Color</h3>
+                <p>A whole color gets discarded.</p>
+            </article>
+
+            <article class="event-card">
+                <h3>Swap Hands</h3>
+                <p>Hands are swapped around.</p>
+            </article>
+
+            <article class="event-card">
+                <h3>Block Specials</h3>
+                <p>Special cards are temporarily blocked.</p>
+            </article>
+
+            <article class="event-card">
+                <h3>Gift Chain</h3>
+                <p>Cards start moving around the table.</p>
+            </article>
+
+            <article class="event-card">
+                <h3>Hand Reset</h3>
+                <p>Hands are reset.</p>
+            </article>
+
+            <article class="event-card">
+                <h3>Lucky Draw</h3>
+                <p>Someone gets lucky with extra cards.</p>
+            </article>
+
+            <article class="event-card">
+                <h3>Penalty Draw</h3>
+                <p>Penalty cards are handed out.</p>
+            </article>
+
+            <article class="event-card">
+                <h3>Equalize</h3>
+                <p>Hands get pulled closer together.</p>
+            </article>
+
+            <article class="event-card">
+                <h3>Wild Request</h3>
+                <p>A new request changes what can be played.</p>
+            </article>
+
+            <article class="event-card">
+                <h3>Cancel Effects</h3>
+                <p>Pending effects are cancelled.</p>
+            </article>
+
+            <article class="event-card">
+                <h3>Bonus Play</h3>
+                <p>The current player gets another play.</p>
+            </article>
+
+            <article class="event-card">
+                <h3>Double Scoring</h3>
+                <p>This round will count double.</p>
+            </article>
+        </div>
+    </section>
+
+    <section class="page-section" id="scoring">
+        <p class="section-eyebrow">Scoring</p>
+        <h2 class="section-title">Lower score wins.</h2>
+        <p class="section-lead">
+            At the end of a round, every card still in your hand gives penalty points.
+        </p>
+
+        <table class="score-table">
+            <thead>
+            <tr>
+                <th>Card type</th>
+                <th>Points</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr><td>Normal card</td><td>face value</td></tr>
+            <tr><td>Black card</td><td>face value × 2</td></tr>
+            <tr><td>Second Chance</td><td>10</td></tr>
+            <tr><td>Skip</td><td>10</td></tr>
+            <tr><td>Gift</td><td>10</td></tr>
+            <tr><td>Exchange</td><td>10</td></tr>
+            <tr><td>Fantastic</td><td>20</td></tr>
+            <tr><td>Fantastic Four</td><td>20</td></tr>
+            <tr><td>Equality</td><td>20</td></tr>
+            <tr><td>Counterattack</td><td>20</td></tr>
+            <tr><td>Nice Try</td><td>20</td></tr>
+            <tr><td>Fuck You</td><td>69</td></tr>
+            <tr><td>Event card</td><td>0</td></tr>
+            </tbody>
+        </table>
+
+        <div class="content-grid">
+            <article class="content-card">
+                <h3>Double Scoring</h3>
+                <p>If the Double Scoring event happened during the round, the round score is doubled.</p>
+            </article>
+
+            <article class="content-card">
+                <h3>Match end</h3>
+                <p>The match ends when at least one player reaches or exceeds the score limit:</p>
+                <p><strong>150 - (3 × number of players)</strong></p>
+                <p>The player with the lowest total score wins.</p>
+            </article>
+        </div>
+    </section>
+
+    <section class="page-section" id="about">
+        <p class="section-eyebrow">About the project</p>
+        <h2 class="section-title">Built for the University of Basel.</h2>
+        <p class="section-lead">
+            Frantic^-1 was created as a project for the University of Basel by <strong>The Devs^-1</strong>.
+        </p>
+
+        <div class="content-grid">
+            <article class="content-card">
+                <h3>The Devs^-1</h3>
+                <p>
+                    This project was developed as part of the Programmierprojekt course.
+                    It combines a full game implementation with a graphical client,
+                    a server-client architecture and a polished final presentation.
+                </p>
+            </article>
+
+            <article class="content-card">
+                <h3>What the project includes</h3>
+                <p>
+                    Java game logic, JavaFX GUI, multiplayer lobbies, chat, special cards,
+                    black-card events, persistent high scores and a fully playable final game.
+                </p>
+            </article>
         </div>
     </section>
 
@@ -658,12 +627,9 @@
 <footer>
     <div>
         <strong>Frantic^-1</strong><br>
-        A chaotic multiplayer card game.
+        Created as a project for the University of Basel by The Devs^-1.
     </div>
 
-    <div>
-        Milestone 6 Project Website
-    </div>
 </footer>
 
 </body>
