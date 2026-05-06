@@ -1,0 +1,15 @@
+image: eclipse-temurin:25-jdk
+
+pages:
+  stage: deploy
+  script:
+    - chmod +x gradlew
+    - ./gradlew clean fatJar
+    - mkdir public
+    - cp -r outreach/website/* public/
+    - cp build/libs/not-frantic.jar public/not-frantic.jar
+  artifacts:
+    paths:
+      - public
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH

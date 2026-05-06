@@ -1,53 +1,253 @@
-<html>
-<!-- Dies ist ein html Kommentar -->
-<!-- Ändert in diesem File sämtliche Platzhalter, wie z.B. den Spielnamen in der nächsten Linie -->
-<head><title>Example Game</title><link rel="stylesheet" href="main.css"></head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Frantic^-1</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        :root {
+            --bg: #bfc5ff;
+            --deep: #404255;
+            --mid: #7f83aa;
+            --accent: #aa7f83;
+            --accent-dark: #554042;
+            --panel: rgba(255, 255, 255, 0.78);
+            --text: #27293a;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--deep), var(--mid));
+            color: white;
+            padding: 3.5rem 1.5rem;
+            text-align: center;
+        }
+
+        header img {
+            max-width: 150px;
+            margin-bottom: 1rem;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 3rem;
+        }
+
+        header p {
+            font-size: 1.15rem;
+            margin-bottom: 0;
+        }
+
+        main {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 1.25rem;
+        }
+
+        section {
+            background: var(--panel);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-radius: 18px;
+            box-shadow: 0 4px 20px rgba(64, 66, 85, 0.18);
+        }
+
+        h2 {
+            margin-top: 0;
+            color: var(--deep);
+        }
+
+        ul {
+            line-height: 1.7;
+        }
+
+        .buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .buttons a {
+            display: inline-block;
+            padding: 0.8rem 1rem;
+            background: var(--accent);
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: bold;
+        }
+
+        .buttons a:hover {
+            background: var(--accent-dark);
+        }
+
+        img, video {
+            max-width: 100%;
+            border-radius: 14px;
+            box-shadow: 0 3px 16px rgba(0, 0, 0, 0.22);
+        }
+
+        pre {
+            background: rgba(64, 66, 85, 0.12);
+            padding: 1rem;
+            border-radius: 12px;
+            overflow-x: auto;
+        }
+
+        code {
+            font-family: Consolas, monospace;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--deep);
+        }
+    </style>
+</head>
 
 <body>
-<!-- Header nicht verändern -->
-<header class="site-header"><div class="wrapper"><a class="site-title" href="/cs108/">Programmierprojekt - Computerspiele</a></div></header><div class="page-content"><div class="wrapper"><div class="home">
 
-<h1>Example Game</h1>
-Hier k&ouml;nnt ihr einen Satz &uuml;ber euer Spiel sagen.
+<header>
+    <img src="logo.png" alt="Frantic^-1 logo">
+    <h1>Frantic^-1</h1>
+    <p>A chaotic multiplayer card game by The Devs^-1.</p>
+</header>
 
-<!-- Dieser Block ist dafür verantwortlich, den Trailer / das Gameplay Video und euren Screenshot einzubauen. Verändert ihn nicht, sondern überschreibt einfach die Dateien -->
-<br>
-<img width="250" src="screenshot.png">
-<br>
-<br>
-<h2>Trailer</h2>
-<video controls width="250">
-    <source src="video.mp4"
-            type="video/mp4">
-    Sorry, your browser doesn't support embedded videos.
-</video>
-<br>
-<br>
+<main>
 
-<!-- Entwickler anpassen -->
+    <section>
+        <h2>About the Game</h2>
+        <p>
+            Frantic^-1 is a multiplayer card game where players try to get rid of all cards
+            in their hand while reacting to special cards, wishes, player effects and
+            unexpected events.
+        </p>
+        <p>
+            The game supports multiple clients, lobby creation, chat, a JavaFX graphical
+            interface, a terminal client and a server-client architecture.
+        </p>
+    </section>
 
-<h3>Entwickler:</h3>
-<ul>
-<li> Edgar Codd </li>
-<li> Lynn Conway </li>
-<li> Ada Lovelace </li>
-<li> Alan Turing </li>
-</ul>
+    <section>
+        <h2>How to Play</h2>
+        <ul>
+            <li>Start the server.</li>
+            <li>Start one or more GUI clients.</li>
+            <li>Create or join a lobby.</li>
+            <li>Start the game from the lobby.</li>
+            <li>On your turn, play a matching card or draw from the draw pile.</li>
+            <li>Special cards can trigger effects such as Skip, Gift, Exchange, Equality, Counterattack or wishes.</li>
+            <li>The round ends when one player has no cards left.</li>
+            <li>The remaining cards are counted as score points.</li>
+            <li>Finished games are stored in a persistent high score list.</li>
+        </ul>
+    </section>
 
-<!-- Nachfolgend sollt ihr die Tasten angeben, welche man braucht um euer Spiel zu Spielen. Um weitere Tasten hinzuzufügen könnt Ihr einfach eine Zeile kopieren und den Buchstaben oder das Wort zwischen <i>Beispiel:</i> ändern. -->
+    <section>
+        <h2>Download</h2>
+        <p>
+            Download the executable game JAR:
+        </p>
 
-<h2>Steuerung:</h2>
-<i>Pfeiltasten:</i> bewegen<br/>
-<i>Leertaste:</i> springen<br/>
-<i>I:</i> Inventar<br/>
-<i>Esc:</i> Spiel beenden<br/>
-<i>P:</i> Spiel pausieren
+        <div class="buttons">
+            <a href="not-frantic.jar" download>Download not-frantic.jar</a>
+        </div>
 
-<!-- Falls ihr noch zusätzliche Informationen wie Items oder andere Erklärungen angeben wollt, könnt Ihr das wie nachfolgend machen. -->
+        <p>
+            Start the server:
+        </p>
 
-<h2>Inventar:</h2>
-<i>Eisblock:</i> Gegner k&ouml;nnen sich nicht mehr bewegen<br/>
-<i>Schwarzes Loch:</i> Steuerung der Gegner wird invertiert
+        <pre><code>java -jar not-frantic.jar server</code></pre>
 
-</div></div></div></div></body>
+        <p>
+            Start the graphical client:
+        </p>
+
+        <pre><code>java -jar not-frantic.jar client</code></pre>
+
+        <p>
+            Start the terminal client:
+        </p>
+
+        <pre><code>java -jar not-frantic.jar cli localhost:5555 Alice</code></pre>
+    </section>
+
+    <section>
+        <h2>Trailer / Gameplay Video</h2>
+        <p>
+            A short gameplay video showing Frantic^-1 in action:
+        </p>
+
+        <video controls>
+            <source src="video.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+    </section>
+
+    <section>
+        <h2>Screenshot</h2>
+        <p>
+            Representative screenshot of the game:
+        </p>
+
+        <img src="screenshot.png" alt="Screenshot of Frantic^-1 gameplay">
+    </section>
+
+    <section>
+        <h2>Documents</h2>
+        <p>
+            Important project documents:
+        </p>
+
+        <div class="buttons">
+            <a href="manual.pdf">Manual</a>
+            <a href="protocol.md">Network Protocol</a>
+            <a href="qa-report.pdf">QA Report</a>
+        </div>
+    </section>
+
+    <section>
+        <h2>Technology</h2>
+        <ul>
+            <li>Java for the main implementation</li>
+            <li>JavaFX for the graphical user interface</li>
+            <li>TCP sockets for client-server communication</li>
+            <li>Gradle for building and dependency management</li>
+            <li>JUnit for testing</li>
+            <li>AnimateFX for GUI animations</li>
+            <li>svgfx for SVG assets</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>Team</h2>
+        <p>
+            Developed by <strong>The Devs^-1</strong> as part of the Programmierprojekt course
+            at the University of Basel.
+        </p>
+        <p>
+            Team members: Sevval Ünlü, Aiysha Frutiger
+        </p>
+    </section>
+
+</main>
+
+<footer>
+    <p>Frantic^-1 — Milestone 6 Project Website</p>
+</footer>
+
+</body>
 </html>
