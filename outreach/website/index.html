@@ -8,245 +8,662 @@
     <style>
         :root {
             --bg: #bfc5ff;
+            --bg-soft: #d7dbff;
+            --bg-soft-2: #e6e8ff;
+
             --deep: #404255;
             --mid: #7f83aa;
+
             --accent: #aa7f83;
             --accent-dark: #554042;
-            --panel: rgba(255, 255, 255, 0.78);
+
             --text: #27293a;
+            --text-soft: #5d6078;
+            --white-soft: rgba(255, 255, 255, 0.72);
+
+            --shadow: rgba(64, 66, 85, 0.20);
+            --nav-bg: rgba(230, 232, 255, 0.78);
         }
 
         * {
             box-sizing: border-box;
         }
 
+        html {
+            scroll-behavior: smooth;
+        }
+
         body {
             margin: 0;
-            font-family: Arial, sans-serif;
-            background: var(--bg);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+            background:
+                    radial-gradient(circle at top left, rgba(255, 255, 255, 0.75), transparent 36rem),
+                    radial-gradient(circle at top right, rgba(170, 127, 131, 0.22), transparent 32rem),
+                    var(--bg);
             color: var(--text);
         }
 
-        header {
-            background: linear-gradient(135deg, var(--deep), var(--mid));
-            color: white;
-            padding: 3.5rem 1.5rem;
-            text-align: center;
+        a {
+            color: inherit;
         }
 
-        header img {
-            max-width: 150px;
-            margin-bottom: 1rem;
+        /* =========================
+           Top Navigation
+           ========================= */
+
+        .top-nav {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            background: var(--nav-bg);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border-bottom: 1px solid rgba(64, 66, 85, 0.14);
         }
 
-        header h1 {
-            margin: 0;
-            font-size: 3rem;
+        .nav-inner {
+            width: min(1180px, calc(100% - 32px));
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
         }
 
-        header p {
-            font-size: 1.15rem;
-            margin-bottom: 0;
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            font-weight: 750;
+            letter-spacing: -0.03em;
+            color: var(--deep);
+            white-space: nowrap;
         }
 
-        main {
-            max-width: 1000px;
-            margin: 2rem auto;
-            padding: 0 1.25rem;
+        .brand img {
+            width: 30px;
+            height: 30px;
+            object-fit: contain;
+            border-radius: 8px;
         }
 
-        section {
-            background: var(--panel);
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            border-radius: 18px;
-            box-shadow: 0 4px 20px rgba(64, 66, 85, 0.18);
+        .nav-links {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            font-size: 0.92rem;
+            color: var(--text-soft);
         }
 
-        h2 {
-            margin-top: 0;
+        .nav-links a {
+            text-decoration: none;
+        }
+
+        .nav-links a:hover {
             color: var(--deep);
         }
 
-        ul {
-            line-height: 1.7;
-        }
-
-        .buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.75rem;
-            margin-top: 1rem;
-        }
-
-        .buttons a {
-            display: inline-block;
-            padding: 0.8rem 1rem;
+        .nav-download {
+            padding: 0.55rem 0.95rem;
+            border-radius: 999px;
             background: var(--accent);
             color: white;
             text-decoration: none;
-            border-radius: 12px;
-            font-weight: bold;
+            font-size: 0.9rem;
+            font-weight: 700;
+            box-shadow: 0 8px 22px rgba(170, 127, 131, 0.26);
         }
 
-        .buttons a:hover {
+        .nav-download:hover {
             background: var(--accent-dark);
         }
 
-        img, video {
-            max-width: 100%;
-            border-radius: 14px;
-            box-shadow: 0 3px 16px rgba(0, 0, 0, 0.22);
+        /* =========================
+           Global Layout
+           ========================= */
+
+        main {
+            overflow: hidden;
         }
 
-        pre {
-            background: rgba(64, 66, 85, 0.12);
-            padding: 1rem;
-            border-radius: 12px;
+        section {
+            scroll-margin-top: 80px;
+        }
+
+        .page-section {
+            width: min(1180px, calc(100% - 36px));
+            margin: 0 auto;
+            padding: 72px 0;
+        }
+
+        .section-eyebrow {
+            margin: 0 0 12px;
+            color: var(--accent-dark);
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            font-size: 0.78rem;
+        }
+
+        .section-title {
+            margin: 0;
+            font-size: clamp(2.2rem, 5vw, 4.8rem);
+            line-height: 0.96;
+            letter-spacing: -0.07em;
+            color: var(--deep);
+        }
+
+        .section-lead {
+            max-width: 760px;
+            margin: 22px 0 0;
+            color: var(--text-soft);
+            font-size: clamp(1.1rem, 2vw, 1.45rem);
+            line-height: 1.45;
+            letter-spacing: -0.025em;
+        }
+
+        /* =========================
+           Hero
+           ========================= */
+
+        .hero {
+            min-height: calc(100vh - 58px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 64px 18px 48px;
+            text-align: center;
+        }
+
+        .hero-inner {
+            width: min(1120px, 100%);
+        }
+
+        .hero-logo {
+            width: 128px;
+            height: 128px;
+            object-fit: contain;
+            margin-bottom: 24px;
+            filter: drop-shadow(0 16px 30px rgba(64, 66, 85, 0.24));
+        }
+
+        .hero h1 {
+            margin: 0;
+            font-size: clamp(4rem, 13vw, 9.5rem);
+            line-height: 0.88;
+            letter-spacing: -0.1em;
+            color: var(--deep);
+        }
+
+        .hero-subtitle {
+            margin: 24px auto 0;
+            max-width: 760px;
+            color: var(--text-soft);
+            font-size: clamp(1.25rem, 2.3vw, 1.85rem);
+            line-height: 1.35;
+            letter-spacing: -0.035em;
+        }
+
+        .hero-actions {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-top: 34px;
+        }
+
+        .primary-button,
+        .secondary-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 46px;
+            padding: 0.75rem 1.15rem;
+            border-radius: 999px;
+            text-decoration: none;
+            font-weight: 750;
+            letter-spacing: -0.02em;
+        }
+
+        .primary-button {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 12px 30px rgba(170, 127, 131, 0.28);
+        }
+
+        .primary-button:hover {
+            background: var(--accent-dark);
+        }
+
+        .secondary-button {
+            background: rgba(255, 255, 255, 0.56);
+            color: var(--deep);
+            border: 1px solid rgba(64, 66, 85, 0.14);
+        }
+
+        .secondary-button:hover {
+            background: rgba(255, 255, 255, 0.78);
+        }
+
+        .hero-note {
+            margin-top: 18px;
+            color: var(--text-soft);
+            font-size: 0.95rem;
+        }
+
+        /* =========================
+           Showcase Media
+           ========================= */
+
+        .showcase {
+            padding: 38px 0 76px;
+        }
+
+        .media-frame {
+            width: min(1180px, calc(100% - 36px));
+            margin: 0 auto;
+            padding: 18px;
+            border-radius: 36px;
+            background: rgba(255, 255, 255, 0.42);
+            border: 1px solid rgba(255, 255, 255, 0.55);
+            box-shadow:
+                    0 30px 80px rgba(64, 66, 85, 0.22),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.42);
+        }
+
+        .media-frame img,
+        .media-frame video {
+            display: block;
+            width: 100%;
+            border-radius: 24px;
+            box-shadow: 0 12px 40px rgba(64, 66, 85, 0.18);
+            background: rgba(255, 255, 255, 0.55);
+        }
+
+        .media-caption {
+            max-width: 900px;
+            margin: 22px auto 0;
+            text-align: center;
+            color: var(--text-soft);
+            font-size: 1.1rem;
+            line-height: 1.45;
+        }
+
+        /* =========================
+           Split Features
+           ========================= */
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 22px;
+            margin-top: 36px;
+        }
+
+        .feature-card {
+            min-height: 260px;
+            padding: 34px;
+            border-radius: 32px;
+            background: rgba(255, 255, 255, 0.52);
+            box-shadow: 0 18px 48px rgba(64, 66, 85, 0.14);
+            border: 1px solid rgba(255, 255, 255, 0.45);
+        }
+
+        .feature-card.large {
+            grid-column: span 2;
+            min-height: 340px;
+            display: grid;
+            grid-template-columns: 1.05fr 0.95fr;
+            align-items: center;
+            gap: 34px;
+        }
+
+        .feature-card h3 {
+            margin: 0;
+            color: var(--deep);
+            font-size: clamp(1.8rem, 3vw, 3.2rem);
+            line-height: 1;
+            letter-spacing: -0.06em;
+        }
+
+        .feature-card p {
+            margin: 18px 0 0;
+            color: var(--text-soft);
+            font-size: 1.08rem;
+            line-height: 1.55;
+        }
+
+        .feature-card ul {
+            margin: 20px 0 0;
+            padding-left: 1.2rem;
+            color: var(--text-soft);
+            line-height: 1.75;
+            font-size: 1.05rem;
+        }
+
+        .mini-terminal {
+            background: rgba(64, 66, 85, 0.92);
+            color: #f5e8de;
+            border-radius: 22px;
+            padding: 22px;
+            box-shadow: 0 18px 50px rgba(64, 66, 85, 0.24);
             overflow-x: auto;
         }
 
-        code {
-            font-family: Consolas, monospace;
+        .mini-terminal code {
+            font-family: Consolas, Monaco, monospace;
+            font-size: 0.98rem;
+            line-height: 1.8;
+            white-space: pre;
         }
 
-        footer {
-            text-align: center;
-            padding: 2rem;
+        /* =========================
+           Documents
+           ========================= */
+
+        .document-row {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 18px;
+            margin-top: 34px;
+        }
+
+        .doc-link {
+            display: block;
+            padding: 28px;
+            min-height: 160px;
+            border-radius: 28px;
+            background: rgba(255, 255, 255, 0.54);
+            text-decoration: none;
+            box-shadow: 0 16px 44px rgba(64, 66, 85, 0.13);
+            border: 1px solid rgba(255, 255, 255, 0.48);
+            transition: transform 160ms ease, box-shadow 160ms ease;
+        }
+
+        .doc-link:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 22px 54px rgba(64, 66, 85, 0.18);
+        }
+
+        .doc-link strong {
+            display: block;
             color: var(--deep);
+            font-size: 1.35rem;
+            letter-spacing: -0.04em;
+        }
+
+        .doc-link span {
+            display: block;
+            margin-top: 12px;
+            color: var(--text-soft);
+            line-height: 1.45;
+        }
+
+        /* =========================
+           Footer
+           ========================= */
+
+        footer {
+            width: min(1180px, calc(100% - 36px));
+            margin: 0 auto;
+            padding: 48px 0 58px;
+            color: var(--text-soft);
+            border-top: 1px solid rgba(64, 66, 85, 0.14);
+            display: flex;
+            justify-content: space-between;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        footer strong {
+            color: var(--deep);
+        }
+
+        /* =========================
+           Responsive
+           ========================= */
+
+        @media (max-width: 860px) {
+            .nav-links {
+                display: none;
+            }
+
+            .hero {
+                min-height: auto;
+                padding-top: 78px;
+            }
+
+            .feature-grid,
+            .document-row {
+                grid-template-columns: 1fr;
+            }
+
+            .feature-card.large {
+                grid-column: span 1;
+                grid-template-columns: 1fr;
+            }
+
+            .feature-card {
+                padding: 26px;
+            }
+
+            .media-frame {
+                padding: 10px;
+                border-radius: 24px;
+            }
+
+            .media-frame img,
+            .media-frame video {
+                border-radius: 18px;
+            }
         }
     </style>
 </head>
 
 <body>
 
-<header>
-    <img src="logo.png" alt="Frantic^-1 logo">
-    <h1>Frantic^-1</h1>
-    <p>A chaotic multiplayer card game by The Devs^-1.</p>
-</header>
+<nav class="top-nav">
+    <div class="nav-inner">
+        <a class="brand" href="#top">
+            <img src="logo.png" alt="Frantic^-1 logo">
+            <span>Frantic^-1</span>
+        </a>
 
-<main>
-
-    <section>
-        <h2>About the Game</h2>
-        <p>
-            Frantic^-1 is a multiplayer card game where players try to get rid of all cards
-            in their hand while reacting to special cards, wishes, player effects and
-            unexpected events.
-        </p>
-        <p>
-            The game supports multiple clients, lobby creation, chat, a JavaFX graphical
-            interface, a terminal client and a server-client architecture.
-        </p>
-    </section>
-
-    <section>
-        <h2>How to Play</h2>
-        <ul>
-            <li>Start the server.</li>
-            <li>Start one or more GUI clients.</li>
-            <li>Create or join a lobby.</li>
-            <li>Start the game from the lobby.</li>
-            <li>On your turn, play a matching card or draw from the draw pile.</li>
-            <li>Special cards can trigger effects such as Skip, Gift, Exchange, Equality, Counterattack or wishes.</li>
-            <li>The round ends when one player has no cards left.</li>
-            <li>The remaining cards are counted as score points.</li>
-            <li>Finished games are stored in a persistent high score list.</li>
-        </ul>
-    </section>
-
-    <section>
-        <h2>Download</h2>
-        <p>
-            Download the executable game JAR:
-        </p>
-
-        <div class="buttons">
-            <a href="not-frantic.jar" download>Download not-frantic.jar</a>
+        <div class="nav-links">
+            <a href="#game">Game</a>
+            <a href="#trailer">Trailer</a>
+            <a href="#features">Features</a>
+            <a href="#play">Play</a>
+            <a href="#documents">Docs</a>
         </div>
 
-        <p>
-            Start the server:
-        </p>
+        <a class="nav-download" href="not-frantic.jar" download>Download</a>
+    </div>
+</nav>
 
-        <pre><code>java -jar not-frantic.jar server</code></pre>
+<main id="top">
 
-        <p>
-            Start the graphical client:
-        </p>
+    <section class="hero" id="game">
+        <div class="hero-inner">
+            <img class="hero-logo" src="logo.png" alt="Frantic^-1 logo">
 
-        <pre><code>java -jar not-frantic.jar client</code></pre>
+            <h1>Frantic^-1</h1>
 
-        <p>
-            Start the terminal client:
-        </p>
+            <p class="hero-subtitle">
+                A chaotic multiplayer card game where every turn can become a trap,
+                a comeback, a betrayal, or a very questionable tactical decision.
+            </p>
 
-        <pre><code>java -jar not-frantic.jar cli localhost:5555 Alice</code></pre>
-    </section>
+            <div class="hero-actions">
+                <a class="primary-button" href="not-frantic.jar" download>Download not-frantic.jar</a>
+                <a class="secondary-button" href="#trailer">Watch gameplay</a>
+                <a class="secondary-button" href="manual.pdf">Read manual</a>
+            </div>
 
-    <section>
-        <h2>Trailer / Gameplay Video</h2>
-        <p>
-            A short gameplay video showing Frantic^-1 in action:
-        </p>
-
-        <video controls>
-            <source src="video.mp4" type="video/mp4">
-            Your browser does not support the video tag.
-        </video>
-    </section>
-
-    <section>
-        <h2>Screenshot</h2>
-        <p>
-            Representative screenshot of the game:
-        </p>
-
-        <img src="screenshot.png" alt="Screenshot of Frantic^-1 gameplay">
-    </section>
-
-    <section>
-        <h2>Documents</h2>
-        <p>
-            Important project documents:
-        </p>
-
-        <div class="buttons">
-            <a href="manual.pdf">Manual</a>
-            <a href="protocol.md">Network Protocol</a>
-            <a href="qa-report.pdf">QA Report</a>
+            <p class="hero-note">
+                Built with Java, JavaFX, Gradle and a TCP client-server architecture.
+            </p>
         </div>
     </section>
 
-    <section>
-        <h2>Technology</h2>
-        <ul>
-            <li>Java for the main implementation</li>
-            <li>JavaFX for the graphical user interface</li>
-            <li>TCP sockets for client-server communication</li>
-            <li>Gradle for building and dependency management</li>
-            <li>JUnit for testing</li>
-            <li>AnimateFX for GUI animations</li>
-            <li>svgfx for SVG assets</li>
-        </ul>
+    <section class="showcase" id="trailer">
+        <div class="media-frame">
+            <video controls poster="screenshot.png">
+                <source src="video.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        </div>
+
+        <p class="media-caption">
+            Play cards, trigger effects, survive events and try to be the first player
+            to empty your hand before the table turns against you.
+        </p>
     </section>
 
-    <section>
-        <h2>Team</h2>
-        <p>
-            Developed by <strong>The Devs^-1</strong> as part of the Programmierprojekt course
-            at the University of Basel.
+    <section class="page-section">
+        <p class="section-eyebrow">The table is never calm</p>
+        <h2 class="section-title">Simple to start. Chaotic to survive.</h2>
+        <p class="section-lead">
+            Frantic^-1 starts like a familiar card game: match, play, draw.
+            Then the special cards arrive. Gift cards away, exchange hands,
+            skip players, counter attacks, wish for colors or numbers and let
+            event cards reshape the round.
         </p>
-        <p>
-            Team members: Sevval Ünlü, Aiysha Frutiger
+    </section>
+
+    <section class="showcase" aria-label="Gameplay screenshot">
+        <div class="media-frame">
+            <img src="screenshot.png" alt="Screenshot of Frantic^-1 gameplay">
+        </div>
+    </section>
+
+    <section class="page-section" id="features">
+        <p class="section-eyebrow">Game features</p>
+        <h2 class="section-title">A full multiplayer game, not just a prototype.</h2>
+
+        <div class="feature-grid">
+            <article class="feature-card large">
+                <div>
+                    <h3>Everything playable through the GUI.</h3>
+                    <p>
+                        Players can connect, create or join lobbies, chat, start the match,
+                        play cards, draw, resolve special effects and view the game end
+                        screen without relying on terminal commands.
+                    </p>
+                </div>
+
+                <div class="mini-terminal">
+                    <code>java -jar not-frantic.jar server
+                        java -jar not-frantic.jar client
+                        java -jar not-frantic.jar cli localhost:5555 Alice</code>
+                </div>
+            </article>
+
+            <article class="feature-card">
+                <h3>Special cards.</h3>
+                <p>
+                    Skip, Gift, Exchange, Equality, Counterattack, Nice Try,
+                    Fantastic, Fantastic Four and Second Chance create direct
+                    player interaction and tactical chaos.
+                </p>
+            </article>
+
+            <article class="feature-card">
+                <h3>Persistent scores.</h3>
+                <p>
+                    Finished games are written to a persistent high score history
+                    and displayed again at the end of the match.
+                </p>
+            </article>
+
+            <article class="feature-card">
+                <h3>Client-server architecture.</h3>
+                <p>
+                    The game uses a server, multiple clients, a human-readable
+                    protocol and shared parsing between GUI and terminal client.
+                </p>
+            </article>
+
+            <article class="feature-card">
+                <h3>Polished presentation.</h3>
+                <p>
+                    JavaFX views, themed cards, animations, sound hooks, lobby
+                    flow and a game-end view make the final demo presentation-ready.
+                </p>
+            </article>
+        </div>
+    </section>
+
+    <section class="page-section" id="play">
+        <p class="section-eyebrow">How to play</p>
+        <h2 class="section-title">Start a server. Join a lobby. Empty your hand.</h2>
+
+        <div class="feature-grid">
+            <article class="feature-card">
+                <h3>1. Start</h3>
+                <ul>
+                    <li>Start the server.</li>
+                    <li>Open one or more GUI clients.</li>
+                    <li>Choose a username.</li>
+                    <li>Create or join a lobby.</li>
+                </ul>
+            </article>
+
+            <article class="feature-card">
+                <h3>2. Play</h3>
+                <ul>
+                    <li>Play a matching card or draw.</li>
+                    <li>Resolve special card effects.</li>
+                    <li>React to wishes and event cards.</li>
+                    <li>Try to get rid of all cards first.</li>
+                </ul>
+            </article>
+        </div>
+    </section>
+
+    <section class="page-section" id="documents">
+        <p class="section-eyebrow">Project documents</p>
+        <h2 class="section-title">Manual, protocol and QA.</h2>
+        <p class="section-lead">
+            The written project material is available directly from the website.
         </p>
+
+        <div class="document-row">
+            <a class="doc-link" href="manual.pdf">
+                <strong>Manual</strong>
+                <span>Rules, setup instructions and gameplay explanation.</span>
+            </a>
+
+            <a class="doc-link" href="protocol.md">
+                <strong>Network Protocol</strong>
+                <span>Human-readable final protocol documentation.</span>
+            </a>
+
+            <a class="doc-link" href="qa-report.pdf">
+                <strong>QA Report</strong>
+                <span>Quality assurance goals, methods, results and lessons learned.</span>
+            </a>
+        </div>
     </section>
 
 </main>
 
 <footer>
-    <p>Frantic^-1 — Milestone 6 Project Website</p>
+    <div>
+        <strong>Frantic^-1</strong><br>
+        A chaotic multiplayer card game.
+    </div>
+
+    <div>
+        Milestone 6 Project Website
+    </div>
 </footer>
 
 </body>
