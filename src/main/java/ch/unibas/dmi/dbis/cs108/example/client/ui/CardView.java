@@ -132,6 +132,14 @@ public class CardView extends StackPane {
             return "card-black";
         }
 
+        if (card.type() == CardType.SPECIAL_FOUR) {
+            return "card-four-color";
+        }
+
+        if (card.type() == CardType.FUCK_YOU) {
+            return "card-fuck-you";
+        }
+
         return "card-neutral";
     }
 
