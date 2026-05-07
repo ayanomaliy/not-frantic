@@ -139,6 +139,19 @@ public class CardView extends StackPane {
 
         double size = isNumberCard(card) ? NUMBER_ICON_SIZE : EFFECT_ICON_SIZE;
 
+        /*
+         * Black number cards need their own white SVGs.
+         * Normal colored number cards still use the regular card_1.svg ... card_9.svg files
+         * through AssetRegistry / asset-config.json.
+         */
+        if (card.type() == CardType.BLACK && card.value() > 0) {
+            String blackIconPath = "icons/card_black_" + card.value() + ".svg";
+
+            return registry.createIconView(blackIconPath, size)
+                    .map(icon -> prepareIcon(icon, card))
+                    .orElseGet(() -> createFallbackGraphic(String.valueOf(card.value())));
+        }
+
         return registry.getIconView(card, size)
                 .map(icon -> prepareIcon(icon, card))
                 .orElseGet(() -> createFallbackGraphic(resolveFallbackCenterText(card)));
