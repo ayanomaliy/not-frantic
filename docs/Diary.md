@@ -886,3 +886,16 @@ Rounded it off with targeted tests covering round transitions, scoring edge case
 * Run one final full end-to-end GUI test before presentation.
 * Keep the remaining focus on stability rather than new features.
 * If time allows, clean up any last small UI inconsistencies and verify Linux/JAR behavior once more.
+
+## Date: May 6, 2026
+
+### QA Concept(Sevval)
+
+#### What did we do today?
+
+Today, I added the MS 5 metrics to our QA Concept. I will wait for the MS 6 Metrics closer to the end of the project and then finish the QA Concept adding the analyses and the lessons learned.
+
+#### Future Plans
+
+Tomorrow, Aiysha and I will meet again and work together on the project, trying to finish MS 6 tasks + bonuses.
+
