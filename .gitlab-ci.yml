@@ -1,0 +1,16 @@
+image: eclipse-temurin:25-jdk
+
+stages:
+  - test
+
+test:
+  stage: test
+  script:
+    - chmod +x gradlew
+    - ./gradlew clean test
+  artifacts:
+    when: always
+    reports:
+      junit: build/test-results/test/*.xml
+    paths:
+      - build/reports/tests/test/
