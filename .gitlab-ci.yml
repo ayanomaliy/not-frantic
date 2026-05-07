@@ -5,9 +5,12 @@ stages:
 
 test:
   stage: test
-  script:
+  before_script:
+    - apt-get update
+    - apt-get install -y xvfb libgtk-3-0 libxrender1 libxtst6 libxi6
     - chmod +x gradlew
-    - ./gradlew clean test
+  script:
+    - xvfb-run -a ./gradlew clean test
   artifacts:
     when: always
     reports:
