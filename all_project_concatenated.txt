@@ -1,5 +1,5 @@
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\.github\workflows\pages.yml
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\.github\workflows\pages.yml
 ====================================================================================================
 
 name: Deploy GitHub Pages
@@ -65,11 +65,34 @@ jobs:
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\all_sources_concatenated.txt
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\.gitlab-ci.yml
+====================================================================================================
+
+image: eclipse-temurin:25-jdk
+
+stages:
+  - test
+
+test:
+  stage: test
+  script:
+    - chmod +x gradlew
+    - ./gradlew clean fatJar test -DexcludeGuiTests=true
+  artifacts:
+    when: always
+    reports:
+      junit: build/test-results/test/*.xml
+    paths:
+      - build/reports/tests/test/
+      - build/libs/
+
+
+====================================================================================================
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\all_sources_concatenated.txt
 ====================================================================================================
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\AppMain.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\AppMain.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example;
@@ -149,7 +172,7 @@ public class AppMain {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\assets\AssetConfig.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\assets\AssetConfig.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.assets;
@@ -250,7 +273,7 @@ public final class AssetConfig {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\assets\AssetConfigLoader.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\assets\AssetConfigLoader.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.assets;
@@ -527,7 +550,7 @@ public final class AssetConfigLoader {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\assets\AssetRegistry.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\assets\AssetRegistry.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.assets;
@@ -813,7 +836,7 @@ public final class AssetRegistry {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\assets\SoundManager.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\assets\SoundManager.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.assets;
@@ -913,7 +936,7 @@ public final class SoundManager {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\CardTextFormatter.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\CardTextFormatter.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client;
@@ -1012,7 +1035,7 @@ public final class CardTextFormatter {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ClientMain.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ClientMain.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client;
@@ -1183,7 +1206,7 @@ public class ClientMain {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ClientState.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ClientState.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client;
@@ -1204,9 +1227,6 @@ import javafx.collections.ObservableList;
  * updates automatically.</p>
  */
 public class ClientState {
-
-    /** Public per-player state derived from each {@code GAME_STATE} broadcast. */
-    public record PlayerInfo(String name, int handSize, String color) {}
 
     private final BooleanProperty connected = new SimpleBooleanProperty(false);
     private final StringProperty username = new SimpleStringProperty("");
@@ -1264,9 +1284,6 @@ public class ClientState {
     private final StringProperty pendingEffectRequest = new SimpleStringProperty("");
 
     private final StringProperty previousRenderableTopCardId = new SimpleStringProperty("");
-
-    /** Ordered player list from the most recent {@code GAME_STATE} broadcast. */
-    private final ObservableList<PlayerInfo> playerInfoList = FXCollections.observableArrayList();
 
 
     /**
@@ -1642,20 +1659,11 @@ public class ClientState {
     public void setPreviousRenderableTopCardId(String value) {
         previousRenderableTopCardId.set(value == null ? "" : value);
     }
-
-    /**
-     * Returns the ordered list of players from the most recent {@code GAME_STATE} broadcast.
-     *
-     * @return the player info list
-     */
-    public ObservableList<PlayerInfo> getPlayerInfoList() {
-        return playerInfoList;
-    }
 }
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\net\ClientMessageHandler.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\net\ClientMessageHandler.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.net;
@@ -1698,7 +1706,7 @@ public interface ClientMessageHandler {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\net\ClientProtocolClient.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\net\ClientProtocolClient.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.net;
@@ -2144,7 +2152,7 @@ public class ClientProtocolClient {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\net\FxNetworkClient.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\net\FxNetworkClient.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.net;
@@ -2155,12 +2163,8 @@ import ch.unibas.dmi.dbis.cs108.example.service.Message;
 import javafx.application.Platform;
 
 import java.io.IOException;
-import ch.unibas.dmi.dbis.cs108.example.client.ui.PlayerColorAssigner;
-
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 import ch.unibas.dmi.dbis.cs108.example.model.game.CardColor;
 import java.util.function.Consumer;
@@ -2846,33 +2850,6 @@ public class FxNetworkClient implements ClientMessageHandler {
                 }
             }
         }
-
-        if (playersIndex >= 0) {
-            String playersSuffix = payload.substring(playersIndex + ",players:".length());
-            List<String> names = new ArrayList<>();
-            List<Integer> handSizes = new ArrayList<>();
-            for (String token : playersSuffix.split(",")) {
-                String[] parts = token.split(":", 3);
-                if (parts.length < 2) {
-                    continue;
-                }
-                String name = parts[0].trim();
-                int handSize = 0;
-                try {
-                    handSize = Integer.parseInt(parts[1].trim());
-                } catch (NumberFormatException ignored) {
-                }
-                names.add(name);
-                handSizes.add(handSize);
-            }
-            Map<String, String> colors = PlayerColorAssigner.assign(names, state.getUsername());
-            List<ClientState.PlayerInfo> infos = new ArrayList<>(names.size());
-            for (int i = 0; i < names.size(); i++) {
-                infos.add(new ClientState.PlayerInfo(names.get(i), handSizes.get(i),
-                        colors.getOrDefault(names.get(i), "")));
-            }
-            state.getPlayerInfoList().setAll(infos);
-        }
     }
 
     private boolean isRenderableDiscardCard(int cardId) {
@@ -2893,7 +2870,6 @@ public class FxNetworkClient implements ClientMessageHandler {
         state.setCurrentPhase("WAITING");
         state.setTopCardText("-");
         state.getCurrentHandCards().clear();
-        state.getPlayerInfoList().clear();
         state.setTopCardId("");
         state.setPreviousRenderableTopCardId("");
         state.setRequestedColor("");
@@ -2922,7 +2898,6 @@ public class FxNetworkClient implements ClientMessageHandler {
             state.getAllPlayers().clear();
             state.getLobbies().clear();
             state.getCurrentHandCards().clear();
-            state.getPlayerInfoList().clear();
 
             state.setCurrentPlayer("Unknown");
             state.setCurrentPhase("WAITING");
@@ -2955,7 +2930,7 @@ public class FxNetworkClient implements ClientMessageHandler {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\net\NetworkClientCore.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\net\NetworkClientCore.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.net;
@@ -3152,62 +3127,7 @@ public class NetworkClientCore {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\CardBacksideView.java
-================================================================================
-
-package ch.unibas.dmi.dbis.cs108.example.client.ui;
-
-import com.fluxvend.svgfx.utils.SvgLoader;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.layout.StackPane;
-
-/**
- * A card-sized pane displaying the card backside asset.
- *
- * <p>Has the same fixed dimensions (90×130 px) as {@link CardView} so it can be
- * used as a face-down placeholder wherever a card slot is needed.</p>
- *
- * <p>Must be created on the JavaFX Application Thread.</p>
- */
-public class CardBacksideView extends StackPane {
-
-    static final double CARD_WIDTH = 90;
-    static final double CARD_HEIGHT = 130;
-
-    private static final String ASSET_PATH = "/icons/card_backside.svg";
-
-    /**
-     * Creates a new card backside view.
-     *
-     * <p>If the backside SVG asset is present on the classpath it is rendered inside the
-     * pane. Construction succeeds silently if the asset is missing.</p>
-     */
-    public CardBacksideView() {
-        getStyleClass().addAll("card-view", "card-backside");
-        setPrefSize(CARD_WIDTH, CARD_HEIGHT);
-        setMinSize(CARD_WIDTH, CARD_HEIGHT);
-        setMaxSize(CARD_WIDTH, CARD_HEIGHT);
-
-        if (getClass().getResource(ASSET_PATH) != null) {
-            try {
-                Image img = SvgLoader.getInstance().loadSvgImage(ASSET_PATH, null, false, CARD_WIDTH, null);
-                ImageView imgView = new ImageView(img);
-                imgView.setPreserveRatio(true);
-                imgView.setFitWidth(CARD_WIDTH);
-                imgView.setFitHeight(CARD_HEIGHT);
-                imgView.setMouseTransparent(true);
-                getChildren().add(imgView);
-            } catch (Exception e) {
-                System.err.println("[CardBacksideView] Cannot load backside asset: " + e.getMessage());
-            }
-        }
-    }
-}
-
-
-================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\CardView.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\CardView.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -3223,11 +3143,6 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.StackPane;
-
-import javafx.animation.ScaleTransition;
-import javafx.animation.TranslateTransition;
-import javafx.animation.ParallelTransition;
-import javafx.util.Duration;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -3252,10 +3167,6 @@ public class CardView extends StackPane {
     private static final double CARD_HEIGHT = 130;
     private static final double ICON_SIZE = 54;
 
-    private static final double HOVER_SCALE = 1.10;
-    private static final double HOVER_LIFT_Y = -22;
-    private static final Duration HOVER_ANIMATION_DURATION = Duration.millis(140);
-
     private static volatile Map<Integer, Card> cardById;
 
     /**
@@ -3266,10 +3177,6 @@ public class CardView extends StackPane {
      * @param onPlay called when the user clicks the card; may be {@code null}
      */
     public CardView(int cardId, AssetRegistry registry, Runnable onPlay) {
-        this(cardId, registry, onPlay, true);
-    }
-
-    public CardView(int cardId, AssetRegistry registry, Runnable onPlay, boolean hoverEnabled) {
         getStyleClass().addAll("game-card-button", "card-view");
         setPrefSize(CARD_WIDTH, CARD_HEIGHT);
         setMinSize(CARD_WIDTH, CARD_HEIGHT);
@@ -3313,10 +3220,6 @@ public class CardView extends StackPane {
                     onPlay.run();
                 }
             });
-        }
-
-        if (hoverEnabled) {
-            installHoverAnimation();
         }
     }
 
@@ -3383,236 +3286,11 @@ public class CardView extends StackPane {
         }
         return cardById.get(id);
     }
-
-    private void installHoverAnimation() {
-        setOnMouseEntered(e -> {
-            toFront();
-
-            ScaleTransition scaleUp = new ScaleTransition(HOVER_ANIMATION_DURATION, this);
-            scaleUp.setToX(HOVER_SCALE);
-            scaleUp.setToY(HOVER_SCALE);
-
-            TranslateTransition liftUp = new TranslateTransition(HOVER_ANIMATION_DURATION, this);
-            liftUp.setToY(HOVER_LIFT_Y);
-
-            new ParallelTransition(scaleUp, liftUp).play();
-        });
-
-        setOnMouseExited(e -> {
-            ScaleTransition scaleDown = new ScaleTransition(HOVER_ANIMATION_DURATION, this);
-            scaleDown.setToX(1.0);
-            scaleDown.setToY(1.0);
-
-            TranslateTransition dropDown = new TranslateTransition(HOVER_ANIMATION_DURATION, this);
-            dropDown.setToY(0);
-
-            new ParallelTransition(scaleDown, dropDown).play();
-        });
-    }
 }
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\CircularTablePane.java
-================================================================================
-
-package ch.unibas.dmi.dbis.cs108.example.client.ui;
-
-import ch.unibas.dmi.dbis.cs108.example.client.ClientState;
-import ch.unibas.dmi.dbis.cs108.example.client.assets.AssetRegistry;
-import com.fluxvend.svgfx.utils.SvgLoader;
-import javafx.geometry.Bounds;
-import javafx.scene.Node;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.Region;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
-/**
- * A circular table layout that places opponent player views around a ring and
- * centers the core game controls (piles, status, end-turn button) in the middle.
- *
- * <p>The 360° around the table is divided as follows:</p>
- * <ul>
- *   <li>120°–240° (bottom arc) — reserved for the local player's hand area</li>
- *   <li>240°–120° through 0° (top 240° arc) — distributed evenly among opponents</li>
- * </ul>
- *
- * <p>Angle formula: {@code interval = 240 / (numOthers + 1)},
- * {@code angle_i = (240 + i * interval) % 360} for i = 1..numOthers.
- * Example: 2 opponents → interval = 80° → angles 320° and 40°.</p>
- *
- * <p>Must be created on the JavaFX Application Thread.</p>
- */
-public class CircularTablePane extends Pane {
-
-    static final double RADIUS_FACTOR = 0.46;
-    private static final double TOP_SLOT_LIFT = 26.0;
-    private static final double SIDE_SLOT_PUSH = 18.0;
-    private static final String TABLE_ASSET_PATH = "/icons/table.svg";
-
-    private ImageView backgroundImageView;
-    private Circle fallbackCircle;
-    private AssetRegistry registry;
-
-    private final Node centerContent;
-    private final List<OtherPlayerView> slots = new ArrayList<>();
-    private final List<Double> slotAngles = new ArrayList<>();
-    private final Map<String, OtherPlayerView> playerSlots = new LinkedHashMap<>();
-
-    /**
-     * Creates a circular table pane with the given center content.
-     *
-     * @param centerContent the node placed in the center of the table (piles, labels, buttons)
-     */
-    public CircularTablePane(Node centerContent) {
-        this.centerContent = centerContent;
-        setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
-
-        buildBackground();
-        if (backgroundImageView != null) getChildren().add(backgroundImageView);
-        if (fallbackCircle != null) getChildren().add(fallbackCircle);
-        getChildren().add(centerContent);
-    }
-
-    private void buildBackground() {
-        if (getClass().getResource(TABLE_ASSET_PATH) != null) {
-            try {
-                Image svgImage = SvgLoader.getInstance().loadSvgImage(TABLE_ASSET_PATH, null, false, 1200.0, null);
-                backgroundImageView = new ImageView(svgImage);
-                backgroundImageView.setPreserveRatio(false);
-                backgroundImageView.setMouseTransparent(true);
-                backgroundImageView.fitWidthProperty().bind(widthProperty());
-                backgroundImageView.fitHeightProperty().bind(heightProperty());
-                return;
-            } catch (Exception e) {
-                System.err.println("[CircularTablePane] Cannot load table asset: " + e.getMessage());
-            }
-        }
-        fallbackCircle = new Circle();
-        fallbackCircle.setFill(Color.web("#1a2234"));
-        fallbackCircle.setMouseTransparent(true);
-    }
-
-    /**
-     * Replaces all opponent player slots with new ones derived from {@code others}.
-     *
-     * @param others        the opponents to display (local player already excluded)
-     * @param localUsername the local player's username (reserved for future use)
-     */
-    public void setPlayerSlots(List<ClientState.PlayerInfo> others, String localUsername) {
-        getChildren().removeAll(slots);
-        slots.clear();
-        slotAngles.clear();
-        playerSlots.clear();
-
-        int n = others.size();
-        if (n > 0) {
-            double interval = 240.0 / (n + 1);
-            for (int i = 0; i < n; i++) {
-                ClientState.PlayerInfo info = others.get(i);
-                double angle = (240 + (i + 1) * interval) % 360;
-
-                OtherPlayerView slot = new OtherPlayerView(info.name(), info.handSize(), info.color(), registry);
-                slot.setSeatAngle(angle);
-
-                slots.add(slot);
-                slotAngles.add(angle);
-                playerSlots.put(info.name(), slot);
-                getChildren().add(slot);
-            }
-        }
-
-        requestLayout();
-    }
-
-    @Override
-    protected void layoutChildren() {
-        double w = getWidth();
-        double h = getHeight();
-        if (w <= 0 || h <= 0) return;
-
-        double cx = w / 2;
-        double cy = h / 2;
-        double radius = Math.min(w, h) * RADIUS_FACTOR;
-
-        if (backgroundImageView != null) {
-            backgroundImageView.setLayoutX(0);
-            backgroundImageView.setLayoutY(0);
-            // fitWidth/fitHeight are bound to widthProperty()/heightProperty()
-        }
-        if (fallbackCircle != null) {
-            fallbackCircle.setRadius(Math.min(w, h) * 0.45);
-            fallbackCircle.setLayoutX(cx);
-            fallbackCircle.setLayoutY(cy);
-        }
-
-        positionCenter(cx, cy);
-
-        for (int i = 0; i < slots.size(); i++) {
-            OtherPlayerView slot = slots.get(i);
-            double angle = slotAngles.get(i);
-            double rad = Math.toRadians(angle);
-
-            double anchorX = cx + radius * Math.sin(rad);
-            double anchorY = cy - radius * Math.cos(rad);
-
-            double topness = Math.max(0, Math.cos(rad));
-            anchorY -= topness * TOP_SLOT_LIFT;
-
-            double sideness = Math.abs(Math.sin(rad));
-            anchorX += Math.signum(Math.sin(rad)) * sideness * SIDE_SLOT_PUSH;
-
-            slot.setLayoutX(anchorX);
-            slot.setLayoutY(anchorY);
-        }
-    }
-
-    private void positionCenter(double cx, double cy) {
-        if (centerContent instanceof Region region) {
-            double prefW = region.prefWidth(-1);
-            double prefH = region.prefHeight(-1);
-            if (prefW > 0 && prefH > 0) {
-                region.setLayoutX(cx - prefW / 2);
-                region.setLayoutY(cy - prefH / 2);
-                region.resize(prefW, prefH);
-                return;
-            }
-        }
-        Bounds cb = centerContent.getBoundsInLocal();
-        double cw = cb.getWidth();
-        double ch = cb.getHeight();
-        centerContent.setLayoutX(cx - (cw > 0 ? cw / 2 : 0));
-        centerContent.setLayoutY(cy - (ch > 0 ? ch / 2 : 0));
-    }
-
-    /** Sets the asset registry used when creating player slots for card reveals. */
-    public void setRegistry(AssetRegistry registry) {
-        this.registry = registry;
-    }
-
-    /** Returns an unmodifiable view of the current player slot map (name → view). */
-    public Map<String, OtherPlayerView> getPlayerSlots() {
-        return Collections.unmodifiableMap(playerSlots);
-    }
-
-    /** Package-private — used by tests to verify angle calculations. */
-    List<Double> getSlotAngles() {
-        return Collections.unmodifiableList(slotAngles);
-    }
-}
-
-
-================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\ConnectView.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\ConnectView.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -3764,7 +3442,7 @@ public class ConnectView extends VBox {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\CounterattackView.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\CounterattackView.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -3779,14 +3457,6 @@ import javafx.scene.layout.VBox;
 
 import java.util.function.Consumer;
 
-/**
- * Overlay view used to resolve the Counterattack effect in the GUI.
- *
- * <p>This dialog lets the affected player choose the follow-up color and
- * submit the selection without relying on manual slash commands. It is shown
- * on top of the current {@link GameView} as a modal-style effect response
- * panel.</p>
- */
 public class CounterattackView extends StackPane {
 
     private CardColor selectedColor;
@@ -3854,7 +3524,7 @@ public class CounterattackView extends StackPane {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\EqualityView.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\EqualityView.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -3871,14 +3541,7 @@ import javafx.scene.layout.VBox;
 
 import java.util.List;
 import java.util.function.BiConsumer;
-/**
- * Overlay view used to resolve the Equality effect in the GUI.
- *
- * <p>This dialog allows the acting player to select both a target player and
- * a requested next color. It appears as an effect response overlay on top of
- * the current {@link GameView} and replaces manual command-based resolution
- * for this effect.</p>
- */
+
 public class EqualityView extends StackPane {
 
     private CardColor selectedColor;
@@ -3974,7 +3637,7 @@ public class EqualityView extends StackPane {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\ExchangeView.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\ExchangeView.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -3992,13 +3655,7 @@ import javafx.scene.layout.VBox;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
-/**
- * Overlay view used to resolve the Exchange effect in the GUI.
- *
- * <p>This dialog lets the acting player choose the cards to exchange and the
- * target player to exchange with. It displays the selectable hand cards
- * graphically and submits the result as a structured effect response.</p>
- */
+
 public class ExchangeView extends StackPane {
 
     private final List<Integer> selectedCardIds = new ArrayList<>();
@@ -4077,7 +3734,7 @@ public class ExchangeView extends StackPane {
         cardPane.getChildren().clear();
 
         for (Integer cardId : availableCardIds) {
-            CardView cardView = new CardView(cardId, registry, null, false);
+            CardView cardView = new CardView(cardId, registry, null);
 
             if (selectedCardIds.contains(cardId)) {
                 cardView.getStyleClass().add("effect-response-selected-card");
@@ -4117,7 +3774,7 @@ public class ExchangeView extends StackPane {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\FantasticFourView.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\FantasticFourView.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -4136,14 +3793,7 @@ import javafx.scene.layout.VBox;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
-/**
- * Multi-step overlay view used to resolve the Fantastic Four effect in the GUI.
- *
- * <p>This dialog first lets the player choose either a color or a number and
- * then assign the four resulting cards to target players. It is shown as a
- * modal-style overlay on top of the {@link GameView} so the full effect can
- * be resolved graphically instead of through text commands.</p>
- */
+
 public class FantasticFourView extends StackPane {
 
     public static final class Result {
@@ -4365,7 +4015,7 @@ public class FantasticFourView extends StackPane {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\FantasticView.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\FantasticView.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -4379,13 +4029,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
 import java.util.function.BiConsumer;
-/**
- * Overlay view used to resolve the Fantastic effect in the GUI.
- *
- * <p>This dialog allows the acting player to choose either a color or a
- * number for the next requested play. It is displayed on top of the current
- * {@link GameView} and sends the result as a structured protocol response.</p>
- */
+
 public class FantasticView extends StackPane {
 
     private CardColor selectedColor;
@@ -4501,7 +4145,7 @@ public class FantasticView extends StackPane {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\GameEndView.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\GameEndView.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -4524,15 +4168,11 @@ public class GameEndView extends BorderPane {
     private final Label winnerLabel;
 
     private final ListView<String> rankingList;
-    private final ListView<String> leaderboardList;
 
     private final Button leaveLobbyButton;
 
     private final VBox centerBox;
     private final HBox buttonBox;
-    private final HBox listsBox;
-    private final VBox localBox;
-    private final VBox globalBox;
 
     public GameEndView() {
         getStyleClass().addAll("screen", "game-end-screen");
@@ -4570,42 +4210,19 @@ public class GameEndView extends BorderPane {
             }
         });
 
-        leaderboardList = new ListView<>();
-        leaderboardList.setItems(FXCollections.observableArrayList());
-        leaderboardList.getStyleClass().add("frantic-list-view");
-        leaderboardList.setPlaceholder(new Label("No stored high scores yet"));
-
         leaveLobbyButton = new Button("Leave Lobby");
         leaveLobbyButton.getStyleClass().add("danger-button");
 
         buttonBox = new HBox(10, leaveLobbyButton);
         buttonBox.getStyleClass().add("button-box");
 
-        localBox = new VBox(
-                10,
-                winnerLabel,
-                new Label("This Game"),
-                rankingList
-        );
-
-        globalBox = new VBox(
-                10,
-                new Label("Global Leaderboard"),
-                leaderboardList
-        );
-
-        listsBox = new HBox(20, localBox, globalBox);
-
-        centerBox = new VBox(
-                15,
+        centerBox = new VBox(15,
                 titleLabel,
-                listsBox,
+                winnerLabel,
+                new Label("Ranking"),
+                rankingList,
                 buttonBox
         );
-
-        centerBox.setFillWidth(false);
-        centerBox.setMaxWidth(javafx.scene.layout.Region.USE_PREF_SIZE);
-        centerBox.setAlignment(javafx.geometry.Pos.CENTER);
 
         centerBox.getStyleClass().add("center-box");
 
@@ -4620,10 +4237,6 @@ public class GameEndView extends BorderPane {
         rankingList.setItems(FXCollections.observableArrayList(players));
     }
 
-    public void setLeaderboard(java.util.List<String> rows) {
-        leaderboardList.setItems(FXCollections.observableArrayList(rows));
-    }
-
     public Label getTitleLabel() {
         return titleLabel;
     }
@@ -4634,10 +4247,6 @@ public class GameEndView extends BorderPane {
 
     public ListView<String> getRankingList() {
         return rankingList;
-    }
-
-    public ListView<String> getLeaderboardList() {
-        return leaderboardList;
     }
 
     public Button getLeaveLobbyButton() {
@@ -4651,11 +4260,12 @@ public class GameEndView extends BorderPane {
     public HBox getButtonBox() {
         return buttonBox;
     }
+
 }
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\GameView.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\GameView.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -4680,7 +4290,6 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
@@ -4728,9 +4337,7 @@ public class GameView extends BorderPane {
 
     private final Button endTurnButton = new Button("End Turn");
 
-
     private final FlowPane playerHandPane = new FlowPane();
-    private Pane handFanPane;
 
     private final VBox sideBar = new VBox(12);
 
@@ -4756,8 +4363,6 @@ public class GameView extends BorderPane {
     private final VBox eventPanel = new VBox(18);
     private final Label eventTitleLabel = new Label();
     private final Label eventDescriptionLabel = new Label();
-
-    private CircularTablePane circularTablePane;
 
     private VBox playersBox;
     private VBox infoBox;
@@ -5020,32 +4625,42 @@ public class GameView extends BorderPane {
         HBox statusRow = new HBox(20, currentPlayerLabel, phaseLabel, discardTopLabel);
         statusRow.setAlignment(Pos.CENTER);
 
-        HBox buttonRow = new HBox(endTurnButton);
-        buttonRow.setAlignment(Pos.CENTER);
+        HBox buttonRow = new HBox(10, endTurnButton);
 
         VBox centerWrapper = new VBox(24, pilesBox, statusRow, buttonRow);
         centerWrapper.setAlignment(Pos.CENTER);
         centerWrapper.setMaxWidth(Double.MAX_VALUE);
-        centerWrapper.setTranslateY(36);
 
-        circularTablePane = new CircularTablePane(centerWrapper);
-        centerTablePane.getChildren().add(circularTablePane);
+        centerTablePane.getChildren().add(centerWrapper);
     }
 
     /**
-     * Builds the bottom hand section with a fan arc layout.
+     * Builds the bottom hand section.
      *
-     * <p>Cards are positioned by {@link ch.unibas.dmi.dbis.cs108.example.client.ui.MainController}
-     * using a circular arc formula so the hand curves up from the bottom center.</p>
+     * <p>The player's hand is placed inside its own scroll pane so that many
+     * cards remain accessible without breaking the overall layout.</p>
      */
     private void buildBottomHandArea() {
-        handFanPane = new Pane();
-        handFanPane.setPrefHeight(180);
-        handFanPane.prefWidthProperty().bind(widthProperty().multiply(0.60));
+        playerHandPane.setHgap(12);
+        playerHandPane.setVgap(12);
+
+        /*
+         * Make the wrapping width adapt to the current window width instead
+         * of relying on a fixed number.
+         */
+        playerHandPane.prefWrapLengthProperty().bind(widthProperty().multiply(0.60));
+
+        ScrollPane handScrollPane = new ScrollPane(playerHandPane);
+        handScrollPane.setFitToWidth(true);
+        handScrollPane.setPannable(true);
+        handScrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        handScrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        handScrollPane.setPrefViewportHeight(180);
+        handScrollPane.setMinHeight(150);
 
         handSection.getChildren().addAll(
                 createSectionTitle("Your Hand"),
-                handFanPane
+                handScrollPane
         );
     }
 
@@ -5292,23 +4907,13 @@ public class GameView extends BorderPane {
         return endTurnButton;
     }
 
-
     /**
-     * Returns the legacy flow-pane field (kept for backward compatibility).
+     * Returns the hand pane used for the current player's cards.
      *
-     * @return the player hand flow pane (not used in the fan layout)
+     * @return the hand pane
      */
     public FlowPane getPlayerHandPane() {
         return playerHandPane;
-    }
-
-    /**
-     * Returns the fan-arc pane where the local player's hand cards are rendered.
-     *
-     * @return the hand fan pane
-     */
-    public Pane getHandFanPane() {
-        return handFanPane;
     }
 
     /**
@@ -5482,20 +5087,11 @@ public class GameView extends BorderPane {
         return rootStack;
     }
 
-    /**
-     * Returns the circular table pane that manages opponent player slots.
-     *
-     * @return the circular table pane
-     */
-    public CircularTablePane getCircularTablePane() {
-        return circularTablePane;
-    }
-
 }
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\GiftView.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\GiftView.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -5513,13 +5109,7 @@ import javafx.scene.layout.VBox;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
-/**
- * Overlay view used to resolve the Gift effect in the GUI.
- *
- * <p>This dialog lets the acting player choose the cards to gift and the
- * player who should receive them. It displays the current hand graphically
- * and submits the selected result without requiring manual command input.</p>
- */
+
 public class GiftView extends StackPane {
 
     private final List<Integer> selectedCardIds = new ArrayList<>();
@@ -5598,7 +5188,7 @@ public class GiftView extends StackPane {
         cardPane.getChildren().clear();
 
         for (Integer cardId : availableCardIds) {
-            CardView cardView = new CardView(cardId, registry, null, false);
+            CardView cardView = new CardView(cardId, registry, null);
 
             if (selectedCardIds.contains(cardId)) {
                 cardView.getStyleClass().add("effect-response-selected-card");
@@ -5638,7 +5228,7 @@ public class GiftView extends StackPane {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\LobbyView.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\LobbyView.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -6092,7 +5682,7 @@ public class LobbyView extends BorderPane {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\MainController.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\MainController.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -6127,9 +5717,6 @@ public class MainController {
 
     private static final String THEME_STYLESHEET = "/css/frantic-theme.css";
 
-    private static final double FAN_SPREAD_DEGREES = 60.0;
-    private static final double FAN_ARC_RADIUS    = 500.0;
-
     private final Stage stage;
     private final ClientState state;
     private final FxNetworkClient networkClient;
@@ -6137,11 +5724,6 @@ public class MainController {
     private final SoundManager soundManager;
 
     private ListChangeListener<String> handCardsListener;
-    private ListChangeListener<ClientState.PlayerInfo> playerInfoListener;
-    private boolean peekActive = false;
-
-
-    private static final double HAND_VERTICAL_LIFT = 40.0;
 
     /**
      * Creates a new main controller using assets loaded from the classpath.
@@ -6345,22 +5927,6 @@ public class MainController {
         state.getCurrentHandCards().addListener(handCardsListener);
         renderHand(view);
 
-        view.getHandFanPane().widthProperty().addListener((obs, oldW, newW) -> {
-            if (newW.doubleValue() > 0) renderHand(view);
-        });
-
-        view.getCircularTablePane().setRegistry(registry);
-
-        if (playerInfoListener != null) {
-            state.getPlayerInfoList().removeListener(playerInfoListener);
-        }
-        playerInfoListener = change -> {
-            peekActive = false;
-            refreshOtherPlayers(view);
-        };
-        state.getPlayerInfoList().addListener(playerInfoListener);
-        refreshOtherPlayers(view);
-
         state.topCardIdProperty().addListener((obs, oldValue, newValue) -> renderDiscardPile(view));
         state.requestedColorProperty().addListener((obs, oldValue, newValue) -> renderDiscardPile(view));
         state.requestedNumberProperty().addListener((obs, oldValue, newValue) -> renderDiscardPile(view));
@@ -6527,25 +6093,14 @@ public class MainController {
     }
 
     /**
-     * Renders the current hand from {@link ClientState#getCurrentHandCards()} into the
-     * fan-arc pane. Cards are positioned on a circular arc so the hand curves upward from
-     * the bottom center of the pane.
+     * Renders the current hand from {@link ClientState#getCurrentHandCards()}.
      *
-     * @param view the game view whose hand fan pane should be refreshed
+     * @param view the game view whose hand area should be refreshed
      */
     private void renderHand(GameView view) {
-        javafx.scene.layout.Pane fanPane = view.getHandFanPane();
-        fanPane.getChildren().clear();
+        view.getPlayerHandPane().getChildren().clear();
 
-        int n = state.getCurrentHandCards().size();
-        if (n == 0) return;
-
-        double paneW = fanPane.getWidth() > 0 ? fanPane.getWidth() : fanPane.getPrefWidth();
-        double paneH = fanPane.getHeight() > 0 ? fanPane.getHeight() : fanPane.getPrefHeight();
-        double cx = paneW / 2;
-
-        for (int i = 0; i < n; i++) {
-            String cardIdText = state.getCurrentHandCards().get(i);
+        for (String cardIdText : state.getCurrentHandCards()) {
             int cardId;
             try {
                 cardId = Integer.parseInt(cardIdText);
@@ -6553,45 +6108,19 @@ public class MainController {
                 continue;
             }
 
-            double angle = (n > 1)
-                    ? -FAN_SPREAD_DEGREES / 2 + i * (FAN_SPREAD_DEGREES / (n - 1))
-                    : 0.0;
+            CardView cardView = new CardView(cardId, registry, () -> {
+                registry.getSoundId(CardView.lookupCard(cardId)).ifPresent(soundManager::play);
 
-            double rad = Math.toRadians(angle);
-            double x = cx + FAN_ARC_RADIUS * Math.sin(rad);
-            double y = paneH - HAND_VERTICAL_LIFT + FAN_ARC_RADIUS * (1 - Math.cos(rad));
-
-            final int cid = cardId;
-            CardView cardView = new CardView(cid, registry, () -> {
-                registry.getSoundId(CardView.lookupCard(cid)).ifPresent(soundManager::play);
                 if (isSecondChanceActiveForMe()) {
-                    networkClient.resolveSecondChance(cid);
+                    networkClient.resolveSecondChance(cardId);
                     clearPendingEffectIfSecondChance();
                 } else {
-                    networkClient.playCard(cid);
+                    networkClient.playCard(cardId);
                 }
             });
 
-            cardView.setRotate(angle);
-            cardView.setLayoutX(x - CardBacksideView.CARD_WIDTH / 2);
-            cardView.setLayoutY(y - CardBacksideView.CARD_HEIGHT);
-
-            fanPane.getChildren().add(cardView);
+            view.getPlayerHandPane().getChildren().add(cardView);
         }
-    }
-
-    /**
-     * Pushes the current {@link ClientState#getPlayerInfoList()} to the circular table,
-     * excluding the local player so only opponents are shown.
-     *
-     * @param view the game view whose circular table should be refreshed
-     */
-    private void refreshOtherPlayers(GameView view) {
-        String username = state.getUsername();
-        java.util.List<ClientState.PlayerInfo> others = state.getPlayerInfoList().stream()
-                .filter(p -> !p.name().equals(username))
-                .toList();
-        view.getCircularTablePane().setPlayerSlots(others, username);
     }
 
     /**
@@ -6723,8 +6252,6 @@ public class MainController {
     /**
      * Executes the game-view command input as a client command.
      *
-     * <p>{@code /peek} is handled locally and never forwarded to the server.</p>
-     *
      * @param view the game view containing the command input field
      */
     private void sendCommand(GameView view) {
@@ -6733,42 +6260,11 @@ public class MainController {
             return;
         }
 
-        if ("/peek".equalsIgnoreCase(command)) {
-            togglePeek(view);
-            view.getCommandInput().clear();
-            return;
-        }
-
         boolean disconnected = networkClient.sendCommand(command);
         view.getCommandInput().clear();
 
         if (disconnected) {
             showConnectView();
-        }
-    }
-
-    /**
-     * Toggles the PEEK mode: reveals opponent cards on first call, hides them on the next.
-     * Placeholder sequential card IDs (0…handSize-1) are used because the server does not
-     * yet send opponent card IDs to other clients.
-     */
-    private void togglePeek(GameView view) {
-        peekActive = !peekActive;
-        CircularTablePane table = view.getCircularTablePane();
-        if (peekActive) {
-            String username = state.getUsername();
-            for (ClientState.PlayerInfo info : state.getPlayerInfoList()) {
-                if (info.name().equals(username)) continue;
-                OtherPlayerView slot = table.getPlayerSlots().get(info.name());
-                if (slot == null) continue;
-                java.util.List<Integer> ids = new java.util.ArrayList<>();
-                for (int i = 0; i < info.handSize(); i++) ids.add(i);
-                slot.revealCards(ids);
-            }
-            state.getGameMessages().add("[CLIENT] PEEK on — showing placeholder cards.");
-        } else {
-            table.getPlayerSlots().values().forEach(OtherPlayerView::hideCards);
-            state.getGameMessages().add("[CLIENT] PEEK off.");
         }
     }
 
@@ -6901,13 +6397,9 @@ public class MainController {
         view.setWinner(state.getWinnerName());
         view.setRanking(state.getFinalScoreRows());
 
-        ch.unibas.dmi.dbis.cs108.example.service.HighScoreHistory highScoreHistory =
-                new ch.unibas.dmi.dbis.cs108.example.service.HighScoreHistory(java.nio.file.Path.of("highscores.txt"));
-        view.setLeaderboard(highScoreHistory.buildLeaderboardDisplayRows());
-
         view.getLeaveLobbyButton().setOnAction(e -> leaveCurrentLobbyAndShowLobbyView());
 
-        Scene scene = createStyledScene(view, 1000, 700);
+        Scene scene = createStyledScene(view, 900, 700);
         stage.setScene(scene);
         new FadeIn(view).play();
     }
@@ -6953,7 +6445,7 @@ public class MainController {
             return;
         }
 
-        CardView discardCardView = new CardView(cardId, registry, null, false);
+        CardView discardCardView = new CardView(cardId, registry, null);
         view.getDiscardPilePane().getChildren().add(discardCardView);
     }
 
@@ -7217,7 +6709,7 @@ public class MainController {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\NiceTryView.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\NiceTryView.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -7232,14 +6724,7 @@ import javafx.scene.layout.VBox;
 
 import java.util.List;
 import java.util.function.Consumer;
-/**
- * Overlay view used to resolve the Nice Try effect in the GUI.
- *
- * <p>This dialog lets the acting player choose which player should receive
- * the penalty cards. It appears as an effect response overlay on top of the
- * current {@link GameView} and replaces manual slash-command resolution for
- * this effect.</p>
- */
+
 public class NiceTryView extends StackPane {
 
     private String selectedPlayer;
@@ -7290,327 +6775,7 @@ public class NiceTryView extends StackPane {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\OtherPlayerView.java
-================================================================================
-
-package ch.unibas.dmi.dbis.cs108.example.client.ui;
-
-import ch.unibas.dmi.dbis.cs108.example.client.assets.AssetRegistry;
-import javafx.geometry.Bounds;
-import javafx.geometry.Pos;
-import javafx.scene.Group;
-import javafx.scene.Node;
-import javafx.scene.control.Label;
-
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.VBox;
-
-import javafx.scene.shape.Circle;
-
-import java.util.List;
-
-/**
- * A self-contained node representing one opponent on the circular table.
- *
- * <p>Contains a tinted player icon, a name label, and a compact fan of face-down cards.
- * Call {@link #setFanRotation} to rotate only the card fan (so cards face inward) while
- * the icon and name label remain upright.</p>
- *
- * <p>Must be created on the JavaFX Application Thread.</p>
- */
-public class OtherPlayerView extends Group {
-
-    static final double ICON_SIZE = 46;
-    static final double CARD_OFFSET_X = 10;
-    static final double CARD_ROTATION_STEP = 2.0;
-    static final double OPPONENT_CARD_SCALE = 0.52;
-    static final double FAN_VERTICAL_ARC = 8.0;
-
-    static final double INFO_INWARD_DISTANCE = 34.0;
-    static final double FAN_OUTWARD_DISTANCE = 88.0;
-
-    static final double PLAYER_OUTWARD_DISTANCE = 14.0;
-    static final double HAND_INWARD_DISTANCE = 82.0;
-
-    private static final String PLAYER_ICON_PATH = "/icons/player.svg";
-
-    private final AssetRegistry registry;
-    private final Pane fanPane;
-    private final Group fanGroup;
-    private final Group infoGroup;
-    private double seatAngleDegrees = 0.0;
-    private int handSize;
-
-    /**
-     * Creates a view with no asset registry; {@link #revealCards} will be a no-op.
-     */
-    public OtherPlayerView(String playerName, int handSize, String colorClass) {
-        this(playerName, handSize, colorClass, null);
-    }
-
-    /**
-     * Creates a view with the given asset registry for card reveals.
-     */
-    public OtherPlayerView(String playerName, int handSize, String colorClass, AssetRegistry registry) {
-        this.registry = registry;
-        this.handSize = handSize;
-
-        Node iconNode = buildIconNode(colorClass);
-
-        Label nameLabel = new Label(playerName);
-        nameLabel.getStyleClass().add("field-label");
-        nameLabel.setMouseTransparent(true);
-
-        fanPane = new Pane();
-        fanGroup = new Group(fanPane);
-
-        VBox infoBox = new VBox(2, iconNode, nameLabel);
-        infoBox.setAlignment(Pos.CENTER);
-        infoGroup = new Group(infoBox);
-
-        getChildren().addAll(fanGroup, infoGroup);
-
-        buildFan(handSize);
-        updateSeatLayout();
-    }
-
-    public void setSeatAngle(double degrees) {
-        this.seatAngleDegrees = degrees;
-        updateSeatLayout();
-    }
-
-    private void updateSeatLayout() {
-        double rad = Math.toRadians(seatAngleDegrees);
-
-        /*
-         * Vector from center outward toward this opponent seat.
-         * Example:
-         * - top-left opponent -> up-left
-         * - top-right opponent -> up-right
-         */
-        double outwardX = Math.sin(rad);
-        double outwardY = -Math.cos(rad);
-
-        Bounds infoBounds = infoGroup.getLayoutBounds();
-        double infoW = infoBounds.getWidth();
-        double infoH = infoBounds.getHeight();
-
-        Bounds fanBounds = fanGroup.getLayoutBounds();
-        double fanW = fanBounds.getWidth();
-        double fanH = fanBounds.getHeight();
-
-        /*
-         * Player icon + name go OUTWARD from the seat anchor.
-         */
-        infoGroup.setLayoutX(outwardX * PLAYER_OUTWARD_DISTANCE - infoW / 2);
-        infoGroup.setLayoutY(outwardY * PLAYER_OUTWARD_DISTANCE - infoH / 2);
-
-        /*
-         * Opponent hand goes INWARD toward the table center.
-         */
-        fanGroup.setLayoutX(-outwardX * HAND_INWARD_DISTANCE - fanW / 2);
-        fanGroup.setLayoutY(-outwardY * HAND_INWARD_DISTANCE - fanH / 2);
-
-        /*
-         * Rotate only the fan so the cards face inward.
-         */
-        fanGroup.setRotate(seatAngleDegrees + 180);
-
-        fanGroup.toBack();
-        infoGroup.toFront();
-    }
-
-    private Node buildIconNode(String colorClass) {
-        return buildFallbackIcon(colorClass);
-    }
-
-    private Node buildFallbackIcon(String colorClass) {
-        Circle circle = new Circle(ICON_SIZE / 2);
-        circle.getStyleClass().add("player-color-" + colorClass);
-        return circle;
-    }
-
-
-
-    private void buildFan(int n) {
-        fanPane.getChildren().clear();
-
-        if (n <= 0) {
-            fanPane.setPrefWidth(0);
-            fanPane.setPrefHeight(0);
-            return;
-        }
-
-        double scaledCardWidth = CardBacksideView.CARD_WIDTH * OPPONENT_CARD_SCALE;
-        double scaledCardHeight = CardBacksideView.CARD_HEIGHT * OPPONENT_CARD_SCALE;
-
-        double totalWidth = (n - 1) * CARD_OFFSET_X + scaledCardWidth;
-        double centerIndex = (n - 1) / 2.0;
-
-        double yOffsetChange = (n > 1) ? Math.PI / (n - 1) : 0;
-        double currentYOffset = 0;
-
-        for (int i = 0; i < n; i++) {
-            CardBacksideView card = new CardBacksideView();
-
-            double rotation = (i - centerIndex) * CARD_ROTATION_STEP;
-            double yOffset = -Math.sin(currentYOffset) * FAN_VERTICAL_ARC;
-
-            card.setScaleX(OPPONENT_CARD_SCALE);
-            card.setScaleY(OPPONENT_CARD_SCALE);
-
-            card.setLayoutX(i * CARD_OFFSET_X);
-            card.setLayoutY(yOffset);
-            card.setRotate(rotation);
-
-            fanPane.getChildren().add(card);
-            currentYOffset += yOffsetChange;
-        }
-
-        fanPane.setPrefWidth(totalWidth);
-        fanPane.setPrefHeight(scaledCardHeight + FAN_VERTICAL_ARC);
-        updateSeatLayout();
-    }
-
-    /** Rebuilds the card fan with a new hand size. */
-    public void setHandSize(int n) {
-        this.handSize = n;
-        buildFan(n);
-    }
-
-    /**
-     * Replaces face-down cards with face-up {@link CardView} instances for the given IDs.
-     * No-op if no asset registry was provided at construction.
-     */
-    public void revealCards(List<Integer> cardIds) {
-        if (registry == null) return;
-
-        fanPane.getChildren().clear();
-        int n = cardIds.size();
-
-        if (n == 0) {
-            fanPane.setPrefWidth(0);
-            fanPane.setPrefHeight(0);
-            return;
-        }
-
-        double scaledCardWidth = CardBacksideView.CARD_WIDTH * OPPONENT_CARD_SCALE;
-        double scaledCardHeight = CardBacksideView.CARD_HEIGHT * OPPONENT_CARD_SCALE;
-
-        double totalWidth = (n - 1) * CARD_OFFSET_X + scaledCardWidth;
-        double centerIndex = (n - 1) / 2.0;
-
-        double yOffsetChange = (n > 1) ? Math.PI / (n - 1) : 0;
-        double currentYOffset = 0;
-
-        for (int i = 0; i < n; i++) {
-            CardView card = new CardView(cardIds.get(i), registry, null, false);
-
-            double rotation = (i - centerIndex) * CARD_ROTATION_STEP;
-            double yOffset = -Math.sin(currentYOffset) * FAN_VERTICAL_ARC;
-
-            card.setScaleX(OPPONENT_CARD_SCALE);
-            card.setScaleY(OPPONENT_CARD_SCALE);
-
-            card.setLayoutX(i * CARD_OFFSET_X);
-            card.setLayoutY(yOffset);
-            card.setRotate(rotation);
-
-            fanPane.getChildren().add(card);
-            currentYOffset += yOffsetChange;
-        }
-
-        fanPane.setPrefWidth(totalWidth);
-        fanPane.setPrefHeight(scaledCardHeight + FAN_VERTICAL_ARC);
-        updateSeatLayout();
-    }
-
-    /** Restores face-down card backsides, reverting any previous {@link #revealCards} call. */
-    public void hideCards() {
-        buildFan(handSize);
-        updateSeatLayout();
-    }
-
-    /**
-     * Rotates the card fan independently so cards face inward on the circular table
-     * while the icon and name label remain upright.
-     */
-    public void setFanRotation(double degrees) {
-        fanGroup.setRotate(degrees);
-    }
-
-    /** Returns the current hand size. */
-    public int getHandSize() {
-        return handSize;
-    }
-
-    int getFanCardCount() {
-        return fanPane.getChildren().size();
-    }
-
-    boolean hasFaceUpCards() {
-        return fanPane.getChildren().stream().anyMatch(c -> c instanceof CardView);
-    }
-
-    double getFanRotation() {
-        return fanGroup.getRotate();
-    }
-
-
-}
-
-
-================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\PlayerColorAssigner.java
-================================================================================
-
-package ch.unibas.dmi.dbis.cs108.example.client.ui;
-
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
-/**
- * Stateless utility that maps player names to display colors.
- *
- * <p>The local user is always assigned {@code "red"}. All other players
- * receive the remaining colors in the order they appear in the name list.
- * Colors cycle through the non-red palette if there are more than seven
- * opponents.</p>
- */
-public final class PlayerColorAssigner {
-
-    static final List<String> COLORS = List.of(
-            "red", "green", "blue", "yellow", "purple", "pink", "orange", "teal"
-    );
-
-    private PlayerColorAssigner() {}
-
-    /**
-     * Assigns a color string to each player name.
-     *
-     * @param orderedNames all player names in turn order (may include the local user)
-     * @param localUsername the name of the local user; receives {@code "red"}
-     * @return a {@link LinkedHashMap} from player name to color string, preserving insertion order
-     */
-    public static Map<String, String> assign(List<String> orderedNames, String localUsername) {
-        Map<String, String> result = new LinkedHashMap<>();
-        int otherIndex = 0;
-        for (String name : orderedNames) {
-            if (name.equals(localUsername)) {
-                result.put(name, COLORS.get(0));
-            } else {
-                result.put(name, COLORS.get(1 + (otherIndex % (COLORS.size() - 1))));
-                otherIndex++;
-            }
-        }
-        return result;
-    }
-}
-
-
-================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\SkipView.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\SkipView.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -7625,14 +6790,7 @@ import javafx.scene.layout.VBox;
 
 import java.util.List;
 import java.util.function.Consumer;
-/**
- * Overlay view used to resolve the Skip effect in the GUI.
- *
- * <p>This dialog lets the acting player choose which player should be skipped
- * next. It is displayed as a modal-style overlay on top of the
- * {@link GameView} and sends the selected target as a structured effect
- * response.</p>
- */
+
 public class SkipView extends StackPane {
 
     private String selectedPlayer;
@@ -7683,7 +6841,7 @@ public class SkipView extends StackPane {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\WishCardView.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\WishCardView.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -7778,7 +6936,7 @@ public class WishCardView extends StackPane {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\controller\ClientSession.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\controller\ClientSession.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.controller;
@@ -7954,7 +7112,7 @@ public class ClientSession implements Runnable {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\controller\ServerController.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\controller\ServerController.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.controller;
@@ -8070,7 +7228,7 @@ public class ServerController {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\dev\DevModeManager.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\dev\DevModeManager.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.dev;
@@ -8223,7 +7381,6 @@ public final class DevModeManager {
         applyRequestedNumber(state, properties);
         applyPendingEffects(state, properties);
         applyPendingEffectTarget(state, properties);
-        applyForcedEventCardIdOnBlack(state, properties);
     }
 
     /**
@@ -8255,7 +7412,6 @@ public final class DevModeManager {
         state.setRequestedColor(null);
         state.setRequestedNumber(null);
         state.setActiveEventCard(null);
-        state.setForcedEventCardIdOnBlack(null);
     }
 
     /**
@@ -8277,34 +7433,6 @@ public final class DevModeManager {
 
         state.getDiscardPile().clear();
         state.getDiscardPile().push(card);
-    }
-
-    /**
-     * Applies a dev-only forced event card id for all black-card plays.
-     *
-     * <p>Property key: {@code forceEventCardIdOnBlack}</p>
-     *
-     * <p>When set, every played black card will trigger this event card id
-     * instead of drawing from the normal event pile.</p>
-     *
-     * @param state the game state to modify
-     * @param properties the scenario properties
-     */
-    private static void applyForcedEventCardIdOnBlack(GameState state, Properties properties) {
-        String rawValue = properties.getProperty("forceEventCardIdOnBlack");
-        if (rawValue == null || rawValue.isBlank()) {
-            return;
-        }
-
-        int eventCardId = parseRequiredInt(rawValue, "forceEventCardIdOnBlack");
-
-        if (eventCardId < 0 || eventCardId > 19) {
-            throw new IllegalArgumentException(
-                    "forceEventCardIdOnBlack must be between 0 and 19, but was: " + eventCardId
-            );
-        }
-
-        state.setForcedEventCardIdOnBlack(eventCardId);
     }
 
     /**
@@ -8605,7 +7733,7 @@ public final class DevModeManager {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\gui\javafx\FranticFxApp.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\gui\javafx\FranticFxApp.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.gui.javafx;
@@ -8740,7 +7868,7 @@ public class FranticFxApp extends Application {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\gui\javafx\GUI.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\gui\javafx\GUI.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.gui.javafx;
@@ -8787,7 +7915,7 @@ public class GUI extends Application {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\gui\javafx\GuiMain.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\gui\javafx\GuiMain.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.gui.javafx;
@@ -8813,7 +7941,7 @@ public class GuiMain {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\gui\javafx\Main.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\gui\javafx\Main.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.gui.javafx;
@@ -8841,7 +7969,7 @@ public class Main {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\HelloWorld.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\HelloWorld.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example;
@@ -8864,7 +7992,7 @@ public class HelloWorld {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\Card.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\Card.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -8941,7 +8069,7 @@ public record Card(int id, CardType type, CardColor color, int value, SpecialEff
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\CardColor.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\CardColor.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -8956,7 +8084,7 @@ public enum CardColor {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\CardType.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\CardType.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -8981,7 +8109,7 @@ public enum CardType {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\CardValidator.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\CardValidator.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -9108,7 +8236,7 @@ public class CardValidator {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\DeckFactory.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\DeckFactory.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -9229,7 +8357,7 @@ public class DeckFactory {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\EffectArgs.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\EffectArgs.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -9389,7 +8517,7 @@ public final class EffectArgs {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\EffectResolver.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\EffectResolver.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -9847,7 +8975,7 @@ public class EffectResolver {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\EventEffect.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\EventEffect.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -9981,7 +9109,7 @@ public enum EventEffect {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\EventResolver.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\EventResolver.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -10346,30 +9474,14 @@ public class EventResolver {
 
     /**
      * Sets a color request matching the color of the current discard-pile top.
-     * Falls back to {@link CardColor#RED} if the top card has no playable color.
+     * Falls back to {@link CardColor#RED} if the top card has no color.
      */
     private static List<GameEvent> handleWildRequest(GameState state) {
         Card top = state.peekDiscardPile();
-
-        CardColor color = null;
-        if (top != null) {
-            CardColor topColor = top.color();
-            if (topColor != null && topColor != CardColor.BLACK) {
-                color = topColor;
-            }
-        }
-
-        if (color == null) {
-            color = CardColor.RED;
-        }
-
+        CardColor color = (top != null && top.color() != null) ? top.color() : CardColor.RED;
         state.setRequestedColor(color);
-        state.setRequestedNumber(null);
-
-        return List.of(new GameEvent(
-                GameEvent.EventType.EFFECT_TRIGGERED,
-                "WILD_REQUEST:" + color
-        ));
+        return List.of(new GameEvent(GameEvent.EventType.EFFECT_TRIGGERED,
+                "WILD_REQUEST:" + color));
     }
 
     /**
@@ -10403,7 +9515,7 @@ public class EventResolver {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\GameEvent.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\GameEvent.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -10476,7 +9588,7 @@ public record GameEvent(EventType type, String detail) {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\GameInitializer.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\GameInitializer.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -10630,7 +9742,7 @@ public class GameInitializer {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\GamePhase.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\GamePhase.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -10662,7 +9774,7 @@ public enum GamePhase {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\GameState.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\GameState.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -10719,8 +9831,6 @@ public class GameState {
      * {@link ScoreCalculator#calculateRoundScores(java.util.List, GameState)}.
      */
     private boolean doubleScoringActive = false;
-
-    private Integer forcedEventCardIdOnBlack;
 
     /**
      * Creates a new game state for one round.
@@ -11016,35 +10126,11 @@ public class GameState {
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Player not found: " + name));
     }
-
-    /**
-     * Returns the dev-mode forced event card id that should be used whenever
-     * a black card is played, or {@code null} if normal event drawing is active.
-     *
-     * @return the forced event card id, or {@code null}
-     */
-    public Integer getForcedEventCardIdOnBlack() {
-        return forcedEventCardIdOnBlack;
-    }
-
-    /**
-     * Sets the dev-mode forced event card id that should be triggered whenever
-     * a black card is played.
-     *
-     * <p>This is intended for development and testing only. When {@code null},
-     * black cards use the normal event pile.</p>
-     *
-     * @param forcedEventCardIdOnBlack the forced event card id, or {@code null}
-     */
-    public void setForcedEventCardIdOnBlack(Integer forcedEventCardIdOnBlack) {
-        this.forcedEventCardIdOnBlack = forcedEventCardIdOnBlack;
-    }
-
 }
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\PlayerGameState.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\PlayerGameState.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -11202,7 +10288,7 @@ public class PlayerGameState {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\ScoreCalculator.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\ScoreCalculator.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -11315,7 +10401,7 @@ public class ScoreCalculator {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\SpecialEffect.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\SpecialEffect.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -11353,7 +10439,7 @@ public enum SpecialEffect {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\TurnEngine.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\TurnEngine.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -11468,21 +10554,11 @@ public class TurnEngine {
         switch (card.type()) {
             case BLACK -> {
                 state.setSpecialsBlocked(false);
-
-                Card eventCard;
-                Integer forcedEventId = state.getForcedEventCardIdOnBlack();
-
-                if (forcedEventId != null) {
-                    eventCard = Card.eventCard(forcedEventId);
-                } else {
-                    eventCard = state.drawFromEventPile();
-                }
-
+                Card eventCard = state.drawFromEventPile();
                 if (eventCard != null) {
                     state.setActiveEventCard(eventCard);
                     events.add(GameEvent.eventCardFlipped(eventCard.id()));
                 }
-
                 state.setPhase(GamePhase.RESOLVING_EFFECT);
             }
             case SPECIAL_SINGLE, SPECIAL_FOUR -> {
@@ -11558,11 +10634,6 @@ public class TurnEngine {
         List<GameEvent> events = new ArrayList<>();
         PlayerGameState current = state.getCurrentPlayer();
 
-        if (!current.hasPlayedThisTurn() && !current.hasDrawnThisTurn()) {
-            events.add(GameEvent.error("You must play or draw before ending your turn."));
-            return events;
-        }
-
         if (endRoundIfAnyPlayerHasNoCards(state, events)) {
             return events;
         }
@@ -11613,7 +10684,7 @@ public class TurnEngine {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\Lobby.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\Lobby.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model;
@@ -11901,7 +10972,7 @@ public class Lobby {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\LobbyStatus.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\LobbyStatus.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model;
@@ -11917,7 +10988,7 @@ public enum LobbyStatus {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\Player.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\Player.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model;
@@ -11937,7 +11008,7 @@ public record Player(String name) {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\ServerMain.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\ServerMain.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example;
@@ -11987,7 +11058,7 @@ public class ServerMain {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\service\GameMessageParser.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\service\GameMessageParser.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.service;
@@ -12266,7 +11337,7 @@ public class GameMessageParser {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\service\GameStateSerializer.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\service\GameStateSerializer.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.service;
@@ -12383,7 +11454,7 @@ public class GameStateSerializer {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\service\HighScoreHistory.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\service\HighScoreHistory.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.service;
@@ -12393,9 +11464,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -12437,110 +11505,11 @@ public final class HighScoreHistory {
     }
 
     public synchronized List<GameHistoryEntry> readAllGames() {
-        if (!Files.exists(file)) {
-            return List.of();
-        }
-
-        try {
-            List<GameHistoryEntry> entries = new ArrayList<>();
-
-            for (String line : Files.readAllLines(file)) {
-                String trimmed = line.trim();
-                if (trimmed.isBlank()) {
-                    continue;
-                }
-
-                String timestamp = "";
-                String lobbyId = "";
-                String winner = "";
-                Map<String, Integer> finalScores = new LinkedHashMap<>();
-
-                String[] fields = trimmed.split(";");
-                for (String field : fields) {
-                    String[] kv = field.split("=", 2);
-                    if (kv.length != 2) {
-                        continue;
-                    }
-
-                    String key = kv[0].trim();
-                    String value = kv[1].trim();
-
-                    switch (key) {
-                        case "timestamp" -> timestamp = value;
-                        case "lobby" -> lobbyId = value;
-                        case "winner" -> winner = value;
-                        case "scores" -> {
-                            if (!value.isBlank()) {
-                                String[] scoreEntries = value.split(",");
-                                for (String scoreEntry : scoreEntries) {
-                                    String[] scoreParts = scoreEntry.split(":", 2);
-                                    if (scoreParts.length != 2) {
-                                        continue;
-                                    }
-
-                                    String playerName = scoreParts[0].trim();
-                                    try {
-                                        int points = Integer.parseInt(scoreParts[1].trim());
-                                        finalScores.put(playerName, points);
-                                    } catch (NumberFormatException ignored) {
-                                        // skip malformed score
-                                    }
-                                }
-                            }
-                        }
-                        default -> {
-                            // ignore unknown fields for forward compatibility
-                        }
-                    }
-                }
-
-                if (!winner.isBlank() && !finalScores.isEmpty()) {
-                    entries.add(new GameHistoryEntry(timestamp, lobbyId, winner, finalScores));
-                }
-            }
-
-            return entries;
-        } catch (IOException e) {
-            throw new IllegalStateException("Could not read highscores file.", e);
-        }
+        return List.of();
     }
 
     public synchronized List<LeaderboardRow> buildLeaderboard() {
-        Map<String, MutableStats> statsByPlayer = new LinkedHashMap<>();
-
-        for (GameHistoryEntry entry : readAllGames()) {
-            for (Map.Entry<String, Integer> score : entry.finalScores().entrySet()) {
-                String player = score.getKey();
-                int penaltyPoints = score.getValue();
-
-                MutableStats stats = statsByPlayer.computeIfAbsent(player, p -> new MutableStats());
-                stats.gamesPlayed++;
-                stats.totalPenaltyPoints += penaltyPoints;
-
-                if (player.equals(entry.winner())) {
-                    stats.wins++;
-                }
-            }
-        }
-
-        return statsByPlayer.entrySet().stream()
-                .map(entry -> new LeaderboardRow(
-                        entry.getKey(),
-                        entry.getValue().wins,
-                        entry.getValue().gamesPlayed,
-                        entry.getValue().totalPenaltyPoints
-                ))
-                .sorted(Comparator
-                        .comparingInt(LeaderboardRow::wins).reversed()
-                        .thenComparingInt(LeaderboardRow::totalPenaltyPoints)
-                        .thenComparing(LeaderboardRow::playerName))
-                .toList();
-    }
-
-    private static final class MutableStats {
-        int wins;
-        int gamesPlayed;
-        int totalPenaltyPoints;
+        return List.of();
     }
 
     public record GameHistoryEntry(
@@ -12558,21 +11527,11 @@ public final class HighScoreHistory {
             int totalPenaltyPoints
     ) {
     }
-
-
-    public synchronized List<String> buildLeaderboardDisplayRows() {
-        return buildLeaderboard().stream()
-                .map(row -> row.playerName()
-                        + " | Wins: " + row.wins()
-                        + " | Games: " + row.gamesPlayed()
-                        + " | Points: " + row.totalPenaltyPoints())
-                .toList();
-    }
 }
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\service\Message.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\service\Message.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.service;
@@ -13223,7 +12182,7 @@ public record Message(Type type, String content) {
 
 
 ================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\service\ServerService.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\service\ServerService.java
 ================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.service;
@@ -14668,26 +13627,9 @@ public class ServerService {
             return;
         }
 
-        PlayerGameState current = state.getCurrentPlayer();
-
-        if (!current.hasPlayedThisTurn() && !current.hasDrawnThisTurn()) {
-            session.send(new Message(
-                    Message.Type.ERROR,
-                    "You must play or draw before ending your turn."
-            ).encode());
-            return;
-        }
-
         List<GameEvent> events = TurnEngine.endTurn(state);
         broadcastEvents(lobby, events);
-
-        if (state.getPhase() == GamePhase.ROUND_END) {
-            handleRoundEnd(lobby);
-            return;
-        }
-
-        List<GameEvent> turnEvents = TurnEngine.startTurn(state);
-        broadcastEvents(lobby, turnEvents);
+        TurnEngine.startTurn(state);
         broadcastGameState(lobby);
     }
 
@@ -15013,7 +13955,7 @@ public class ServerService {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\build.gradle
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\build.gradle
 ====================================================================================================
 
 plugins {
@@ -15054,6 +13996,13 @@ dependencies {
 
 test {
     useJUnitPlatform()
+
+    if (System.getProperty("excludeGuiTests") == "true") {
+        exclude "**/*ViewTest.class"
+        exclude "**/*GuiTest.class"
+        exclude "**/*UITest.class"
+        exclude "**/AssetRegistryTest.class"
+    }
 }
 
 tasks.withType(JavaCompile).configureEach {
@@ -15118,7 +14067,7 @@ tasks.register('build-cs108') {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\CONTRIBUTORS.txt
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\CONTRIBUTORS.txt
 ====================================================================================================
 
 Sevval Ünlü
@@ -15126,7 +14075,7 @@ Aiysha Frutiger
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\docs\Diary.md
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\docs\Diary.md
 ====================================================================================================
 
 # Project Diary
@@ -16018,9 +14967,22 @@ Rounded it off with targeted tests covering round transitions, scoring edge case
 * Keep the remaining focus on stability rather than new features.
 * If time allows, clean up any last small UI inconsistencies and verify Linux/JAR behavior once more.
 
+## Date: May 6, 2026
+
+### QA Concept(Sevval)
+
+#### What did we do today?
+
+Today, I added the MS 5 metrics to our QA Concept. I will wait for the MS 6 Metrics closer to the end of the project and then finish the QA Concept adding the analyses and the lessons learned.
+
+#### Future Plans
+
+Tomorrow, Aiysha and I will meet again and work together on the project, trying to finish MS 6 tasks + bonuses.
+
+
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\docs\game_flow_update_plan.md
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\docs\game_flow_update_plan.md
 ====================================================================================================
 
 # Game flow update plan
@@ -16595,7 +15557,7 @@ lobby must be created for a subsequent game.
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\docs\manual\manual.md
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\docs\manual\manual.md
 ====================================================================================================
 
 # Frantic^-1 Manual
@@ -17780,7 +16742,7 @@ They are triggered automatically by black cards and are not part of the normal h
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\docs\manual\manualMs6.md
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\docs\manual\manualMs6.md
 ====================================================================================================
 
 
@@ -18197,7 +17159,7 @@ Useful commands include:
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\docs\old_docs(dont_delete)\changelog_game_logic.md
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\docs\old_docs(dont_delete)\changelog_game_logic.md
 ====================================================================================================
 
 # Game Logic Changelog
@@ -18451,7 +17413,7 @@ All 313 tests pass with `./gradlew test`.
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\docs\old_docs(dont_delete)\game_logic_implementation.md
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\docs\old_docs(dont_delete)\game_logic_implementation.md
 ====================================================================================================
 
 # Initialization
@@ -18624,7 +17586,7 @@ Scoring value: value of card * 2
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\docs\old_docs(dont_delete)\GUI_update_plan.md
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\docs\old_docs(dont_delete)\GUI_update_plan.md
 ====================================================================================================
 
 # GUI Asset System — Implementation Plan
@@ -18921,7 +17883,7 @@ src/main/java/.../gui/javafx/
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\docs\old_docs(dont_delete)\technical_plan_game_logic.md
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\docs\old_docs(dont_delete)\technical_plan_game_logic.md
 ====================================================================================================
 
 # Game Logic Implementation Plan
@@ -19398,7 +18360,7 @@ Phases 4–7 are pure game logic with no networking dependency and can be tested
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\docs\old_docs(dont_delete)\test_instructions_game_logic.md
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\docs\old_docs(dont_delete)\test_instructions_game_logic.md
 ====================================================================================================
 
 # Game Logic Manual Test Instructions
@@ -20035,7 +18997,7 @@ PLAY_CARD|<id>     # Alice plays;  turn → Bob
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\docs\old_docs(dont_delete)\update_game_view_plan.md
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\docs\old_docs(dont_delete)\update_game_view_plan.md
 ====================================================================================================
 
 # Non-Technical plan
@@ -20271,7 +19233,7 @@ Implement Option B first as a proof of concept, then upgrade to Option A once th
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\docs\protocol_document.md
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\docs\protocol_document.md
 ====================================================================================================
 
 # Protocol Documentation - Group 17
@@ -21485,27 +20447,28 @@ The current message enum and parser design already allow adding new types withou
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\highscores.txt
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\highscores.txt
 ====================================================================================================
 
-timestamp=2026-04-21T15:28:11.750260400;lobby=h;winner=ayano;scores=ayano:67,ayano(2):72
-timestamp=2026-04-22T14:18:38.407031100;lobby=d;winner=s;scores=s:65,ayano:44
-timestamp=2026-04-24T12:25:58.479864100;lobby=Lobby1;winner=Alice;scores=Bob:7,Alice:0
-timestamp=2026-04-24T15:47:03.044010900;lobby=Lobby1;winner=Alice;scores=Bob:7,Alice:0
-timestamp=2026-04-24T15:51:19.344861300;lobby=Lobby1;winner=Alice;scores=Bob:7,Alice:0
-timestamp=2026-04-24T15:57:10.654588700;lobby=Lobby1;winner=Alice;scores=Bob:7,Alice:0
-timestamp=2026-04-24T16:07:26.194326600;lobby=Lobby1;winner=Alice;scores=Bob:7,Alice:0
-timestamp=2026-04-24T16:28:33.785747300;lobby=d;winner=ayano;scores=ayano:0,ayano(2):137,ayano(3):99
-timestamp=2026-04-24T16:30:21.308664300;lobby=Lobby1;winner=Alice;scores=Bob:7,Alice:0
-timestamp=2026-04-24T16:30:38.351491600;lobby=d;winner=ayano;scores=ayano:62,ayano(2):63,ayano(3):35
-timestamp=2026-04-29T14:09:10.730269500;lobby=faah;winner=Denys;scores=s:18,ayano:9,Denys:0
-timestamp=2026-04-29T14:11:40.927266700;lobby=Lobby1;winner=Alice;scores=Bob:7,Alice:0
-timestamp=2026-04-29T14:27:04.726721700;lobby=1;winner=Denys;scores=sena:59,a:120,Sevval:80,Denys:0
-timestamp=2026-04-29T14:28:45.186138700;lobby=d;winner=Sevval;scores=Sevval:65,HP:76
+timestamp=2026-04-22T22:39:02.282408;lobby=$;winner=ayano(2);scores=ayano:110,ayano(2):0
+timestamp=2026-04-22T22:55:26.892600500;lobby=d;winner=ayano(2);scores=ayano:76,ayano(2):0
+timestamp=2026-04-23T00:26:07.726883900;lobby=d;winner=ayano;scores=ayano:0,ayano(2):61
+timestamp=2026-04-23T00:28:26.330507800;lobby=d;winner=ayano(2);scores=ayano:94,ayano(2):0
+timestamp=2026-04-23T01:22:27.308164600;lobby=d;winner=ayano;scores=ayano:50,ayano(2):72
+timestamp=2026-04-23T01:42:02.223856700;lobby=Lobby1;winner=Alice;scores=Bob:7,Alice:0
+timestamp=2026-04-23T14:34:40.923440400;lobby=Lobby1;winner=Alice;scores=Bob:7,Alice:0
+timestamp=2026-04-23T14:35:13.362341500;lobby=Lobby1;winner=Alice;scores=Bob:7,Alice:0
+timestamp=2026-04-23T15:25:16.133522700;lobby=s;winner=s;scores=s:0,ayano:22
+timestamp=2026-05-07T16:29:49.518107700;lobby=MRLobby;winner=Alice;scores=Bob:11,Alice:0
+timestamp=2026-05-07T16:29:49.522109700;lobby=WinnerLobby;winner=Alice;scores=Bob:11,Alice:0
+timestamp=2026-05-07T16:29:49.547904900;lobby=Lobby1;winner=Alice;scores=Bob:7,Alice:0
+timestamp=2026-05-07T16:49:26.865227600;lobby=MRLobby;winner=Alice;scores=Bob:11,Alice:0
+timestamp=2026-05-07T16:49:26.868228;lobby=WinnerLobby;winner=Alice;scores=Bob:11,Alice:0
+timestamp=2026-05-07T16:49:26.887270100;lobby=Lobby1;winner=Alice;scores=Bob:7,Alice:0
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\libraries.txt
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\libraries.txt
 ====================================================================================================
 
 **Zählt für die Requirements nicht als Library, erlaubt für das Programmierprojekt:**
@@ -21564,7 +20527,7 @@ FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\libraries.txt
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\outreach\game.properties
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\outreach\game.properties
 ====================================================================================================
 
 game.name = Example Game
@@ -21578,7 +20541,7 @@ game.developers = Tom Cat, Jerry Mouse, William Hanna, Joseph Barbera
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\outreach\readMe.md
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\outreach\readMe.md
 ====================================================================================================
 
 # Abgabeanforderungen für Outreach
@@ -21611,7 +20574,7 @@ Passt alle Teile wie im `index.html` File beschrieben an.
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\outreach\website\main.css
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\outreach\website\main.css
 ====================================================================================================
 
 :root {
@@ -22351,7 +21314,7 @@ footer strong {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\README.md
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\README.md
 ====================================================================================================
 
 
@@ -23188,7 +22151,7 @@ If you want, I can turn this into a shorter “polished README” version with l
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\settings.gradle
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\settings.gradle
 ====================================================================================================
 
 rootProject.name = 'example-project'
@@ -23198,7 +22161,7 @@ rootProject.name = 'example-project'
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\AppMain.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\AppMain.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example;
@@ -23278,7 +22241,7 @@ public class AppMain {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\assets\AssetConfig.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\assets\AssetConfig.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.assets;
@@ -23379,7 +22342,7 @@ public final class AssetConfig {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\assets\AssetConfigLoader.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\assets\AssetConfigLoader.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.assets;
@@ -23656,7 +22619,7 @@ public final class AssetConfigLoader {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\assets\AssetRegistry.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\assets\AssetRegistry.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.assets;
@@ -23942,7 +22905,7 @@ public final class AssetRegistry {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\assets\SoundManager.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\assets\SoundManager.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.assets;
@@ -24042,7 +23005,7 @@ public final class SoundManager {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\CardTextFormatter.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\CardTextFormatter.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client;
@@ -24141,7 +23104,7 @@ public final class CardTextFormatter {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ClientMain.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ClientMain.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client;
@@ -24312,7 +23275,7 @@ public class ClientMain {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ClientState.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ClientState.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client;
@@ -24801,7 +23764,7 @@ public class ClientState {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\net\ClientMessageHandler.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\net\ClientMessageHandler.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.net;
@@ -24844,7 +23807,7 @@ public interface ClientMessageHandler {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\net\ClientProtocolClient.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\net\ClientProtocolClient.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.net;
@@ -25290,7 +24253,7 @@ public class ClientProtocolClient {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\net\FxNetworkClient.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\net\FxNetworkClient.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.net;
@@ -26161,7 +25124,7 @@ public class FxNetworkClient implements ClientMessageHandler {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\net\NetworkClientCore.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\net\NetworkClientCore.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.net;
@@ -26358,7 +25321,7 @@ public class NetworkClientCore {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\CardBacksideView.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\CardBacksideView.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -26413,7 +25376,7 @@ public class CardBacksideView extends StackPane {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\CardView.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\CardView.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -26550,6 +25513,14 @@ public class CardView extends StackPane {
             return "card-black";
         }
 
+        if (card.type() == CardType.SPECIAL_FOUR) {
+            return "card-four-color";
+        }
+
+        if (card.type() == CardType.FUCK_YOU) {
+            return "card-fuck-you";
+        }
+
         return "card-neutral";
     }
 
@@ -26619,7 +25590,7 @@ public class CardView extends StackPane {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\CircularTablePane.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\CircularTablePane.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -26818,7 +25789,7 @@ public class CircularTablePane extends Pane {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\ConnectView.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\ConnectView.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -26970,7 +25941,7 @@ public class ConnectView extends VBox {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\CounterattackView.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\CounterattackView.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -27060,7 +26031,7 @@ public class CounterattackView extends StackPane {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\EqualityView.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\EqualityView.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -27180,7 +26151,7 @@ public class EqualityView extends StackPane {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\ExchangeView.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\ExchangeView.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -27323,7 +26294,7 @@ public class ExchangeView extends StackPane {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\FantasticFourView.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\FantasticFourView.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -27571,7 +26542,7 @@ public class FantasticFourView extends StackPane {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\FantasticView.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\FantasticView.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -27707,7 +26678,7 @@ public class FantasticView extends StackPane {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\GameEndView.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\GameEndView.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -27861,7 +26832,7 @@ public class GameEndView extends BorderPane {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\GameView.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\GameView.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -28740,7 +27711,7 @@ public class GameView extends BorderPane {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\GiftView.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\GiftView.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -28883,7 +27854,7 @@ public class GiftView extends StackPane {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\LobbyView.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\LobbyView.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -29337,7 +28308,7 @@ public class LobbyView extends BorderPane {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\MainController.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\MainController.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -30476,7 +29447,7 @@ public class MainController {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\NiceTryView.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\NiceTryView.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -30549,7 +29520,7 @@ public class NiceTryView extends StackPane {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\OtherPlayerView.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\OtherPlayerView.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -30820,7 +29791,7 @@ public class OtherPlayerView extends Group {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\PlayerColorAssigner.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\PlayerColorAssigner.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -30869,7 +29840,7 @@ public final class PlayerColorAssigner {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\RoundResultsOverlay.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\RoundResultsOverlay.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -30975,7 +29946,7 @@ public class RoundResultsOverlay extends StackPane {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\SkipView.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\SkipView.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -31048,7 +30019,7 @@ public class SkipView extends StackPane {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\WishCardView.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\client\ui\WishCardView.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -31143,7 +30114,7 @@ public class WishCardView extends StackPane {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\controller\ClientSession.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\controller\ClientSession.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.controller;
@@ -31319,7 +30290,7 @@ public class ClientSession implements Runnable {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\controller\ServerController.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\controller\ServerController.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.controller;
@@ -31435,7 +30406,7 @@ public class ServerController {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\dev\DevModeManager.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\dev\DevModeManager.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.dev;
@@ -31970,7 +30941,7 @@ public final class DevModeManager {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\gui\javafx\FranticFxApp.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\gui\javafx\FranticFxApp.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.gui.javafx;
@@ -32105,7 +31076,7 @@ public class FranticFxApp extends Application {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\gui\javafx\GUI.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\gui\javafx\GUI.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.gui.javafx;
@@ -32152,7 +31123,7 @@ public class GUI extends Application {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\gui\javafx\GuiMain.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\gui\javafx\GuiMain.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.gui.javafx;
@@ -32178,7 +31149,7 @@ public class GuiMain {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\gui\javafx\Main.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\gui\javafx\Main.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.gui.javafx;
@@ -32206,7 +31177,7 @@ public class Main {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\HelloWorld.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\HelloWorld.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example;
@@ -32229,7 +31200,7 @@ public class HelloWorld {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\Card.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\Card.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -32306,7 +31277,7 @@ public record Card(int id, CardType type, CardColor color, int value, SpecialEff
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\CardColor.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\CardColor.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -32321,7 +31292,7 @@ public enum CardColor {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\CardType.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\CardType.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -32346,7 +31317,7 @@ public enum CardType {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\CardValidator.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\CardValidator.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -32473,7 +31444,7 @@ public class CardValidator {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\DeckFactory.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\DeckFactory.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -32594,7 +31565,7 @@ public class DeckFactory {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\EffectArgs.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\EffectArgs.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -32754,7 +31725,7 @@ public final class EffectArgs {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\EffectResolver.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\EffectResolver.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -33212,7 +32183,7 @@ public class EffectResolver {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\EventEffect.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\EventEffect.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -33346,7 +32317,7 @@ public enum EventEffect {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\EventResolver.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\EventResolver.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -33768,7 +32739,7 @@ public class EventResolver {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\GameEvent.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\GameEvent.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -33841,7 +32812,7 @@ public record GameEvent(EventType type, String detail) {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\GameInitializer.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\GameInitializer.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -33995,7 +32966,7 @@ public class GameInitializer {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\GamePhase.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\GamePhase.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -34027,7 +32998,7 @@ public enum GamePhase {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\GameState.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\GameState.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -34424,7 +33395,7 @@ public class GameState {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\PlayerGameState.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\PlayerGameState.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -34582,7 +33553,7 @@ public class PlayerGameState {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\ScoreCalculator.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\ScoreCalculator.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -34695,7 +33666,7 @@ public class ScoreCalculator {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\SpecialEffect.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\SpecialEffect.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -34733,7 +33704,7 @@ public enum SpecialEffect {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\TurnEngine.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\game\TurnEngine.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -34993,7 +33964,7 @@ public class TurnEngine {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\Lobby.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\Lobby.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model;
@@ -35286,7 +34257,7 @@ public class Lobby {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\LobbyStatus.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\LobbyStatus.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model;
@@ -35302,7 +34273,7 @@ public enum LobbyStatus {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\Player.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\model\Player.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model;
@@ -35322,7 +34293,7 @@ public record Player(String name) {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\ServerMain.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\ServerMain.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example;
@@ -35372,7 +34343,7 @@ public class ServerMain {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\service\GameMessageParser.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\service\GameMessageParser.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.service;
@@ -35651,7 +34622,7 @@ public class GameMessageParser {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\service\GameStateSerializer.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\service\GameStateSerializer.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.service;
@@ -35769,7 +34740,7 @@ public class GameStateSerializer {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\service\HighScoreHistory.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\service\HighScoreHistory.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.service;
@@ -35958,7 +34929,7 @@ public final class HighScoreHistory {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\service\Message.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\service\Message.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.service;
@@ -36624,7 +35595,7 @@ public record Message(Type type, String content) {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\service\ServerService.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\java\ch\unibas\dmi\dbis\cs108\example\service\ServerService.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.service;
@@ -38523,7 +37494,7 @@ public class ServerService {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\resources\config\asset-config.json
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\resources\config\asset-config.json
 ====================================================================================================
 
 {
@@ -38597,7 +37568,7 @@ FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\resourc
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\resources\css\frantic-theme.css
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\resources\css\frantic-theme.css
 ====================================================================================================
 
 .root {
@@ -38912,16 +37883,23 @@ FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\resourc
 .game-card-button {
     -fx-background-radius: radius-card;
     -fx-border-radius: radius-card;
-    -fx-border-color: rgba(255,255,255,0.08);
-    -fx-border-width: 1;
+    -fx-border-color: rgba(255, 248, 243, 0.28);
+    -fx-border-width: 3;
     -fx-padding: 10 10 10 10;
-    -fx-font-weight: 700;
+    -fx-font-weight: 800;
     -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.32), 24, 0.22, 0, 8);
 }
 
+.game-card-button:hover {
+    -fx-border-color: rgba(255, 248, 243, 0.52);
+    -fx-effect:
+            dropshadow(gaussian, rgba(0, 0, 0, 0.42), 30, 0.24, 0, 12),
+            dropshadow(gaussian, rgba(181, 122, 99, 0.24), 24, 0.20, 0, 0);
+}
 
 .game-card-button:pressed {
-    -fx-background-color: surface-soft;
+    -fx-border-color: rgba(255, 248, 243, 0.72);
 }
 
 .card-view {
@@ -38930,31 +37908,66 @@ FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\resourc
 }
 
 .card-red {
-    -fx-background-color: game-red;
+    -fx-background-color:
+            radial-gradient(center 50% 20%, radius 80%, rgba(255, 255, 255, 0.24), transparent),
+            linear-gradient(to bottom right, #df7772, #d1625f 45%, #8b4c57 100%);
 }
 
 .card-yellow {
-    -fx-background-color: game-yellow;
+    -fx-background-color:
+            radial-gradient(center 50% 20%, radius 80%, rgba(255, 255, 255, 0.32), transparent),
+            linear-gradient(to bottom right, #f1d36d, #d9bc5a 48%, #9a7441 100%);
 }
 
 .card-green {
-    -fx-background-color: game-green;
+    -fx-background-color:
+            radial-gradient(center 50% 20%, radius 80%, rgba(255, 255, 255, 0.28), transparent),
+            linear-gradient(to bottom right, #79cc91, #66b67d 48%, #3f7054 100%);
 }
 
 .card-blue {
-    -fx-background-color: game-blue;
+    -fx-background-color:
+            radial-gradient(center 50% 20%, radius 80%, rgba(255, 255, 255, 0.24), transparent),
+            linear-gradient(to bottom right, #79a7ec, #5d8fd6 48%, #3e527f 100%);
 }
 
 .card-black {
-    -fx-background-color: game-black;
+    -fx-background-color:
+            radial-gradient(center 50% 18%, radius 72%, rgba(255, 255, 255, 0.18), transparent),
+            linear-gradient(to bottom right, #111319, #2a2f39 54%, #72505b 100%);
+    -fx-border-color: rgba(255, 248, 243, 0.34);
+}
+
+/* Four-color special cards */
+.card-four-color {
+    -fx-background-color:
+            radial-gradient(center 18% 18%, radius 42%, rgba(209, 98, 95, 0.95), transparent),
+            radial-gradient(center 82% 22%, radius 44%, rgba(93, 143, 214, 0.95), transparent),
+            radial-gradient(center 22% 82%, radius 44%, rgba(102, 182, 125, 0.95), transparent),
+            radial-gradient(center 82% 82%, radius 42%, rgba(217, 188, 90, 0.95), transparent),
+            radial-gradient(center 50% 50%, radius 78%, rgba(255, 255, 255, 0.08), transparent),
+            linear-gradient(to bottom right, #171a20, #232833 45%, #332933 100%);
+    -fx-border-color: rgba(255, 248, 243, 0.42);
+}
+
+/* Unique Fuck You card */
+.card-fuck-you {
+    -fx-background-color:
+            radial-gradient(center 50% 18%, radius 72%, rgba(255, 255, 255, 0.16), transparent),
+            linear-gradient(to bottom right, #72505b, #554042 48%, #111319 100%);
+    -fx-border-color: rgba(255, 248, 243, 0.36);
 }
 
 .card-neutral {
-    -fx-background-color: game-neutral;
+    -fx-background-color:
+            radial-gradient(center 50% 20%, radius 80%, rgba(255, 255, 255, 0.20), transparent),
+            linear-gradient(to bottom right, #72505b, #554042 52%, #2a2f39 100%);
 }
 
 .card-fallback {
-    -fx-background-color: game-fallback;
+    -fx-background-color:
+            radial-gradient(center 50% 20%, radius 80%, rgba(255, 255, 255, 0.20), transparent),
+            linear-gradient(to bottom right, #4d525c, #2a2f39 52%, #111319 100%);
 }
 
 .card-label {
@@ -39227,7 +38240,7 @@ FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\resourc
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\resources\devmode\default.properties
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\resources\devmode\default.properties
 ====================================================================================================
 
 # Top card on discard pile after setup
@@ -39240,7 +38253,7 @@ player3.hand=88,31,24,28,10,2
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\resources\devmode\wildrequest.properties
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\resources\devmode\wildrequest.properties
 ====================================================================================================
 
 topCard=1
@@ -39253,7 +38266,7 @@ forceEventCardIdOnBlack=16
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\main\resources\devmode\wildrequestbroken.properties
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\main\resources\devmode\wildrequestbroken.properties
 ====================================================================================================
 
 topCard=123
@@ -39267,7 +38280,7 @@ requestedNumber=1
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\client\assets\AssetConfigLoaderTest.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\client\assets\AssetConfigLoaderTest.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.assets;
@@ -39518,7 +38531,7 @@ class AssetConfigLoaderTest {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\client\assets\AssetRegistryTest.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\client\assets\AssetRegistryTest.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.assets;
@@ -39844,7 +38857,7 @@ class AssetRegistryTest {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\client\assets\SoundManagerTest.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\client\assets\SoundManagerTest.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.assets;
@@ -40036,7 +39049,7 @@ class SoundManagerTest {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\client\net\FxNetworkClientTest.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\client\net\FxNetworkClientTest.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.net;
@@ -41179,7 +40192,7 @@ class FxNetworkClientTest {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\client\ui\CardBacksideViewTest.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\client\ui\CardBacksideViewTest.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -41272,7 +40285,7 @@ class CardBacksideViewTest {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\client\ui\CardViewTest.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\client\ui\CardViewTest.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -41475,7 +40488,7 @@ class CardViewTest {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\client\ui\CircularTablePaneTest.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\client\ui\CircularTablePaneTest.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -41664,7 +40677,7 @@ class CircularTablePaneTest {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\client\ui\ConnectViewTest.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\client\ui\ConnectViewTest.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -41771,7 +40784,7 @@ class ConnectViewTest {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\client\ui\GameEndViewTest.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\client\ui\GameEndViewTest.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -41803,7 +40816,7 @@ public class GameEndViewTest {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\client\ui\GameViewTest.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\client\ui\GameViewTest.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -42010,7 +41023,7 @@ class GameViewTest {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\client\ui\HandFanPaneTest.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\client\ui\HandFanPaneTest.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -42137,7 +41150,7 @@ class HandFanPaneTest {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\client\ui\LobbyViewTest.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\client\ui\LobbyViewTest.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -42294,7 +41307,7 @@ class LobbyViewTest {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\client\ui\MainControllerTest.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\client\ui\MainControllerTest.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -43264,7 +42277,7 @@ class MainControllerTest {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\client\ui\OtherPlayerViewTest.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\client\ui\OtherPlayerViewTest.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -43421,7 +42434,7 @@ class OtherPlayerViewTest {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\client\ui\PlayerColorAssignerTest.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\client\ui\PlayerColorAssignerTest.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
@@ -43501,7 +42514,7 @@ class PlayerColorAssignerTest {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\controller\ClientSessionTest.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\controller\ClientSessionTest.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.controller;
@@ -43947,7 +42960,7 @@ class ClientSessionTest {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\controller\ServerControllerTest.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\controller\ServerControllerTest.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.controller;
@@ -44156,7 +43169,7 @@ class ServerControllerTest {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\HelloWorldTest.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\HelloWorldTest.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example;
@@ -44229,7 +43242,7 @@ public class HelloWorldTest {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\model\game\CardTest.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\model\game\CardTest.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -44407,7 +43420,7 @@ class CardTest {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\model\game\CardValidatorTest.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\model\game\CardValidatorTest.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -44786,7 +43799,7 @@ class CardValidatorTest {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\model\game\DeckFactoryTest.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\model\game\DeckFactoryTest.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -45027,7 +44040,7 @@ class DeckFactoryTest {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\model\game\EffectResolverTest.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\model\game\EffectResolverTest.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -45508,7 +44521,7 @@ class EffectResolverTest {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\model\game\EventResolverTest.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\model\game\EventResolverTest.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -46037,7 +45050,7 @@ class EventResolverTest {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\model\game\FullRoundSimulationTest.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\model\game\FullRoundSimulationTest.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -46592,7 +45605,7 @@ class FullRoundSimulationTest {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\model\game\GameInitializerTest.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\model\game\GameInitializerTest.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -46848,7 +45861,7 @@ class GameInitializerTest {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\model\game\ScoreCalculatorTest.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\model\game\ScoreCalculatorTest.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -47117,7 +46130,7 @@ class ScoreCalculatorTest {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\model\game\TurnEngineTest.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\model\game\TurnEngineTest.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.model.game;
@@ -47774,7 +46787,7 @@ class TurnEngineTest {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\service\GameStateSerializerTest.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\service\GameStateSerializerTest.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.service;
@@ -47979,7 +46992,7 @@ class GameStateSerializerTest {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\service\MessageTest.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\service\MessageTest.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.service;
@@ -48326,7 +47339,7 @@ class MessageTest {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\service\ProtocolIntegrationTest.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\service\ProtocolIntegrationTest.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.service;
@@ -48756,7 +47769,7 @@ class ProtocolIntegrationTest {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\service\ServerServiceMultiRoundTest.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\service\ServerServiceMultiRoundTest.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.service;
@@ -49096,7 +48109,7 @@ class ServerServiceMultiRoundTest {
 
 
 ====================================================================================================
-FILE: C:\Users\ayano\Documents\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\service\ServerServiceTest.java
+FILE: D:\Uni\Programmierprojekt\Gruppe-17\src\test\java\ch\unibas\dmi\dbis\cs108\example\service\ServerServiceTest.java
 ====================================================================================================
 
 package ch.unibas.dmi.dbis.cs108.example.service;

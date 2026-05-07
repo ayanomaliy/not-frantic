@@ -3,30 +3,23 @@ package ch.unibas.dmi.dbis.cs108.example.client.ui;
 import ch.unibas.dmi.dbis.cs108.example.client.assets.AssetRegistry;
 import ch.unibas.dmi.dbis.cs108.example.model.game.CardColor;
 import javafx.geometry.Pos;
+import javafx.scene.control.Label;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 
 import java.util.Objects;
 
 /**
- * Visual representation of a requested color or requested number on the discard pile.
+ * Visual representation of an active wished color or wished number.
  *
- * <p>This view is not a real game card from the deck. It is a UI-only representation
- * of an active wish state. The control reuses the same size and general card styling
- * as normal hand cards so it fits visually into the existing game table.</p>
- *
- * <p>Rendering rules:</p>
- * <ul>
- *   <li><b>Color wish:</b> shows a blank card in the requested color.</li>
- *   <li><b>Number wish:</b> shows a special-style card with only the wished number icon.</li>
- * </ul>
- *
- * <p>All visual styling is driven by CSS classes so the wish cards stay consistent
- * with normal {@link CardView} colors.</p>
+ * <p>This is not a real card from the deck. It is only a UI representation
+ * used on the discard pile when an effect requests a color or number.</p>
  */
 public class WishCardView extends StackPane {
 
-    private static final double CARD_WIDTH = 90;
-    private static final double CARD_HEIGHT = 130;
+    private static final double CARD_WIDTH = CardView.CARD_WIDTH;
+    private static final double CARD_HEIGHT = CardView.CARD_HEIGHT;
     private static final double ICON_SIZE = 54;
 
     private WishCardView() {
@@ -38,12 +31,11 @@ public class WishCardView extends StackPane {
     }
 
     /**
-     * Creates a visual card for a requested color.
+     * Creates a wish card for a requested color.
      *
-     * @param color the requested color to display
-     * @param registry unused for color styling now, kept for API compatibility
+     * @param color the requested color
+     * @param registry the asset registry, kept for API consistency
      * @return a wish card showing the requested color
-     * @throws NullPointerException if {@code color} or {@code registry} is {@code null}
      */
     public static WishCardView forColorWish(CardColor color, AssetRegistry registry) {
         Objects.requireNonNull(color, "color must not be null");
@@ -51,16 +43,35 @@ public class WishCardView extends StackPane {
 
         WishCardView view = new WishCardView();
         view.getStyleClass().addAll("wish-card-color", toCardColorStyleClass(color));
+
+        VBox centerBox = new VBox(4);
+        centerBox.getStyleClass().add("card-center-box");
+        centerBox.setAlignment(Pos.CENTER);
+        centerBox.setMouseTransparent(true);
+
+        Label mainLabel = new Label(color.name());
+        mainLabel.getStyleClass().add("wish-card-main-text");
+        mainLabel.setWrapText(true);
+        mainLabel.setAlignment(Pos.CENTER);
+        mainLabel.setMaxWidth(CARD_WIDTH - 16);
+
+        Label subtitle = new Label("REQUEST");
+        subtitle.getStyleClass().add("card-subtitle-text");
+
+        centerBox.getChildren().addAll(mainLabel, subtitle);
+
+        AnchorPane overlay = createOverlay("WISH", "");
+        view.getChildren().addAll(centerBox, overlay);
+
         return view;
     }
 
     /**
-     * Creates a visual card for a requested number.
+     * Creates a wish card for a requested number.
      *
      * @param number the requested number
-     * @param registry the asset registry used to load the configured number icon
+     * @param registry the asset registry used to load the number SVG
      * @return a wish card showing the requested number
-     * @throws NullPointerException if {@code registry} is {@code null}
      */
     public static WishCardView forNumberWish(int number, AssetRegistry registry) {
         Objects.requireNonNull(registry, "registry must not be null");
@@ -68,13 +79,55 @@ public class WishCardView extends StackPane {
         WishCardView view = new WishCardView();
         view.getStyleClass().add("wish-card-number");
 
-        registry.createIconView("icons/card_" + number + ".svg", ICON_SIZE).ifPresent(icon -> {
-            icon.setMouseTransparent(true);
-            StackPane.setAlignment(icon, Pos.CENTER);
-            view.getChildren().add(icon);
-        });
+        VBox centerBox = new VBox(4);
+        centerBox.getStyleClass().add("card-center-box");
+        centerBox.setAlignment(Pos.CENTER);
+        centerBox.setMouseTransparent(true);
+
+        registry.createIconView("icons/card_" + number + ".svg", ICON_SIZE).ifPresentOrElse(
+                icon -> {
+                    icon.setMouseTransparent(true);
+                    icon.getStyleClass().addAll("card-main-icon", "card-number-icon");
+                    centerBox.getChildren().add(icon);
+                },
+                () -> {
+                    Label fallback = new Label(String.valueOf(number));
+                    fallback.getStyleClass().add("card-main-fallback");
+                    centerBox.getChildren().add(fallback);
+                }
+        );
+
+        Label subtitle = new Label("REQUEST");
+        subtitle.getStyleClass().add("card-subtitle-text");
+        centerBox.getChildren().add(subtitle);
+
+        AnchorPane overlay = createOverlay("WISH", String.valueOf(number));
+        view.getChildren().addAll(centerBox, overlay);
 
         return view;
+    }
+
+    private static AnchorPane createOverlay(String topText, String bottomText) {
+        Label topLabel = new Label(topText);
+        topLabel.getStyleClass().add("card-top-text");
+        topLabel.setMouseTransparent(true);
+
+        Label bottomLabel = new Label(bottomText);
+        bottomLabel.getStyleClass().add("card-bottom-text");
+        bottomLabel.setMouseTransparent(true);
+
+        AnchorPane overlay = new AnchorPane();
+        overlay.setPickOnBounds(false);
+        overlay.setMouseTransparent(true);
+
+        AnchorPane.setTopAnchor(topLabel, 9.0);
+        AnchorPane.setLeftAnchor(topLabel, 9.0);
+
+        AnchorPane.setBottomAnchor(bottomLabel, 9.0);
+        AnchorPane.setLeftAnchor(bottomLabel, 9.0);
+
+        overlay.getChildren().addAll(topLabel, bottomLabel);
+        return overlay;
     }
 
     private static String toCardColorStyleClass(CardColor color) {
