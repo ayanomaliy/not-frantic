@@ -36,6 +36,13 @@ dependencies {
 
 test {
     useJUnitPlatform()
+
+    if (System.getProperty("excludeGuiTests") == "true") {
+        exclude "**/*ViewTest.class"
+        exclude "**/*GuiTest.class"
+        exclude "**/*UITest.class"
+        exclude "**/AssetRegistryTest.class"
+    }
 }
 
 tasks.withType(JavaCompile).configureEach {

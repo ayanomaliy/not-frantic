@@ -5,15 +5,13 @@ stages:
 
 test:
   stage: test
-  before_script:
-    - apt-get update
-    - apt-get install -y xvfb libgtk-3-0 libxrender1 libxtst6 libxi6
-    - chmod +x gradlew
   script:
-    - xvfb-run -a ./gradlew clean test
+    - chmod +x gradlew
+    - ./gradlew clean fatJar test -DexcludeGuiTests=true
   artifacts:
     when: always
     reports:
       junit: build/test-results/test/*.xml
     paths:
       - build/reports/tests/test/
+      - build/libs/
