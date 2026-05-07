@@ -899,3 +899,57 @@ Today, I added the MS 5 metrics to our QA Concept. I will wait for the MS 6 Metr
 
 Tomorrow, Aiysha and I will meet again and work together on the project, trying to finish MS 6 tasks + bonuses.
 
+## Date: May 7, 2026
+
+### Game Development Update (Sevval, Aiysha)
+
+## What did we do today?
+
+* We updated and officially uploaded the **game rules**.
+* We started looking for a **bug tracker** (to be continued tomorrow).
+* We tried to figure out the **CIA task** and its requirements.
+* We improved the **GUI design** by removing the background table to make it more attractive.
+* We added **card animations** for the milestone system.
+* We sent an email to our tutor regarding several **milestone tasks** and are currently waiting for a response.
+
+## Work Summary
+
+During today’s session, we focused on improving both the structure of the project documentation and the visual and functional aspects of the game.
+
+### Game Rules Update
+
+One of the main tasks was updating the official **game rules**. After reviewing and refining them, we uploaded the final version so that the current gameplay mechanics are clearly documented and accessible. This helps ensure consistency across development and testing.
+
+### Bug Tracker Research
+
+We also started researching possible solutions for implementing a **bug tracker**. The goal is to find a suitable system that allows us to efficiently log, organize, and monitor issues during development. This task is not yet completed and will continue tomorrow.
+
+### CIA Task Investigation
+
+Another focus point was trying to understand the requirements of the **CIA task**. We went through the task details and discussed possible interpretations, but further clarification is still needed before implementation can begin.
+
+### GUI Improvements
+
+We made noticeable improvements to the **graphical user interface** by removing the background table. This change made the interface cleaner and more visually appealing. Additionally, we enhanced the overall presentation of the game.
+
+### Card Animations for Milestones
+
+We also implemented **animations for cards related to milestone achievements**. These animations make interactions more dynamic and improve the overall user experience by providing better visual feedback when milestones are reached.
+
+### Communication with Tutor
+
+Finally, we sent an email to our tutor asking for clarification and feedback regarding several **milestone-related tasks**. We are currently waiting for a response, which will also be part of tomorrow’s workflow.
+
+## Conclusion
+
+Today’s work focused heavily on improving structure, visuals, and planning. While some tasks are still in progress (like the bug tracker and CIA task), the project’s interface and documentation have become more polished and organized.
+
+## Future Plans
+
+We will meet tomorrow and try to finish these tasks:
+
+* Find and implement a **bug tracker system**.
+* Continue working on and clarifying the **CIA task**.
+* Follow up on the **tutor’s email response**.
+* Further improve **GUI polish and animations**.
+
