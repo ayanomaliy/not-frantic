@@ -374,14 +374,9 @@
 
 .card-four-color {
     -fx-background-color:
-            linear-gradient(from 0% 0% to 100% 100%, rgba(255,255,255,0.28), rgba(255,255,255,0.05)),
-            radial-gradient(center 18% 18%, radius 42%, rgb(209 27 241 / 0.95), transparent),
-            radial-gradient(center 82% 22%, radius 44%, rgb(65 62 227 / 0.95), transparent),
-            radial-gradient(center 22% 82%, radius 44%, rgb(67 220 180 / 0.95), transparent),
-            radial-gradient(center 82% 82%, radius 42%, rgb(231 215 57 / 0.95), transparent),
-            radial-gradient(center 50% 50%, radius 78%, rgb(0 79 212 / 0.08), transparent),
-            linear-gradient(from 0% 0% to 100% 100%, #171a20, #232833 45%, #332933);
-    -fx-border-color: rgba(255, 248, 243, 0.46);
+            linear-gradient(from 0% 0% to 100% 100%, rgba(255,255,255,0.30), rgba(255,255,255,0.05)),
+            linear-gradient(from 0% 0% to 100% 100%, #e65a77, #f4ce5f, #55d68f, #5687ee, #8e5eea);
+    -fx-border-color: rgba(255, 248, 243, 0.52);
 }
 
 /* Unique card */

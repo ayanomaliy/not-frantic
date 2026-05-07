@@ -42,9 +42,12 @@ public class CardView extends StackPane {
     private static final double NUMBER_ICON_SIZE = 54;
     private static final double EFFECT_ICON_SIZE = 46;
 
-    private static final double HOVER_SCALE = 1.10;
-    private static final double HOVER_LIFT_Y = -22;
+    private static final double HOVER_SCALE = 1.06;
+    private static final double HOVER_LIFT_Y = -14;
     private static final Duration HOVER_ANIMATION_DURATION = Duration.millis(140);
+
+    private double viewOrderBeforeHover;
+    private boolean raisedByHover = false;
 
     private static volatile Map<Integer, Card> cardById;
 
@@ -264,11 +267,6 @@ public class CardView extends StackPane {
             return "card-fallback";
         }
 
-        /*
-         * Four-color special cards must be checked before color-based styling.
-         * This guarantees that Nice Try, Counterattack, Fantastic, etc. are
-         * rendered as rainbow special cards and not as black/neutral cards.
-         */
         if (card.type() == CardType.SPECIAL_FOUR || card.effect() == SpecialEffect.NICE_TRY) {
             return "card-four-color";
         }
@@ -320,9 +318,14 @@ public class CardView extends StackPane {
         return cardById.get(id);
     }
 
+
     private void installHoverAnimation() {
         setOnMouseEntered(e -> {
-            toFront();
+            if (!raisedByHover) {
+                viewOrderBeforeHover = getViewOrder();
+                setViewOrder(-1000);
+                raisedByHover = true;
+            }
 
             ScaleTransition scaleUp = new ScaleTransition(HOVER_ANIMATION_DURATION, this);
             scaleUp.setToX(HOVER_SCALE);
@@ -342,7 +345,14 @@ public class CardView extends StackPane {
             TranslateTransition dropDown = new TranslateTransition(HOVER_ANIMATION_DURATION, this);
             dropDown.setToY(0);
 
-            new ParallelTransition(scaleDown, dropDown).play();
+            ParallelTransition resetAnimation = new ParallelTransition(scaleDown, dropDown);
+
+            resetAnimation.setOnFinished(event -> {
+                setViewOrder(viewOrderBeforeHover);
+                raisedByHover = false;
+            });
+
+            resetAnimation.play();
         });
     }
 }
