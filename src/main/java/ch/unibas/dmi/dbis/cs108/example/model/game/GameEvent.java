@@ -16,6 +16,8 @@ public record GameEvent(EventType type, String detail) {
         CARD_PLAYED,
         /** A card was drawn from the draw pile into a player's hand. */
         CARD_DRAWN,
+        /** One or more hidden cards moved from one player's hand to another player's hand. */
+        CARD_TRANSFERRED,
         /** The turn has advanced to the next player. */
         TURN_ADVANCED,
         /** A special effect has been queued for resolution. */
@@ -38,6 +40,11 @@ public record GameEvent(EventType type, String detail) {
 
     public static GameEvent cardDrawn(String playerName, int cardId) {
         return new GameEvent(EventType.CARD_DRAWN, playerName + ":" + cardId);
+    }
+
+    public static GameEvent cardTransferred(String sourcePlayer, String targetPlayer, int count) {
+        return new GameEvent(EventType.CARD_TRANSFERRED,
+                sourcePlayer + ":" + targetPlayer + ":" + count);
     }
 
     public static GameEvent turnAdvanced(String nextPlayerName) {
