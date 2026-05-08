@@ -88,7 +88,7 @@ public class CardView extends StackPane {
 
         Node centerGraphic = buildCenterGraphic(card, registry);
         Label subtitleLabel = new Label(resolveSubtitleText(card));
-        subtitleLabel.getStyleClass().add("card-subtitle-text");
+        subtitleLabel.getStyleClass().addAll("card-subtitle-text", resolveCardTextColorClass(card));
         subtitleLabel.setWrapText(true);
         subtitleLabel.setAlignment(Pos.CENTER);
         subtitleLabel.setMaxWidth(CARD_WIDTH - 16);
@@ -97,11 +97,11 @@ public class CardView extends StackPane {
         centerBox.getChildren().addAll(centerGraphic, subtitleLabel);
 
         Label topLabel = new Label(resolveTopText(card));
-        topLabel.getStyleClass().add("card-top-text");
+        topLabel.getStyleClass().addAll("card-top-text", resolveCardTextColorClass(card));
         topLabel.setMouseTransparent(true);
 
         Label bottomLabel = new Label(resolveBottomText(card));
-        bottomLabel.getStyleClass().add("card-bottom-text");
+        bottomLabel.getStyleClass().addAll("card-bottom-text", resolveCardTextColorClass(card));
         bottomLabel.setMouseTransparent(true);
 
         AnchorPane overlay = new AnchorPane();
@@ -111,8 +111,8 @@ public class CardView extends StackPane {
         AnchorPane.setTopAnchor(topLabel, 9.0);
         AnchorPane.setLeftAnchor(topLabel, 9.0);
 
-        AnchorPane.setBottomAnchor(bottomLabel, 9.0);
-        AnchorPane.setLeftAnchor(bottomLabel, 9.0);
+        AnchorPane.setBottomAnchor(bottomLabel, 5.0);
+        AnchorPane.setLeftAnchor(bottomLabel, 5.0);
 
         overlay.getChildren().addAll(topLabel, bottomLabel);
 
@@ -367,5 +367,24 @@ public class CardView extends StackPane {
 
             resetAnimation.play();
         });
+    }
+
+    private static String resolveCardTextColorClass(Card card) {
+        if (card == null || card.type() == null) {
+            return "card-text-light";
+        }
+
+        /*
+         * Text should match the center SVG:
+         * - normal colored cards use dark SVGs, so their text should be dark
+         * - black cards use white SVGs, so their text should be light
+         * - four-color specials currently use dark SVGs, so their text should be dark
+         * - single-color specials also use dark SVGs, so their text should be dark
+         */
+        if (card.type() == CardType.BLACK || card.type() == CardType.FUCK_YOU) {
+            return "card-text-light";
+        }
+
+        return "card-text-dark";
     }
 }

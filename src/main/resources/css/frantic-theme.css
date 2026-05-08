@@ -410,21 +410,27 @@
 .card-top-text,
 .card-bottom-text {
     -fx-font-family: "Arial", "Segoe UI", sans-serif;
-    -fx-font-size: 9px;
+    -fx-font-size: 10px;
     -fx-font-weight: 900;
-    -fx-text-fill: #fffaf5;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.28), 2, 0.25, 0, 1);
+    -fx-effect: dropshadow(gaussian, rgba(255,255,255,0.22), 1.5, 0.20, 0, 1);
 }
 
 .card-subtitle-text {
     -fx-font-family: "Arial", "Segoe UI", sans-serif;
-    -fx-font-size: 8px;
+    -fx-font-size: 9px;
     -fx-font-weight: 900;
-    -fx-text-fill: #fffaf5;
     -fx-text-alignment: center;
     -fx-alignment: center;
     -fx-wrap-text: true;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.28), 2, 0.25, 0, 1);
+    -fx-effect: dropshadow(gaussian, rgba(255,255,255,0.22), 1.5, 0.20, 0, 1);
+}
+
+.card-text-dark {
+    -fx-text-fill: #1f232b;
+}
+
+.card-text-light {
+    -fx-text-fill: #fffaf5;
 }
 
 .card-main-fallback {
