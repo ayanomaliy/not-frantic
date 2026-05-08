@@ -18,6 +18,14 @@ import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 
+import javafx.animation.Interpolator;
+import javafx.animation.ScaleTransition;
+import javafx.animation.TranslateTransition;
+import javafx.geometry.Bounds;
+import javafx.geometry.Point2D;
+import javafx.scene.layout.StackPane;
+import javafx.util.Duration;
+
 
 /**
  * Coordinates screen changes and user interaction in the Frantic^-1 JavaFX client.
@@ -42,6 +50,12 @@ public class MainController {
     private ListChangeListener<String> handCardsListener;
     private ListChangeListener<ClientState.PlayerInfo> playerInfoListener;
     private boolean peekActive = false;
+
+    private boolean drawAnimationPending = false;
+    private boolean drawAnimationRunning = false;
+    private int handSizeBeforeDrawAnimation = -1;
+
+    private static final Duration DRAW_ANIMATION_DURATION = Duration.millis(430);
 
 
     private static final double HAND_VERTICAL_LIFT = 40.0;
@@ -258,12 +272,31 @@ public class MainController {
             state.getCurrentHandCards().removeListener(handCardsListener);
         }
 
-        handCardsListener = change -> renderHand(view);
+        handCardsListener = change -> {
+            if (drawAnimationPending) {
+                int newHandSize = state.getCurrentHandCards().size();
+
+                if (newHandSize > handSizeBeforeDrawAnimation) {
+                    drawAnimationPending = false;
+                    playDrawCardAnimationThenRender(view);
+                    return;
+                }
+
+                drawAnimationPending = false;
+            }
+
+            if (!drawAnimationRunning) {
+                renderHand(view);
+            }
+        };
+
         state.getCurrentHandCards().addListener(handCardsListener);
         renderHand(view);
 
         view.getHandFanPane().widthProperty().addListener((obs, oldW, newW) -> {
-            if (newW.doubleValue() > 0) renderHand(view);
+            if (newW.doubleValue() > 0 && !drawAnimationRunning) {
+                renderHand(view);
+            }
         });
 
         view.getCircularTablePane().setRegistry(registry);
@@ -304,14 +337,7 @@ public class MainController {
         view.getCommandInput().setOnAction(e -> sendCommand(view));
 
         view.getDrawPilePane().setOnMouseClicked(e -> {
-            registry.getSoundId("CARD_DRAWN").ifPresent(soundManager::play);
-
-            if (isSecondChanceActiveForMe()) {
-                networkClient.resolveSecondChanceDrawPenalty();
-                clearPendingEffectIfSecondChance();
-            } else {
-                networkClient.drawCard();
-            }
+            requestDrawWithAnimation(view);
         });
 
         view.getEndTurnButton().setOnAction(e -> networkClient.endTurn());
@@ -1101,6 +1127,85 @@ public class MainController {
 
         view.getRootStack().getChildren().add(effectView);
     }
+
+    private void requestDrawWithAnimation(GameView view) {
+        drawAnimationPending = true;
+        handSizeBeforeDrawAnimation = state.getCurrentHandCards().size();
+
+        registry.getSoundId("CARD_DRAWN").ifPresent(soundManager::play);
+
+        if (isSecondChanceActiveForMe()) {
+            networkClient.resolveSecondChanceDrawPenalty();
+            clearPendingEffectIfSecondChance();
+        } else {
+            networkClient.drawCard();
+        }
+    }
+
+
+    private void playDrawCardAnimationThenRender(GameView view) {
+        StackPane animationLayer = view.getRootStack();
+
+        CardBacksideView movingCard = new CardBacksideView();
+        movingCard.setManaged(false);
+        movingCard.setMouseTransparent(true);
+        movingCard.setViewOrder(-2000);
+
+        Bounds drawBounds = view.getDrawPilePane().localToScene(
+                view.getDrawPilePane().getBoundsInLocal()
+        );
+
+        Bounds handBounds = view.getHandFanPane().localToScene(
+                view.getHandFanPane().getBoundsInLocal()
+        );
+
+        Point2D start = animationLayer.sceneToLocal(
+                drawBounds.getMinX() + drawBounds.getWidth() / 2,
+                drawBounds.getMinY() + drawBounds.getHeight() / 2
+        );
+
+        Point2D end = animationLayer.sceneToLocal(
+                handBounds.getMinX() + handBounds.getWidth() / 2,
+                handBounds.getMinY() + handBounds.getHeight() * 0.55
+        );
+
+        double startX = start.getX() - CardBacksideView.CARD_WIDTH / 2;
+        double startY = start.getY() - CardBacksideView.CARD_HEIGHT / 2;
+
+        double endX = end.getX() - CardBacksideView.CARD_WIDTH / 2;
+        double endY = end.getY() - CardBacksideView.CARD_HEIGHT / 2;
+
+        movingCard.setLayoutX(startX);
+        movingCard.setLayoutY(startY);
+
+        animationLayer.getChildren().add(movingCard);
+
+        drawAnimationRunning = true;
+
+        TranslateTransition slide = new TranslateTransition(DRAW_ANIMATION_DURATION, movingCard);
+        slide.setByX(endX - startX);
+        slide.setByY(endY - startY);
+        slide.setInterpolator(Interpolator.EASE_BOTH);
+
+        ScaleTransition shrink = new ScaleTransition(DRAW_ANIMATION_DURATION, movingCard);
+        shrink.setFromX(1.0);
+        shrink.setFromY(1.0);
+        shrink.setToX(0.82);
+        shrink.setToY(0.82);
+        shrink.setInterpolator(Interpolator.EASE_BOTH);
+
+        javafx.animation.ParallelTransition animation =
+                new javafx.animation.ParallelTransition(slide, shrink);
+
+        animation.setOnFinished(e -> {
+            animationLayer.getChildren().remove(movingCard);
+            drawAnimationRunning = false;
+            renderHand(view);
+        });
+
+        animation.play();
+    }
+
 
 
     private record EventBannerData(String title, String description) {}

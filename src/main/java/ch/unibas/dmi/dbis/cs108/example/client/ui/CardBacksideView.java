@@ -15,8 +15,8 @@ import javafx.scene.layout.StackPane;
  */
 public class CardBacksideView extends StackPane {
 
-    static final double CARD_WIDTH = 90;
-    static final double CARD_HEIGHT = 130;
+    public static final double CARD_WIDTH = 90;
+    public static final double CARD_HEIGHT = 130;
 
     private static final String ASSET_PATH = "/icons/card_backside.svg";
 
