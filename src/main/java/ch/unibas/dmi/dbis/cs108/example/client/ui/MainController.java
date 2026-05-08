@@ -26,6 +26,9 @@ import javafx.geometry.Point2D;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 
+import java.util.HashMap;
+import java.util.Map;
+
 
 /**
  * Coordinates screen changes and user interaction in the Frantic^-1 JavaFX client.
@@ -54,6 +57,9 @@ public class MainController {
     private boolean drawAnimationPending = false;
     private boolean drawAnimationRunning = false;
     private int handSizeBeforeDrawAnimation = -1;
+    private String pendingOpponentDrawPlayer = null;
+    private boolean opponentDrawAnimationRunning = false;
+    private final Map<String, Integer> knownPublicHandSizes = new HashMap<>();
 
     private static final Duration DRAW_ANIMATION_DURATION = Duration.millis(430);
 
@@ -306,8 +312,18 @@ public class MainController {
         }
         playerInfoListener = change -> {
             peekActive = false;
+
+            if (shouldAnimateOpponentDraw()) {
+                String targetPlayer = pendingOpponentDrawPlayer;
+                pendingOpponentDrawPlayer = null;
+
+                playOpponentDrawAnimationThenRefresh(view, targetPlayer);
+                return;
+            }
+
             refreshOtherPlayers(view);
         };
+
         state.getPlayerInfoList().addListener(playerInfoListener);
         refreshOtherPlayers(view);
 
@@ -406,6 +422,22 @@ public class MainController {
         networkClient.setEventCardFlippedListener(eventCardId -> {
             EventBannerData data = describeEventCard(eventCardId);
             view.playEventOverlay(data.title(), data.description());
+        });
+
+        networkClient.setCardDrawnListener(drawingPlayer -> {
+            if (drawingPlayer == null || drawingPlayer.isBlank()) {
+                return;
+            }
+
+            /*
+             * The local player already gets the larger hand animation through HAND_UPDATE.
+             * Remote players should be animated into their opponent slot.
+             */
+            if (drawingPlayer.equals(state.getUsername())) {
+                return;
+            }
+
+            pendingOpponentDrawPlayer = drawingPlayer;
         });
 
         Scene scene = createStyledScene(view, 1280, 800);
@@ -536,10 +568,17 @@ public class MainController {
      */
     private void refreshOtherPlayers(GameView view) {
         String username = state.getUsername();
+
         java.util.List<ClientState.PlayerInfo> others = state.getPlayerInfoList().stream()
                 .filter(p -> !p.name().equals(username))
                 .toList();
+
         view.getCircularTablePane().setPlayerSlots(others, username);
+
+        knownPublicHandSizes.clear();
+        for (ClientState.PlayerInfo info : state.getPlayerInfoList()) {
+            knownPublicHandSizes.put(info.name(), info.handSize());
+        }
     }
 
     /**
@@ -1215,6 +1254,108 @@ public class MainController {
             animationLayer.getChildren().remove(movingCard);
             drawAnimationRunning = false;
             renderHand(view);
+        });
+
+        animation.play();
+    }
+
+    private boolean shouldAnimateOpponentDraw() {
+        if (pendingOpponentDrawPlayer == null || pendingOpponentDrawPlayer.isBlank()) {
+            return false;
+        }
+
+        if (opponentDrawAnimationRunning) {
+            return false;
+        }
+
+        if (pendingOpponentDrawPlayer.equals(state.getUsername())) {
+            return false;
+        }
+
+        Integer oldSize = knownPublicHandSizes.get(pendingOpponentDrawPlayer);
+        if (oldSize == null) {
+            return false;
+        }
+
+        return state.getPlayerInfoList().stream()
+                .filter(info -> info.name().equals(pendingOpponentDrawPlayer))
+                .findFirst()
+                .map(info -> info.handSize() > oldSize)
+                .orElse(false);
+    }
+
+    private void playOpponentDrawAnimationThenRefresh(GameView view, String targetPlayer) {
+        OtherPlayerView targetSlot = view.getCircularTablePane()
+                .getPlayerSlots()
+                .get(targetPlayer);
+
+        if (targetSlot == null) {
+            refreshOtherPlayers(view);
+            return;
+        }
+
+        StackPane animationLayer = view.getRootStack();
+
+        CardBacksideView movingCard = new CardBacksideView();
+        movingCard.setManaged(false);
+        movingCard.setMouseTransparent(true);
+        movingCard.setViewOrder(-2000);
+
+        Bounds drawBounds = view.getDrawPilePane().localToScene(
+                view.getDrawPilePane().getBoundsInLocal()
+        );
+
+        Point2D start = animationLayer.sceneToLocal(
+                drawBounds.getMinX() + drawBounds.getWidth() / 2,
+                drawBounds.getMinY() + drawBounds.getHeight() / 2
+        );
+
+        Point2D targetScenePoint = targetSlot.getHandTargetScenePoint();
+        Point2D end = animationLayer.sceneToLocal(targetScenePoint);
+
+        double startX = start.getX() - CardBacksideView.CARD_WIDTH / 2;
+        double startY = start.getY() - CardBacksideView.CARD_HEIGHT / 2;
+
+        double endX = end.getX() - CardBacksideView.CARD_WIDTH / 2;
+        double endY = end.getY() - CardBacksideView.CARD_HEIGHT / 2;
+
+        animationLayer.getChildren().add(movingCard);
+
+        /*
+         * Important because the animated card is unmanaged.
+         * Without explicit sizing, only the logo may render.
+         */
+        movingCard.resize(CardBacksideView.CARD_WIDTH, CardBacksideView.CARD_HEIGHT);
+        movingCard.autosize();
+        movingCard.applyCss();
+        movingCard.relocate(startX, startY);
+
+        opponentDrawAnimationRunning = true;
+
+        TranslateTransition slide = new TranslateTransition(DRAW_ANIMATION_DURATION, movingCard);
+        slide.setByX(endX - startX);
+        slide.setByY(endY - startY);
+        slide.setInterpolator(Interpolator.EASE_BOTH);
+
+        ScaleTransition shrink = new ScaleTransition(DRAW_ANIMATION_DURATION, movingCard);
+        shrink.setFromX(1.0);
+        shrink.setFromY(1.0);
+        shrink.setToX(OtherPlayerView.OPPONENT_CARD_SCALE);
+        shrink.setToY(OtherPlayerView.OPPONENT_CARD_SCALE);
+        shrink.setInterpolator(Interpolator.EASE_BOTH);
+
+        javafx.animation.ParallelTransition animation =
+                new javafx.animation.ParallelTransition(slide, shrink);
+
+        animation.setOnFinished(e -> {
+            animationLayer.getChildren().remove(movingCard);
+            opponentDrawAnimationRunning = false;
+
+            /*
+             * Now render the new public hand size.
+             * This is the moment where the extra backside card appears in the opponent fan.
+             */
+            refreshOtherPlayers(view);
         });
 
         animation.play();

@@ -14,6 +14,8 @@ import javafx.scene.shape.Circle;
 
 import java.util.List;
 
+import javafx.geometry.Point2D;
+
 /**
  * A self-contained node representing one opponent on the circular table.
  *
@@ -28,7 +30,7 @@ public class OtherPlayerView extends Group {
     static final double ICON_SIZE = 46;
     static final double CARD_OFFSET_X = 10;
     static final double CARD_ROTATION_STEP = 2.0;
-    static final double OPPONENT_CARD_SCALE = 0.52;
+    public static final double OPPONENT_CARD_SCALE = 0.52;
     static final double FAN_VERTICAL_ARC = 8.0;
 
     static final double INFO_INWARD_DISTANCE = 34.0;
@@ -259,6 +261,22 @@ public class OtherPlayerView extends Group {
 
     double getFanRotation() {
         return fanGroup.getRotate();
+    }
+
+    /**
+     * Returns the visual center of this opponent's card fan in scene coordinates.
+     *
+     * <p>This is used as the target point for public draw animations.</p>
+     *
+     * @return center point of the opponent hand fan in scene coordinates
+     */
+    public Point2D getHandTargetScenePoint() {
+        javafx.geometry.Bounds bounds = fanGroup.localToScene(fanGroup.getBoundsInLocal());
+
+        return new Point2D(
+                bounds.getMinX() + bounds.getWidth() / 2,
+                bounds.getMinY() + bounds.getHeight() / 2
+        );
     }
 
 

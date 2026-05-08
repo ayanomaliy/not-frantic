@@ -54,6 +54,8 @@ public class FxNetworkClient implements ClientMessageHandler {
 
     private Consumer<Integer> eventCardFlippedListener;
 
+    private Consumer<String> cardDrawnListener;
+
     /**
      * Creates a new GUI network adapter.
      *
@@ -344,6 +346,15 @@ public class FxNetworkClient implements ClientMessageHandler {
     // --------------------------------------------------------------------------------
 
     /**
+     * Registers a callback invoked when a public CARD_DRAWN game event is received.
+     *
+     * @param cardDrawnListener callback receiving the player name that drew a card
+     */
+    public void setCardDrawnListener(Consumer<String> cardDrawnListener) {
+        this.cardDrawnListener = cardDrawnListener;
+    }
+
+    /**
      * Set Game end Listener
      *
      * @param gameEndListener as Runnable
@@ -554,6 +565,18 @@ public class FxNetworkClient implements ClientMessageHandler {
             case GAME -> Platform.runLater(() -> {
                 String content = message.content();
                 state.getGameMessages().add("[GAME] " + content);
+
+                if (content.startsWith("CARD_DRAWN:")) {
+                    String[] parts = content.split(":", 3);
+
+                    if (parts.length >= 2) {
+                        String drawingPlayer = parts[1].trim();
+
+                        if (!drawingPlayer.isBlank() && cardDrawnListener != null) {
+                            cardDrawnListener.accept(drawingPlayer);
+                        }
+                    }
+                }
 
                 if (content.startsWith("EVENT_CARD_FLIPPED:")) {
                     String idPart = content.substring("EVENT_CARD_FLIPPED:".length()).trim();
