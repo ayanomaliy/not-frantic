@@ -727,38 +727,41 @@
 .card-backside {
     -fx-background-radius: 12;
     -fx-border-radius: 12;
-    -fx-border-color: rgba(255, 248, 243, 0.42);
+    -fx-border-color: rgba(255, 248, 243, 0.52);
     -fx-border-width: 2.5;
     -fx-padding: 10;
 
     -fx-background-color:
-            radial-gradient(center 50% 20%, radius 72%, rgba(255,255,255,0.20), transparent),
-            radial-gradient(center 20% 85%, radius 55%, rgba(181,122,99,0.28), transparent),
-            linear-gradient(from 0% 0% to 100% 100%, #242936, #171a20 52%, #111319);
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.34), 22, 0.22, 0, 8);
+            radial-gradient(center 18% 16%, radius 40%, rgba(255,255,255,0.34), transparent),
+            radial-gradient(center 78% 20%, radius 46%, rgba(246,171,61,0.72), transparent),
+            radial-gradient(center 22% 82%, radius 52%, rgba(129,55,247,0.72), transparent),
+            radial-gradient(center 75% 78%, radius 58%, rgba(54,32,120,0.78), transparent),
+            linear-gradient(from 0% 0% to 100% 100%, #F6AB3D, #8137F7);
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.42), 24, 0.24, 0, 9);
 }
 
 .card-backside:hover {
-    -fx-border-color: rgba(255, 248, 243, 0.62);
+    -fx-border-color: rgba(255, 248, 243, 0.72);
 }
 
 .card-backside-logo-box {
-    -fx-pref-width: 48;
-    -fx-pref-height: 48;
-    -fx-max-width: 48;
-    -fx-max-height: 48;
+    -fx-pref-width: 50;
+    -fx-pref-height: 50;
+    -fx-max-width: 50;
+    -fx-max-height: 50;
 
     -fx-background-radius: 999;
     -fx-border-radius: 999;
     -fx-border-width: 2.5;
-    -fx-border-color: rgba(255, 248, 243, 0.46);
+    -fx-border-color: rgba(255, 248, 243, 0.62);
     -fx-background-color:
-            radial-gradient(center 50% 35%, radius 70%, rgba(255,255,255,0.16), transparent),
-            linear-gradient(from 0% 0% to 100% 100%, #2f3542, #1b1f28);
+            radial-gradient(center 50% 30%, radius 72%, rgba(255,255,255,0.22), transparent),
+            linear-gradient(from 0% 0% to 100% 100%, rgba(17,19,25,0.84), rgba(34,24,72,0.88));
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.36), 8, 0.22, 0, 2);
 }
 
 .card-backside-logo-image {
-    -fx-opacity: 0.92;
+    -fx-opacity: 0.94;
 }
 
 .card-backside-logo-text {
@@ -778,4 +781,4 @@
 .draw-pile-has-cards {
     -fx-background-color: transparent;
     -fx-border-color: transparent;
-}
+}}
