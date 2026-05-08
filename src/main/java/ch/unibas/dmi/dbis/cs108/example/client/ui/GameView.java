@@ -588,9 +588,9 @@ public class GameView extends BorderPane {
         Label title = new Label(titleText);
         title.getStyleClass().add("field-label");
 
-        pilePane.setPrefSize(90, 130);
-        pilePane.setMinSize(90, 130);
-        pilePane.setMaxSize(90, 130);
+        pilePane.setPrefSize(CardBacksideView.CARD_WIDTH, CardBacksideView.CARD_HEIGHT);
+        pilePane.setMinSize(CardBacksideView.CARD_WIDTH, CardBacksideView.CARD_HEIGHT);
+        pilePane.setMaxSize(CardBacksideView.CARD_WIDTH, CardBacksideView.CARD_HEIGHT);
 
         VBox box = new VBox(10, title, pilePane);
         box.setAlignment(Pos.CENTER);
@@ -868,6 +868,32 @@ public class GameView extends BorderPane {
         RoundResultsOverlay overlay = currentRoundResultsOverlay;
         currentRoundResultsOverlay = null;
         overlay.dismiss(() -> rootStack.getChildren().remove(overlay));
+    }
+
+
+    /**
+     * Renders the draw pile as a face-down card stack.
+     *
+     * @param drawPileSize current number of cards in the draw pile
+     */
+    public void renderDrawPile(int drawPileSize) {
+        drawPilePane.getChildren().clear();
+
+        drawPilePane.getStyleClass().removeAll(
+                "draw-pile-empty",
+                "draw-pile-has-cards"
+        );
+
+        if (drawPileSize <= 0) {
+            drawPilePane.getStyleClass().add("draw-pile-empty");
+            return;
+        }
+
+        drawPilePane.getStyleClass().add("draw-pile-has-cards");
+
+        CardBacksideView back = new CardBacksideView();
+        back.setMouseTransparent(true);
+        drawPilePane.getChildren().setAll(back);
     }
 
 }

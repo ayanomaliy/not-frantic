@@ -710,6 +710,14 @@ public class FxNetworkClient implements ClientMessageHandler {
                     }
                 }
 
+                case "drawPileSize" -> {
+                    try {
+                        state.setDrawPileSize(Integer.parseInt(value));
+                    } catch (NumberFormatException ignored) {
+                        state.setDrawPileSize(0);
+                    }
+                }
+
                 case "currentPlayer" -> state.setCurrentPlayer(value);
 
                 case "requestedColor" -> {
@@ -749,6 +757,8 @@ public class FxNetworkClient implements ClientMessageHandler {
                         }
                     }
                 }
+
+
 
                 default -> {
                     // Ignore unknown fields for forward compatibility.
@@ -808,6 +818,7 @@ public class FxNetworkClient implements ClientMessageHandler {
         state.setRequestedColor("");
         state.setRequestedNumber("");
         state.setCurrentRound(1);
+        state.setDrawPileSize(0);
     }
 
     /**
@@ -838,6 +849,7 @@ public class FxNetworkClient implements ClientMessageHandler {
             state.setCurrentPlayer("Unknown");
             state.setCurrentPhase("WAITING");
             state.setTopCardText("-");
+            state.setDrawPileSize(0);
 
             state.getGlobalChatMessages().clear();
             state.getLobbyChatMessages().clear();

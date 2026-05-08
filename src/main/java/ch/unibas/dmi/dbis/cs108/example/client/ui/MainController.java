@@ -316,6 +316,11 @@ public class MainController {
         state.requestedNumberProperty().addListener((obs, oldValue, newValue) -> renderDiscardPile(view));
         renderDiscardPile(view);
 
+        state.drawPileSizeProperty().addListener((obs, oldValue, newValue) ->
+                view.renderDrawPile(newValue.intValue())
+        );
+        view.renderDrawPile(state.getDrawPileSize());
+
         updateDisplayedChat(view);
 
         view.getChatModeButton().textProperty().bind(state.chatModeProperty());
@@ -1175,10 +1180,19 @@ public class MainController {
         double endX = end.getX() - CardBacksideView.CARD_WIDTH / 2;
         double endY = end.getY() - CardBacksideView.CARD_HEIGHT / 2;
 
-        movingCard.setLayoutX(startX);
-        movingCard.setLayoutY(startY);
-
         animationLayer.getChildren().add(movingCard);
+
+        /*
+         * IMPORTANT:
+         * unmanaged Regions are not automatically sized by the parent.
+         * Without an explicit size, only the logo child may appear,
+         * while the card background itself remains effectively invisible.
+         */
+        movingCard.resize(CardBacksideView.CARD_WIDTH, CardBacksideView.CARD_HEIGHT);
+        movingCard.autosize();
+        movingCard.applyCss();
+
+        movingCard.relocate(startX, startY);
 
         drawAnimationRunning = true;
 
