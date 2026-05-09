@@ -108,6 +108,7 @@ public class MainController {
         this.networkClient = networkClient;
         this.registry = registry;
         this.soundManager = new SoundManager(registry);
+        this.soundManager.playBackgroundMusic("background_music");
 
         this.networkClient.setGameEndListener(() -> {
             registry.getSoundId("GAME_ENDED").ifPresent(soundManager::play);
@@ -173,6 +174,8 @@ public class MainController {
     /** Shows the lobby screen and wires it to the current shared client state. */
     public void showLobbyView() {
         LobbyView view = new LobbyView();
+
+        StackPane rootStack = new StackPane(view);
 
         view.getLobbyPlayersList().setItems(state.getPlayers());
         view.getAllPlayersList().setItems(state.getAllPlayers());
@@ -273,6 +276,7 @@ public class MainController {
 
         });
 
+
         view.getStartButton().setOnAction(e -> networkClient.startGame());
 
         view.getDisconnectButton().setOnAction(e -> {
@@ -280,7 +284,9 @@ public class MainController {
             showConnectView();
         });
 
-        Scene scene = createStyledScene(view, 1280, 800);
+        view.getSettingsButton().setOnAction(e -> showSettingsOverlay(rootStack));
+
+        Scene scene = createStyledScene(rootStack, 1280, 800);
         stage.setScene(scene);
         new FadeIn(view).play();
     }
@@ -293,6 +299,9 @@ public class MainController {
      */
     public void showGameView() {
         GameView view = new GameView();
+
+        view.setInitialMusicVolume(soundManager.getMusicVolume());
+        view.setMusicVolumeHandler(soundManager::setMusicVolume);
 
         view.getPlayersList().setItems(state.getPlayers());
         installSelfHighlight(view.getPlayersList());
@@ -1858,5 +1867,28 @@ public class MainController {
         }
 
         view.getCircularTablePane().highlightCurrentPlayer(state.getCurrentPlayer());
+    }
+
+    private void showSettingsOverlay(StackPane rootStack) {
+        boolean alreadyOpen = rootStack.getChildren().stream()
+                .anyMatch(node -> node instanceof SettingsView);
+
+        if (alreadyOpen) {
+            return;
+        }
+
+        SettingsView settingsView = new SettingsView(soundManager.getMusicVolume());
+        settingsView.prefWidthProperty().bind(rootStack.widthProperty());
+        settingsView.prefHeightProperty().bind(rootStack.heightProperty());
+
+        settingsView.getMusicVolumeSlider().valueProperty().addListener((obs, oldValue, newValue) ->
+                soundManager.setMusicVolume(newValue.doubleValue() / 100.0)
+        );
+
+        settingsView.getOkButton().setOnAction(e ->
+                rootStack.getChildren().remove(settingsView)
+        );
+
+        rootStack.getChildren().add(settingsView);
     }
 }

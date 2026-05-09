@@ -45,6 +45,7 @@ public class LobbyView extends BorderPane {
     private final Button chatModeButton = new Button("Global");
 
     private final Button nameButton = new Button("Change Name");
+    private final Button settingsButton = new Button("Settings");
     /**
      * Creates the lobby view.
      *
@@ -103,6 +104,9 @@ public class LobbyView extends BorderPane {
         commandBox.setAlignment(Pos.CENTER_LEFT);
         HBox.setHgrow(commandInput, Priority.ALWAYS);
 
+        HBox lobbyActionButtons = new HBox(10, nameButton, settingsButton);
+        lobbyActionButtons.setAlignment(Pos.CENTER_LEFT);
+
         VBox rightPanel = new VBox(
                 12,
                 createSectionTitle("Game / Info"),
@@ -110,7 +114,7 @@ public class LobbyView extends BorderPane {
                 createSectionTitle("Command"),
                 commandBox,
                 startButton,
-                nameButton,
+                lobbyActionButtons,
                 disconnectButton
         );
         rightPanel.getStyleClass().add("panel");
@@ -156,6 +160,7 @@ public class LobbyView extends BorderPane {
         chatModeButton.getStyleClass().addAll("frantic-button", "secondary-button");
 
         nameButton.getStyleClass().addAll("frantic-button", "primary-button");
+        settingsButton.getStyleClass().addAll("frantic-button", "secondary-button");
 
         joinLobbyButton.setDisable(true);
     }
@@ -450,7 +455,21 @@ public class LobbyView extends BorderPane {
         return leaveLobbyButton;
     }
 
+    /**
+     * Returns the button used to change the name
+     *
+     * @return the change name button
+     */
     public Button getNameButton() {
         return nameButton;
+    }
+
+    /**
+     * Returns the button used to open settings
+     *
+     * @return the settings button
+     */
+    public Button getSettingsButton() {
+        return settingsButton;
     }
 }

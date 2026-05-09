@@ -866,3 +866,46 @@
     -fx-font-size: 12px;
     -fx-text-fill: text-muted;
 }
+
+
+/* =========================
+   Settings
+   ========================= */
+.settings-slider-box {
+    -fx-alignment: center;
+    -fx-padding: 0;
+    -fx-min-width: 190;
+    -fx-pref-width: 190;
+    -fx-max-width: 190;
+    -fx-min-height: 28;
+    -fx-pref-height: 28;
+    -fx-max-height: 28;
+}
+
+.settings-volume-slider {
+    -fx-min-width: 180;
+    -fx-pref-width: 180;
+    -fx-max-width: 180;
+    -fx-padding: 4 0 4 0;
+}
+
+.settings-volume-slider .track {
+    -fx-background-color: surface-focus;
+    -fx-background-radius: 999;
+    -fx-pref-height: 7;
+    -fx-max-height: 7;
+}
+
+.settings-volume-slider .thumb {
+    -fx-background-color: color-warm;
+    -fx-background-radius: 999;
+    -fx-pref-width: 18;
+    -fx-pref-height: 18;
+    -fx-effect: dropshadow(gaussian, panel-shadow, 10, 0.25, 0, 3);
+}
+
+.settings-volume-value {
+    -fx-text-fill: text-secondary;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}

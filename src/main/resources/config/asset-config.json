@@ -133,7 +133,9 @@
     "card_play_counterattack": "sounds/card_play_counterattack.mp3",
     "card_play_nice_try": "sounds/card_play_nice_try.mp3",
     "card_play_black": "sounds/card_play_black.mp3",
-    "card_play_fuck_you": "sounds/card_play_fuck_you.mp3"
+    "card_play_fuck_you": "sounds/card_play_fuck_you.mp3",
+
+    "background_music": "sounds/background_music.mp3"
   },
   "events": {
     "GAME_STARTED": {

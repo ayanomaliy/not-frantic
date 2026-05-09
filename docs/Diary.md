@@ -1051,3 +1051,15 @@ Overall, today’s session focused on improving the user interface and reducing 
 * Find and implement a **bug tracker system**.
 * Create our own custom sound effects and audio for the game.
 * Remove an unnecessary or unbalanced **card** from the game.
+
+
+## Date: May 9, 2026
+
+### Custom self-made background music in FL Studio (Aiysha)
+
+#### What did I do today?
+
+
+#### Future Plans
+
+

@@ -28,6 +28,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 import javafx.scene.control.ListCell;
+import java.util.function.Consumer;
 
 /**
  * Game screen for the Frantic^-1 GUI client.
@@ -116,6 +117,10 @@ public class GameView extends BorderPane {
     private final StackPane turnOverlay = new StackPane();
     private final Label turnOverlayLabel = new Label();
     private final GaussianBlur turnBlur = new GaussianBlur(0);
+
+    // Sound
+    private Consumer<Double> musicVolumeHandler = volume -> {};
+    private double initialMusicVolume = 0.35;
 
     /**
      * Creates the game view.
@@ -931,9 +936,15 @@ public class GameView extends BorderPane {
             return;
         }
 
-        settingsView = new SettingsView();
+        settingsView = new SettingsView(initialMusicVolume);
         settingsView.prefWidthProperty().bind(rootStack.widthProperty());
         settingsView.prefHeightProperty().bind(rootStack.heightProperty());
+
+        settingsView.getMusicVolumeSlider().valueProperty().addListener((obs, oldValue, newValue) -> {
+            double volume = newValue.doubleValue() / 100.0;
+            initialMusicVolume = volume;
+            musicVolumeHandler.accept(volume);
+        });
 
         settingsView.getOkButton().setOnAction(e -> hideSettingsView());
 
@@ -961,4 +972,23 @@ public class GameView extends BorderPane {
     }
 
 
+    /**
+     * Sets the initial music volume shown when the settings overlay opens.
+     *
+     * @param initialMusicVolume volume between 0.0 and 1.0
+     */
+    public void setInitialMusicVolume(double initialMusicVolume) {
+        this.initialMusicVolume = Math.max(0.0, Math.min(1.0, initialMusicVolume));
+    }
+
+    /**
+     * Sets the callback invoked when the music volume slider changes.
+     *
+     * @param musicVolumeHandler callback receiving a value between 0.0 and 1.0
+     */
+    public void setMusicVolumeHandler(Consumer<Double> musicVolumeHandler) {
+        this.musicVolumeHandler = musicVolumeHandler == null
+                ? volume -> {}
+                : musicVolumeHandler;
+    }
 }
