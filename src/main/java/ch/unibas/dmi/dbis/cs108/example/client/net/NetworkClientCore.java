@@ -29,6 +29,7 @@ public class NetworkClientCore {
     private Socket socket;
     private BufferedReader serverIn;
     private PrintWriter serverOut;
+    private volatile int connectionGeneration = 0;
 
     private final AtomicLong lastServerPongTime =
             new AtomicLong(System.currentTimeMillis());
@@ -52,9 +53,9 @@ public class NetworkClientCore {
      * @throws IOException if the connection cannot be established
      */
     public synchronized void connect(String host, int port) throws IOException {
-        if (socket != null && !socket.isClosed()) {
-            disconnect(false);
-        }
+        disconnect(false);
+
+        int myGeneration = ++connectionGeneration;
 
         socket = new Socket(host, port);
         serverIn = new BufferedReader(
@@ -64,11 +65,11 @@ public class NetworkClientCore {
         disconnected = false;
         lastServerPongTime.set(System.currentTimeMillis());
 
-        Thread readerThread = new Thread(this::readLoop, "client-reader");
+        Thread readerThread = new Thread(() -> readLoop(myGeneration), "client-reader-" + myGeneration);
         readerThread.setDaemon(true);
         readerThread.start();
 
-        Thread heartbeatThread = new Thread(this::heartbeatLoop, "client-heartbeat");
+        Thread heartbeatThread = new Thread(() -> heartbeatLoop(myGeneration), "client-heartbeat-" + myGeneration);
         heartbeatThread.setDaemon(true);
         heartbeatThread.start();
     }
@@ -133,10 +134,14 @@ public class NetworkClientCore {
     /**
      * Continuously reads incoming server messages and dispatches them to the handler.
      */
-    private void readLoop() {
+    private void readLoop(int generation) {
         try {
             String line;
-            while ((line = serverIn.readLine()) != null) {
+
+            while (isCurrentConnection(generation)
+                    && serverIn != null
+                    && (line = serverIn.readLine()) != null) {
+
                 Message message = Message.parse(line);
 
                 if (message == null || !message.hasValidStructure()) {
@@ -157,33 +162,44 @@ public class NetworkClientCore {
                 handler.onMessage(message);
             }
 
-            handler.onDisconnected("Connection closed.");
+            if (isCurrentConnection(generation)) {
+                handler.onDisconnected("Connection closed.");
+            }
+
         } catch (Exception e) {
-            if (!disconnected) {
+            if (isCurrentConnection(generation) && !disconnected) {
                 handler.onDisconnected("Connection closed: " + e.getMessage());
             }
         } finally {
-            disconnect(false);
+            if (isCurrentConnection(generation)) {
+                disconnect(false);
+            }
         }
     }
 
     /**
      * Periodically sends heartbeat pings and disconnects if the server becomes unresponsive.
      */
-    private void heartbeatLoop() {
+    private void heartbeatLoop(int generation) {
         final long heartbeatIntervalMillis = 5000;
         final long heartbeatTimeoutMillis = 15000;
 
         try {
-            while (socket != null && !socket.isClosed() && !disconnected) {
+            while (isCurrentConnection(generation)
+                    && socket != null
+                    && !socket.isClosed()
+                    && !disconnected) {
+
                 send(new Message(Message.Type.PING, ""));
 
                 long now = System.currentTimeMillis();
                 long lastPong = lastServerPongTime.get();
 
                 if (now - lastPong > heartbeatTimeoutMillis) {
-                    handler.onDisconnected("Connection to server lost.");
-                    disconnect(false);
+                    if (isCurrentConnection(generation)) {
+                        handler.onDisconnected("Connection to server lost.");
+                        disconnect(false);
+                    }
                     break;
                 }
 
@@ -192,7 +208,6 @@ public class NetworkClientCore {
         } catch (Exception ignored) {
         }
     }
-
     /**
      * Simulates an unexpected network loss for testing reconnect behavior.
      *
@@ -207,6 +222,10 @@ public class NetworkClientCore {
             }
         } catch (IOException ignored) {
         }
+    }
+
+    private boolean isCurrentConnection(int generation) {
+        return generation == connectionGeneration;
     }
 
 }
