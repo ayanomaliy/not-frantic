@@ -317,7 +317,10 @@ public class MainController {
         renderHand(view);
 
         view.getHandFanPane().widthProperty().addListener((obs, oldW, newW) -> {
-            if (newW.doubleValue() > 0 && !drawAnimationRunning) {
+            if (newW.doubleValue() > 0
+                    && !drawAnimationRunning
+                    && !playAnimationRunning
+                    && !hiddenTransferAnimationRunning) {
                 renderHand(view);
             }
         });
@@ -475,7 +478,7 @@ public class MainController {
                 return;
             }
 
-            enqueueOpponentDrawAnimation(view, drawingPlayer);
+            pendingOpponentDrawPlayer = drawingPlayer;
         });
 
         networkClient.setCardPlayedListener((playingPlayer, playedCardId) -> {
@@ -495,21 +498,6 @@ public class MainController {
             view.playEventOverlay(data.title(), data.description());
         });
 
-        networkClient.setCardDrawnListener(drawingPlayer -> {
-            if (drawingPlayer == null || drawingPlayer.isBlank()) {
-                return;
-            }
-
-            /*
-             * The local player already gets the larger hand animation through HAND_UPDATE.
-             * Remote players should be animated into their opponent slot.
-             */
-            if (drawingPlayer.equals(state.getUsername())) {
-                return;
-            }
-
-            pendingOpponentDrawPlayer = drawingPlayer;
-        });
 
         Scene scene = createStyledScene(view, 1280, 800);
         stage.setScene(scene);
@@ -623,6 +611,7 @@ public class MainController {
                 }
             });
 
+            cardView.setUserData(cid);
             cardView.setRotate(angle);
             cardView.setLayoutX(x - CardBacksideView.CARD_WIDTH / 2);
             cardView.setLayoutY(y - CardBacksideView.CARD_HEIGHT);
