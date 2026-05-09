@@ -239,7 +239,7 @@ public class CardView extends StackPane {
             case COLOR -> "NORMAL";
             case BLACK -> "TRIGGER EVENT";
             case SPECIAL_SINGLE, SPECIAL_FOUR -> prettyEffectName(card.effect());
-            case FUCK_YOU -> "FUCK YOU";
+            case FUCK_YOU -> "F%&/ U";
             case EVENT -> "EVENT";
         };
     }
