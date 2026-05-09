@@ -145,7 +145,7 @@ public class CardView extends StackPane {
          * through AssetRegistry / asset-config.json.
          */
         if (card.type() == CardType.BLACK && card.value() > 0) {
-            String blackIconPath = "icons/card_black_" + card.value() + ".svg";
+            String blackIconPath = "icons/card_" + card.value() + "_black.svg";
 
             return registry.createIconView(blackIconPath, size)
                     .map(icon -> prepareIcon(icon, card))
@@ -239,7 +239,7 @@ public class CardView extends StackPane {
             case COLOR -> "NORMAL";
             case BLACK -> "TRIGGER EVENT";
             case SPECIAL_SINGLE, SPECIAL_FOUR -> prettyEffectName(card.effect());
-            case FUCK_YOU -> "FUCK YOU";
+            case FUCK_YOU -> "F%&/ U";
             case EVENT -> "EVENT";
         };
     }

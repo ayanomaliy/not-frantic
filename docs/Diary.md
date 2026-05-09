@@ -953,3 +953,59 @@ We will meet tomorrow and try to finish these tasks:
 * Follow up on the **tutor’s email response**.
 * Further improve **GUI polish and animations**.
 
+## Date: May 9, 2026
+
+### GUI Polish, Animations, and Visual Identity
+
+#### What did I do today?
+
+* Improved the JavaFX game GUI to make the table layout cleaner and more modern.
+* Reworked the card animations for:
+
+  * drawing cards,
+  * playing cards to the discard pile,
+  * hidden card transfers between players,
+  * opponent draw animations.
+* Added smoother scaling and movement transitions using `TranslateTransition`, `ScaleTransition`, and `ParallelTransition`.
+* Improved synchronization between animations and state updates to avoid visual glitches during gameplay.
+* Refined hand rendering and fan layout positioning for the local player.
+* Improved discard pile rendering for:
+
+  * normal cards,
+  * color wishes,
+  * number wishes.
+* Added turn overlay effects and event banner overlays for better game feedback.
+* Implemented visual effect dialogs for special cards such as:
+
+  * Fantastic,
+  * Fantastic Four,
+  * Gift,
+  * Exchange,
+  * Skip,
+  * Nice Try,
+  * Counterattack,
+  * Equality.
+* Began replacing old text-heavy game state indicators (“Current Player”, “Phase”, “Top Card”) with cleaner visual feedback systems.
+* Planned a new active-player highlighting system using glowing contours around player icons instead of plain text labels.
+* Designed a new futuristic logo style for *Frantic^-1* matching the GUI color palette.
+* Created multiple logo concepts including:
+
+  * a main title logo,
+  * a simplified icon/logo for card backs,
+  * a “^-1” based emblem referencing the “not frantic” joke.
+* Refined the logo style to use more dynamic circular motion effects and neon gradients matching the current CSS theme.
+
+#### Future Plans
+
+* Replace remaining debug-like UI labels with cleaner visual indicators.
+* Implement animated active-player highlighting around opponent icons.
+* Further refine animation timing and easing curves.
+* Improve responsiveness and scaling for different screen sizes.
+* Integrate the new logo assets into:
+
+  * card backs,
+  * menus,
+  * loading/game screens.
+* Continue polishing the overall visual consistency of the GUI.
+
+
