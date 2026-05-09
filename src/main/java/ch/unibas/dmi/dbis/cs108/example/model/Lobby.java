@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
 
 /**
  * Represents one game lobby containing the connected players of a single game.
@@ -30,6 +32,9 @@ public class Lobby {
 
     /** Active client sessions currently inside this lobby. */
     private final List<ClientSession> sessions = new ArrayList<>();
+
+    /** Players that disconnected during an active game. */
+    private final Set<String> disconnectedPlayers = new HashSet<>();
 
     /** Whether a game is currently running in this lobby. */
     private boolean gameStarted = false;
@@ -283,5 +288,59 @@ public class Lobby {
      */
     public void setDevScenario(String devScenario) {
         this.devScenario = devScenario == null ? "none" : devScenario;
+    }
+
+    /**
+     * Marks a player as temporarily disconnected.
+     *
+     * @param playerName the disconnected player
+     */
+    public void markDisconnected(String playerName) {
+        disconnectedPlayers.add(playerName);
+    }
+
+    /**
+     * Removes a player from the disconnected list after reconnecting.
+     *
+     * @param playerName the reconnected player
+     */
+    public void markReconnected(String playerName) {
+        disconnectedPlayers.remove(playerName);
+    }
+
+    /**
+     * Returns whether the given player is currently disconnected.
+     *
+     * @param playerName the player name
+     * @return true if disconnected
+     */
+    public boolean isDisconnected(String playerName) {
+        return disconnectedPlayers.contains(playerName);
+    }
+
+    /**
+     * Returns all disconnected player names.
+     *
+     * @return disconnected player names
+     */
+    public Set<String> getDisconnectedPlayers() {
+        return new HashSet<>(disconnectedPlayers);
+    }
+
+    public boolean replaceSession(ClientSession session) {
+        removeSessionsByPlayerName(session.getPlayerName());
+
+        if (isFull()) {
+            return false;
+        }
+
+        sessions.add(session);
+        return true;
+    }
+
+    public void removeSessionsByPlayerName(String playerName) {
+        sessions.removeIf(session ->
+                session.getPlayerName().equalsIgnoreCase(playerName)
+        );
     }
 }

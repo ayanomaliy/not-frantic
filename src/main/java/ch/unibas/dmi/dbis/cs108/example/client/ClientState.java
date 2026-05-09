@@ -89,6 +89,10 @@ public class ClientState {
 
     private final IntegerProperty drawPileSize = new SimpleIntegerProperty(0);
 
+    private final StringProperty serverHost = new SimpleStringProperty("");
+    private final IntegerProperty serverPort = new SimpleIntegerProperty(0);
+    private final StringProperty reconnectToken = new SimpleStringProperty("");
+
     /**
      * Creates a new shared client state object.
      */
@@ -494,5 +498,29 @@ public class ClientState {
 
     public void setDrawPileSize(int size) {
         drawPileSize.set(size);
+    }
+
+    public String getServerHost() {
+        return serverHost.get();
+    }
+
+    public void setServerHost(String value) {
+        serverHost.set(value == null ? "" : value);
+    }
+
+    public int getServerPort() {
+        return serverPort.get();
+    }
+
+    public void setServerPort(int value) {
+        serverPort.set(value);
+    }
+
+    public String getReconnectToken() {
+        return reconnectToken.get();
+    }
+
+    public void setReconnectToken(String value) {
+        reconnectToken.set(value == null ? "" : value);
     }
 }

@@ -13,6 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 
 import java.nio.file.Path;
 import java.util.stream.Collectors;
@@ -38,6 +39,9 @@ public class ServerService {
 
     /** All currently connected client sessions. */
     private final List<ClientSession> connectedClients = new ArrayList<>();
+
+    /** Reconnect tokens mapped by player name. */
+    private final Map<String, String> reconnectTokensByPlayerName = new HashMap<>();
 
     private final HighScoreHistory highScoreHistory =
             new HighScoreHistory(Path.of("highscores.txt"));
@@ -189,16 +193,9 @@ public class ServerService {
     /**
      * Unregisters a disconnected client.
      *
-     * <p>If the client is currently inside a lobby, the centralized lobby-leave
-     * helper is used so that player lists and lobby lists stay consistent.</p>
-     *
-     * <p>If a game is active when the client disconnects:</p>
-     * <ul>
-     *   <li>Fewer than 2 players remain — the game is aborted and the lobby
-     *       is marked finished.</li>
-     *   <li>The disconnected player was the current player — the turn is
-     *       auto-advanced so the game is not stuck.</li>
-     * </ul>
+     * <p>If the client disconnects during an active game, the player is not removed
+     * from the lobby or game state. Instead, the player is marked as temporarily
+     * disconnected so they can reconnect later with the same name.</p>
      *
      * @param session the client session to unregister
      */
@@ -213,53 +210,30 @@ public class ServerService {
             return;
         }
 
-        log("Client disconnected: " + session.getPlayerName()
-                + ". Leaving lobby " + lobby.getLobbyId());
+        String playerName = session.getPlayerName();
 
-        // Capture whether the disconnecting player was the active player before
-        // leaveCurrentLobby() removes the session from the lobby.
-        boolean wasCurrentPlayer = false;
+        log("Client disconnected: " + playerName
+                + " from lobby " + lobby.getLobbyId());
+
         if (lobby.isGameStarted() && lobby.getGameState() != null) {
-            GameState state = lobby.getGameState();
-            GamePhase phase = state.getPhase();
-            if (phase == GamePhase.AWAITING_PLAY || phase == GamePhase.TURN_START) {
-                wasCurrentPlayer = state.getCurrentPlayer().getPlayerName()
-                        .equals(session.getPlayerName());
-            }
+            lobby.markDisconnected(playerName);
+
+            playerLobbyMap.remove(session);
+
+            broadcastToLobby(lobby, new Message(
+                    Message.Type.INFO,
+                    playerName + " disconnected. They can reconnect to the running game."
+            ));
+
+            broadcastPlayerList(lobby);
+            broadcastLobbyListToAllClients();
+            broadcastAllPlayersListToAllClients();
+
+            return;
         }
 
         leaveCurrentLobby(session, "disconnected.");
         broadcastAllPlayersListToAllClients();
-
-        // Handle game disruption caused by the disconnect.
-        if (lobby.isGameStarted() && lobby.getGameState() != null) {
-            GameState state = lobby.getGameState();
-            if (lobby.getPlayerCount() < 2) {
-                // Not enough players to continue — abort the game.
-                broadcastToLobby(lobby, new Message(
-                        Message.Type.ERROR, "Game aborted: a player disconnected."));
-                lobby.setGameState(null);
-                lobby.setGameStarted(false);
-                lobby.setLobbyStatus(LobbyStatus.FINISHED);
-                broadcastLobbyListToAllClients();
-            } else if (wasCurrentPlayer) {
-                // Auto-advance past the disconnected player's turn so the game
-                // is not stuck waiting for input from a player who is gone.
-                PlayerGameState current = state.getCurrentPlayer();
-                if (!current.hasPlayedThisTurn() && !current.hasDrawnThisTurn()) {
-                    current.setHasDrawnThisTurn(true);
-                }
-                List<GameEvent> events = TurnEngine.endTurn(state);
-                broadcastEvents(lobby, events);
-                if (state.getPhase() == GamePhase.ROUND_END) {
-                    handleRoundEnd(lobby);
-                } else {
-                    List<GameEvent> turnEvents = TurnEngine.startTurn(state);
-                    broadcastEvents(lobby, turnEvents);
-                    broadcastGameState(lobby);
-                }
-            }
-        }
     }
 
     /**
@@ -472,6 +446,7 @@ public class ServerService {
             case CREATE -> handleCreateLobby(session, message.content());
             case JOIN -> handleJoinLobby(session, message.content());
             case BROADCAST -> handleBroadcast(session, message.content());
+            case RECONNECT -> handleReconnect(session, message.content());
 
             case LOBBIES -> {
                 if (!message.content().isBlank()) {
@@ -909,8 +884,79 @@ public class ServerService {
             return;
         }
 
+        // ---------------------------------------------------------
+// RECONNECT SUPPORT
+// ---------------------------------------------------------
+
+        for (Lobby existingLobby : lobbies.values()) {
+
+            if (!existingLobby.isDisconnected(newName)) {
+                continue;
+            }
+
+            if (existingLobby.getGameState() == null) {
+                continue;
+            }
+
+            log("Reconnect detected for player: " + newName);
+
+            session.setPlayerName(newName);
+
+            existingLobby.addSession(session);
+            existingLobby.markReconnected(newName);
+
+            playerLobbyMap.put(session, existingLobby.getLobbyId());
+
+            session.send(new Message(
+                    Message.Type.INFO,
+                    "Reconnected to running game in lobby "
+                            + existingLobby.getLobbyId()
+            ).encode());
+
+            broadcastToLobby(existingLobby, new Message(
+                    Message.Type.INFO,
+                    newName + " reconnected to the game."
+            ));
+
+            broadcastPlayerList(existingLobby);
+            broadcastLobbyListToAllClients();
+            broadcastAllPlayersListToAllClients();
+
+            // restore private hand
+            try {
+                PlayerGameState playerState =
+                        existingLobby.getGameState().getPlayer(newName);
+
+                session.send(new Message(
+                        Message.Type.HAND_UPDATE,
+                        GameStateSerializer.serializeHand(playerState)
+                ).encode());
+
+            } catch (Exception ignored) {
+            }
+
+            // restore public game state
+            session.send(new Message(
+                    Message.Type.GAME_STATE,
+                    GameStateSerializer.serializePublicState(
+                            existingLobby.getGameState())
+            ).encode());
+
+            return;
+        }
+
         String uniqueName = makeUniqueName(newName, session);
         session.setPlayerName(uniqueName);
+
+        String token = reconnectTokensByPlayerName.computeIfAbsent(
+                uniqueName,
+                ignored -> UUID.randomUUID().toString()
+        );
+
+        session.send(new Message(
+                Message.Type.RECONNECT_TOKEN,
+                uniqueName + "|" + token
+        ).encode());
 
         if (firstTimeNaming) {
             log("Player set initial name: " + oldName + " -> " + uniqueName);
@@ -959,6 +1005,99 @@ public class ServerService {
             broadcastPlayerList(lobby);
         }
         broadcastAllPlayersListToAllClients();
+    }
+
+    /**
+     * Handles an automatic reconnect request from a client.
+     *
+     * <p>The payload must have the format {@code playerName|token}. Reconnection
+     * is allowed only if the token matches the token previously issued by the
+     * server and the player is marked as disconnected in a running lobby.</p>
+     *
+     * @param session the new client session
+     * @param payload the reconnect payload
+     */
+    private void handleReconnect(ClientSession session, String payload) {
+        if (payload == null || payload.isBlank()) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Reconnect payload is empty."
+            ).encode());
+            return;
+        }
+
+        String[] parts = payload.split("\\|", 2);
+
+        if (parts.length != 2 || parts[0].isBlank() || parts[1].isBlank()) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Reconnect payload must be playerName|token."
+            ).encode());
+            return;
+        }
+
+        String playerName = parts[0].trim();
+        String token = parts[1].trim();
+
+        String expectedToken = reconnectTokensByPlayerName.get(playerName);
+
+        if (expectedToken == null || !expectedToken.equals(token)) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Reconnect failed: invalid token."
+            ).encode());
+            return;
+        }
+
+        for (Lobby lobby : lobbies.values()) {
+            if (!lobby.isDisconnected(playerName)) {
+                continue;
+            }
+
+            if (!lobby.isGameStarted() || lobby.getGameState() == null) {
+                continue;
+            }
+
+            session.setPlayerName(playerName);
+
+            lobby.replaceSession(session);
+            lobby.markReconnected(playerName);
+
+            playerLobbyMap.put(session, lobby.getLobbyId());
+
+            session.send(new Message(
+                    Message.Type.INFO,
+                    "Reconnected to running game in lobby " + lobby.getLobbyId()
+            ).encode());
+
+            broadcastToLobby(lobby, new Message(
+                    Message.Type.INFO,
+                    playerName + " reconnected to the game."
+            ));
+
+            broadcastPlayerList(lobby);
+            broadcastLobbyListToAllClients();
+            broadcastAllPlayersListToAllClients();
+
+            PlayerGameState playerState = lobby.getGameState().getPlayer(playerName);
+
+            session.send(new Message(
+                    Message.Type.HAND_UPDATE,
+                    GameStateSerializer.serializeHand(playerState)
+            ).encode());
+
+            session.send(new Message(
+                    Message.Type.GAME_STATE,
+                    GameStateSerializer.serializePublicState(lobby.getGameState())
+            ).encode());
+
+            return;
+        }
+
+        session.send(new Message(
+                Message.Type.ERROR,
+                "Reconnect failed: no disconnected player found."
+        ).encode());
     }
 
     /**

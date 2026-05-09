@@ -15,6 +15,12 @@ public record Message(Type type, String content) {
         /** Message used to set or change a player's display name. */
         NAME,
 
+        /** Client requests automatic reconnection to a running game. */
+        RECONNECT,
+
+        /** Server sends a private reconnect token to the client. */
+        RECONNECT_TOKEN,
+
         /** Message containing a global chat text. */
         GLOBALCHAT,
 
@@ -77,73 +83,60 @@ public record Message(Type type, String content) {
         /** Client requests to draw a card. No payload. */
         DRAW_CARD,
 
-        /** Client explicitly ends their turn (used after drawing without playing). No payload. */
+        /** Client explicitly ends their turn. No payload. */
         END_TURN,
 
-        /** Client submits arguments for a pending special effect. Payload: effect|arg1|arg2|… */
+        /** Client submits arguments for a pending special effect. */
         EFFECT_RESPONSE,
 
-        /** Client requests their current hand. Server responds with HAND_UPDATE. No payload. */
+        /** Client requests their current hand. */
         GET_HAND,
 
-        /** Client requests the current public game state. Server responds with GAME_STATE. No payload. */
+        /** Client requests the current public game state. */
         GET_GAME_STATE,
 
-        /** Client requests the most recent round scores. Server responds with ROUND_END. No payload. */
+        /** Client requests the most recent round scores. */
         GET_ROUND_END,
 
-        /** Client requests the final game result. Server responds with GAME_END. No payload. */
+        /** Client requests the final game result. */
         GET_GAME_END,
 
         // ---- Game-state messages (server → client) ----
 
-        /** Server broadcasts the public game state. Payload: serialized key:value pairs. */
+        /** Server broadcasts the public game state. */
         GAME_STATE,
 
-        /** Server sends a player's private hand. Payload: comma-separated card ids. */
+        /** Server sends a player's private hand. */
         HAND_UPDATE,
 
-        /** Server requests effect-resolution arguments from the acting player. Payload: effect|context. */
+        /** Server requests effect-resolution arguments. */
         EFFECT_REQUEST,
 
-        /** Server broadcasts end-of-round scores. Payload: name:roundScore:totalScore per player. */
+        /** Server broadcasts end-of-round scores. */
         ROUND_END,
 
-        /** Server broadcasts the game-over result. Payload: winner name. */
+        /** Server broadcasts the game-over result. */
         GAME_END,
 
-        /**
-         * Client requests to start the next round after a round has ended.
-         * No payload. Any player in the lobby may send this.
-         */
+        /** Client requests to start the next round. */
         START_NEXT_ROUND,
 
-        /** Server notifies all clients that a new round is starting. Payload: round number (integer). */
+        /** Server notifies all clients that a new round is starting. */
         NEXT_ROUND,
 
-        /** Message used to enable or configure dev mode for the current lobby. */
+        /** Message used to enable or configure dev mode. */
         DEV,
 
-        /** Client requests the persistent high score list. Server responds with HIGHSCORES. No payload. */
+        /** Client requests the persistent high score list. */
         GET_HIGHSCORES,
 
-        /** Server sends the aggregated high score list. Payload: player:wins:gamesPlayed:totalPenaltyPoints,... */
+        /** Server sends the aggregated high score list. */
         HIGHSCORES,
 
         /** Fallback type for unrecognized or malformed messages. */
         UNKNOWN
     }
 
-    /**
-     * Parses a raw protocol string into a {@code Message}.
-     *
-     * <p>This method supports legacy heartbeat messages, the unified
-     * {@code TYPE|payload} format, and legacy slash commands such as
-     * {@code /chat Hello}.</p>
-     *
-     * @param raw the raw input string to parse
-     * @return the parsed message, or {@code null} if the input is null or blank
-     */
     public static Message parse(String raw) {
         if (raw == null || raw.isBlank()) {
             return null;
@@ -151,21 +144,21 @@ public record Message(Type type, String content) {
 
         String trimmed = raw.trim();
 
-        // Legacy heartbeat format
         if (trimmed.equalsIgnoreCase("SYS|PING")) {
             return new Message(Type.PING, "");
         }
+
         if (trimmed.equalsIgnoreCase("SYS|PONG")) {
             return new Message(Type.PONG, "");
         }
 
-        // Unified TYPE|payload format
         if (trimmed.contains("|")) {
             String[] parts = trimmed.split("\\|", 2);
             String typeText = parts[0].trim().toUpperCase();
             String payload = parts.length > 1 ? parts[1] : "";
 
             Type type = parseType(typeText);
+
             if (type == Type.UNKNOWN) {
                 return new Message(Type.UNKNOWN, trimmed);
             }
@@ -173,7 +166,6 @@ public record Message(Type type, String content) {
             return new Message(type, payload);
         }
 
-        // Legacy slash-command format
         if (trimmed.startsWith("/")) {
             String[] parts = trimmed.split("\\s+", 2);
             String command = parts[0].toLowerCase();
@@ -182,7 +174,6 @@ public record Message(Type type, String content) {
             return switch (command) {
                 case "/name" -> new Message(Type.NAME, payload);
                 case "/chat", "/g", "/global" -> new Message(Type.GLOBALCHAT, payload);
-
                 case "/l", "/lobby" -> new Message(Type.LOBBYCHAT, payload);
 
                 case "/w", "/whisper", "/msg", "/tell" -> {
@@ -190,11 +181,13 @@ public record Message(Type type, String content) {
                     if (whisperParts.length < 2) {
                         yield new Message(Type.WHISPERCHAT, "");
                     }
-                    yield new Message(Type.WHISPERCHAT, whisperParts[0].trim() + "|" + whisperParts[1].trim());
+                    yield new Message(
+                            Type.WHISPERCHAT,
+                            whisperParts[0].trim() + "|" + whisperParts[1].trim()
+                    );
                 }
 
                 case "/broadcast" -> new Message(Type.BROADCAST, payload);
-
                 case "/hand" -> new Message(Type.GET_HAND, "");
                 case "/gamestate" -> new Message(Type.GET_GAME_STATE, "");
                 case "/roundend" -> new Message(Type.GET_ROUND_END, "");
@@ -212,7 +205,8 @@ public record Message(Type type, String content) {
                 case "/end", "/endturn" -> new Message(Type.END_TURN, "");
 
                 case "/skip" -> parseSingleTargetEffectCommand("SKIP", payload);
-                case "/counter" -> parseCounterattackCommand(payload);                case "/nicetry" -> parseSingleTargetEffectCommand("NICE_TRY", payload);
+                case "/counter" -> parseCounterattackCommand(payload);
+                case "/nicetry" -> parseSingleTargetEffectCommand("NICE_TRY", payload);
                 case "/gift" -> parseGiftCommand(payload);
                 case "/exchange" -> parseExchangeCommand(payload);
                 case "/fantastic" -> parseColorOrNumberEffectCommand("FANTASTIC", payload);
@@ -221,7 +215,6 @@ public record Message(Type type, String content) {
                 case "/secondchance" -> parseSecondChanceCommand(payload);
 
                 case "/dev" -> new Message(Type.DEV, payload);
-
                 case "/highscores", "/scores" -> new Message(Type.GET_HIGHSCORES, "");
                 case "/nextround" -> new Message(Type.START_NEXT_ROUND, "");
 
@@ -232,15 +225,11 @@ public record Message(Type type, String content) {
         return new Message(Type.UNKNOWN, trimmed);
     }
 
-    /**
-     * Parses a protocol type string into a message type.
-     *
-     * @param typeText the raw type text
-     * @return the corresponding message type or {@link Type#UNKNOWN}
-     */
     private static Type parseType(String typeText) {
         return switch (typeText) {
             case "NAME" -> Type.NAME;
+            case "RECONNECT" -> Type.RECONNECT;
+            case "RECONNECT_TOKEN" -> Type.RECONNECT_TOKEN;
             case "GLOBALCHAT" -> Type.GLOBALCHAT;
             case "LOBBYCHAT" -> Type.LOBBYCHAT;
             case "WHISPERCHAT" -> Type.WHISPERCHAT;
@@ -257,6 +246,8 @@ public record Message(Type type, String content) {
             case "INFO" -> Type.INFO;
             case "ERROR" -> Type.ERROR;
             case "GAME" -> Type.GAME;
+            case "BROADCAST" -> Type.BROADCAST;
+            case "CHEATWIN" -> Type.CHEATWIN;
             case "PLAY_CARD" -> Type.PLAY_CARD;
             case "DRAW_CARD" -> Type.DRAW_CARD;
             case "END_TURN" -> Type.END_TURN;
@@ -272,8 +263,6 @@ public record Message(Type type, String content) {
             case "GAME_END" -> Type.GAME_END;
             case "START_NEXT_ROUND" -> Type.START_NEXT_ROUND;
             case "NEXT_ROUND" -> Type.NEXT_ROUND;
-            case "BROADCAST" -> Type.BROADCAST;
-            case "CHEATWIN" -> Type.CHEATWIN;
             case "DEV" -> Type.DEV;
             case "GET_HIGHSCORES" -> Type.GET_HIGHSCORES;
             case "HIGHSCORES" -> Type.HIGHSCORES;
@@ -281,69 +270,58 @@ public record Message(Type type, String content) {
         };
     }
 
-    /**
-     * Encodes this message into the unified protocol format.
-     *
-     * @return the encoded message string in the form {@code TYPE|payload}
-     */
     public String encode() {
         return type.name() + "|" + safe(content);
     }
 
-    /**
-     * Returns whether this message type normally expects a content payload.
-     *
-     * @return {@code true} if the type expects content, {@code false} otherwise
-     */
     public boolean expectsContent() {
         return switch (type) {
-            case NAME, GLOBALCHAT, LOBBYCHAT, WHISPERCHAT, PLAYERS, ALLPLAYERS,
-                 INFO, ERROR, GAME, CREATE, LOBBIES, JOIN,
+            case NAME, RECONNECT, RECONNECT_TOKEN,
+                 GLOBALCHAT, LOBBYCHAT, WHISPERCHAT,
+                 PLAYERS, ALLPLAYERS,
+                 INFO, ERROR, GAME,
+                 CREATE, LOBBIES, JOIN,
                  PLAY_CARD, EFFECT_RESPONSE, DEV,
-                 GAME_STATE, HAND_UPDATE, EFFECT_REQUEST, ROUND_END, GAME_END, NEXT_ROUND, BROADCAST -> true;
-            case START, QUIT, LEAVE, DRAW_CARD, END_TURN, GET_HAND,
-                 GET_GAME_STATE, GET_ROUND_END, GET_GAME_END, PING, PONG, CHEATWIN,
-                 HIGHSCORES, GET_HIGHSCORES, START_NEXT_ROUND, UNKNOWN -> false;
+                 GAME_STATE, HAND_UPDATE, EFFECT_REQUEST,
+                 ROUND_END, GAME_END, NEXT_ROUND,
+                 BROADCAST, HIGHSCORES -> true;
+
+            case START, QUIT, LEAVE,
+                 DRAW_CARD, END_TURN,
+                 GET_HAND, GET_GAME_STATE, GET_ROUND_END, GET_GAME_END,
+                 PING, PONG, CHEATWIN,
+                 GET_HIGHSCORES, START_NEXT_ROUND,
+                 UNKNOWN -> false;
         };
     }
 
-    /**
-     * Checks whether this message has a valid structure for its type.
-     *
-     * <p>For example, heartbeat and control messages such as {@code PING},
-     * {@code PONG}, {@code START}, and {@code QUIT} must not contain payload
-     * text, while other message types may contain content.</p>
-     *
-     * @return {@code true} if the message structure is valid, {@code false} otherwise
-     */
     public boolean hasValidStructure() {
         if (type == Type.UNKNOWN) {
             return false;
         }
 
         return switch (type) {
-            case START, QUIT, LEAVE, DRAW_CARD, END_TURN, GET_HAND,
-                 GET_GAME_STATE, GET_ROUND_END, GET_GAME_END, PING, PONG, CHEATWIN,
+            case START, QUIT, LEAVE,
+                 DRAW_CARD, END_TURN,
+                 GET_HAND, GET_GAME_STATE, GET_ROUND_END, GET_GAME_END,
+                 PING, PONG, CHEATWIN,
                  START_NEXT_ROUND -> safe(content).isBlank();
-            case NAME, GLOBALCHAT, LOBBYCHAT, WHISPERCHAT, PLAYERS, ALLPLAYERS,
-                 INFO, ERROR, GAME, CREATE, LOBBIES, JOIN,
+
+            case NAME, RECONNECT, RECONNECT_TOKEN,
+                 GLOBALCHAT, LOBBYCHAT, WHISPERCHAT,
+                 PLAYERS, ALLPLAYERS,
+                 INFO, ERROR, GAME,
+                 CREATE, LOBBIES, JOIN,
                  PLAY_CARD, EFFECT_RESPONSE, DEV,
-                 GAME_STATE, HAND_UPDATE, EFFECT_REQUEST, ROUND_END, GAME_END,
-                 NEXT_ROUND, HIGHSCORES, GET_HIGHSCORES, BROADCAST -> true;
+                 GAME_STATE, HAND_UPDATE, EFFECT_REQUEST,
+                 ROUND_END, GAME_END, NEXT_ROUND,
+                 HIGHSCORES, GET_HIGHSCORES,
+                 BROADCAST -> true;
+
             case UNKNOWN -> false;
         };
     }
 
-
-    /**
-     * Splits a chat payload into sender name and message text.
-     *
-     * <p>If the payload does not contain the expected separator, the sender
-     * is returned as {@code "?"} and the entire payload is treated as the
-     * message text.</p>
-     *
-     * @return a two-element array containing sender name and chat text
-     */
     public String[] splitChatPayload() {
         String[] parts = safe(content).split("\\|", 2);
         if (parts.length < 2) {
@@ -352,42 +330,21 @@ public record Message(Type type, String content) {
         return new String[]{parts[0], parts[1]};
     }
 
-    /**
-     * Returns a non-null string for the given text.
-     *
-     * @param text the input text
-     * @return the same text, or an empty string if null
-     */
     private static String safe(String text) {
         return text == null ? "" : text;
     }
 
-    /**
-     * Parses a slash command for an effect that only needs one target player.
-     *
-     * @param effectName the protocol effect name
-     * @param payload the raw payload after the slash command
-     * @return an {@code EFFECT_RESPONSE} message or {@code UNKNOWN} if invalid
-     */
     private static Message parseSingleTargetEffectCommand(String effectName, String payload) {
         if (payload == null || payload.isBlank()) {
             return new Message(Type.UNKNOWN, "/" + effectName.toLowerCase());
         }
 
-        String target = payload.trim();
-        return new Message(Type.EFFECT_RESPONSE, effectName + "|" + target);
+        return new Message(Type.EFFECT_RESPONSE, effectName + "|" + payload.trim());
     }
 
-    /**
-     * Parses a human-friendly {@code /gift} command.
-     *
-     * <p>Format: {@code /gift <player> <cardId1> [cardId2]}</p>
-     *
-     * @param payload the raw payload after {@code /gift}
-     * @return an {@code EFFECT_RESPONSE} message or {@code UNKNOWN} if invalid
-     */
     private static Message parseGiftCommand(String payload) {
         String[] parts = payload.split("\\s+");
+
         if (parts.length < 2 || parts.length > 3) {
             return new Message(Type.UNKNOWN, "/gift " + payload);
         }
@@ -403,22 +360,16 @@ public record Message(Type type, String content) {
             if (cardIds.length() > 0) {
                 cardIds.append(",");
             }
+
             cardIds.append(parts[i].trim());
         }
 
         return new Message(Type.EFFECT_RESPONSE, "GIFT|" + target + "|" + cardIds);
     }
 
-    /**
-     * Parses a human-friendly {@code /exchange} command.
-     *
-     * <p>Format: {@code /exchange <player> <cardId1> <cardId2>}</p>
-     *
-     * @param payload the raw payload after {@code /exchange}
-     * @return an {@code EFFECT_RESPONSE} message or {@code UNKNOWN} if invalid
-     */
     private static Message parseExchangeCommand(String payload) {
         String[] parts = payload.split("\\s+");
+
         if (parts.length != 3) {
             return new Message(Type.UNKNOWN, "/exchange " + payload);
         }
@@ -427,33 +378,19 @@ public record Message(Type type, String content) {
             return new Message(Type.UNKNOWN, "/exchange " + payload);
         }
 
-        String target = parts[0].trim();
-        return new Message(Type.EFFECT_RESPONSE,
-                "EXCHANGE|" + target + "|" + parts[1].trim() + "," + parts[2].trim());
+        return new Message(
+                Type.EFFECT_RESPONSE,
+                "EXCHANGE|" + parts[0].trim() + "|" + parts[1].trim() + "," + parts[2].trim()
+        );
     }
 
-    /**
-     * Parses a human-friendly Fantastic-style command that may request either
-     * one playable color or one number, but never both.
-     *
-     * <p>Valid examples:</p>
-     * <ul>
-     *   <li>{@code /fantastic red}</li>
-     *   <li>{@code /fantastic 4}</li>
-     *   <li>{@code /fantasticfour blue}</li>
-     *   <li>{@code /fantasticfour 7}</li>
-     * </ul>
-     *
-     * @param effectName the protocol effect name
-     * @param payload the raw payload after the slash command
-     * @return an {@code EFFECT_RESPONSE} message or {@code UNKNOWN} if invalid
-     */
     private static Message parseColorOrNumberEffectCommand(String effectName, String payload) {
         if (payload == null || payload.isBlank()) {
             return new Message(Type.UNKNOWN, "/" + effectName.toLowerCase());
         }
 
         String[] parts = payload.trim().split("\\s+");
+
         if (parts.length != 1) {
             return new Message(Type.UNKNOWN, "/" + effectName.toLowerCase() + " " + payload);
         }
@@ -466,48 +403,28 @@ public record Message(Type type, String content) {
         }
 
         if (isPlayableNumber(token)) {
-            return new Message(Type.EFFECT_RESPONSE, effectName + "||" + token.trim());
+            return new Message(Type.EFFECT_RESPONSE, effectName + "||" + token);
         }
 
         return new Message(Type.UNKNOWN, "/" + effectName.toLowerCase() + " " + payload);
     }
 
-    /**
-     * Parses a human-friendly {@code /equality} command.
-     *
-     * <p>Format: {@code /equality <player> <color>}</p>
-     *
-     * @param payload the raw payload after {@code /equality}
-     * @return an {@code EFFECT_RESPONSE} message or {@code UNKNOWN} if invalid
-     */
     private static Message parseEqualityCommand(String payload) {
         String[] parts = payload.split("\\s+");
+
         if (parts.length != 2) {
             return new Message(Type.UNKNOWN, "/equality " + payload);
         }
 
-        String target = parts[0].trim();
         String color = parts[1].trim().toUpperCase();
 
         if (!isPlayableColor(color)) {
             return new Message(Type.UNKNOWN, "/equality " + payload);
         }
 
-        return new Message(Type.EFFECT_RESPONSE, "EQUALITY|" + target + "|" + color);
+        return new Message(Type.EFFECT_RESPONSE, "EQUALITY|" + parts[0].trim() + "|" + color);
     }
 
-    /**
-     * Parses a human-friendly {@code /secondchance} command.
-     *
-     * <p>Formats:</p>
-     * <ul>
-     *   <li>{@code /secondchance <cardId>}</li>
-     *   <li>{@code /secondchance draw}</li>
-     * </ul>
-     *
-     * @param payload the raw payload after {@code /secondchance}
-     * @return an {@code EFFECT_RESPONSE} message or {@code UNKNOWN} if invalid
-     */
     private static Message parseSecondChanceCommand(String payload) {
         if (payload == null || payload.isBlank()) {
             return new Message(Type.UNKNOWN, "/secondchance");
@@ -526,33 +443,19 @@ public record Message(Type type, String content) {
         return new Message(Type.EFFECT_RESPONSE, "SECOND_CHANCE|" + trimmed);
     }
 
-    /**
-     * Parses a human-friendly {@code /counter} command.
-     *
-     * <p>Supported formats:</p>
-     * <ul>
-     *   <li>{@code /counter <color>}</li>
-     *   <li>{@code /counter <color> <player>}</li>
-     * </ul>
-     *
-     * <p>The command always carries a requested color. If a target player is also
-     * given, the wire format includes both target and color. If no target is
-     * given, the target field is left empty.</p>
-     *
-     * @param payload the raw payload after {@code /counter}
-     * @return an {@code EFFECT_RESPONSE} message or {@code UNKNOWN} if invalid
-     */
     private static Message parseCounterattackCommand(String payload) {
         if (payload == null || payload.isBlank()) {
             return new Message(Type.UNKNOWN, "/counter");
         }
 
         String[] parts = payload.trim().split("\\s+");
+
         if (parts.length < 1 || parts.length > 2) {
             return new Message(Type.UNKNOWN, "/counter " + payload);
         }
 
         String color = parts[0].trim().toUpperCase();
+
         if (!isPlayableColor(color)) {
             return new Message(Type.UNKNOWN, "/counter " + payload);
         }
@@ -561,19 +464,39 @@ public record Message(Type type, String content) {
             return new Message(Type.EFFECT_RESPONSE, "COUNTERATTACK||" + color);
         }
 
-        String target = parts[1].trim();
-        if (target.isBlank()) {
-            return new Message(Type.UNKNOWN, "/counter " + payload);
+        return new Message(Type.EFFECT_RESPONSE, "COUNTERATTACK|" + parts[1].trim() + "|" + color);
+    }
+
+    private static Message parseFantasticFourCommand(String payload) {
+        if (payload == null || payload.isBlank()) {
+            return new Message(Type.UNKNOWN, "/fantasticfour");
         }
 
-        return new Message(Type.EFFECT_RESPONSE, "COUNTERATTACK|" + target + "|" + color);
+        String[] parts = payload.trim().split("\\s+");
+
+        if (parts.length != 5) {
+            return new Message(Type.UNKNOWN, "/fantasticfour " + payload);
+        }
+
+        String first = parts[0].trim();
+        String upper = first.toUpperCase();
+
+        String targets = parts[1].trim() + ","
+                + parts[2].trim() + ","
+                + parts[3].trim() + ","
+                + parts[4].trim();
+
+        if (isPlayableColor(upper)) {
+            return new Message(Type.EFFECT_RESPONSE, "FANTASTIC_FOUR|" + upper + "||" + targets);
+        }
+
+        if (isPlayableNumber(first)) {
+            return new Message(Type.EFFECT_RESPONSE, "FANTASTIC_FOUR||" + first + "|" + targets);
+        }
+
+        return new Message(Type.UNKNOWN, "/fantasticfour " + payload);
     }
-    /**
-     * Returns whether the given text is a valid integer.
-     *
-     * @param text the raw text to test
-     * @return {@code true} if the text can be parsed as an integer
-     */
+
     private static boolean isInteger(String text) {
         try {
             Integer.parseInt(text.trim());
@@ -583,69 +506,11 @@ public record Message(Type type, String content) {
         }
     }
 
-    /**
-     * Returns whether the given text is one of the playable requested colors.
-     *
-     * @param text the color text to test
-     * @return {@code true} if the text is {@code RED}, {@code GREEN},
-     *         {@code BLUE}, or {@code YELLOW}
-     */
     private static boolean isPlayableColor(String text) {
         return "RED".equals(text)
                 || "GREEN".equals(text)
                 || "BLUE".equals(text)
                 || "YELLOW".equals(text);
-    }
-
-    /**
-     * Parses a human-friendly {@code /fantasticfour} command.
-     *
-     * <p>Format:</p>
-     * <ul>
-     *   <li>{@code /fantasticfour <color> <player1> <player2> <player3> <player4>}</li>
-     *   <li>{@code /fantasticfour <number> <player1> <player2> <player3> <player4>}</li>
-     * </ul>
-     *
-     * <p>The first argument is either one playable color or one requested number.
-     * The next four arguments specify the recipients of the four distributed cards.
-     * Repeated player names are allowed.</p>
-     *
-     * <p>Examples:</p>
-     * <ul>
-     *   <li>{@code /fantasticfour blue Alice Bob Charlie David}</li>
-     *   <li>{@code /fantasticfour 7 Alice Alice Bob Charlie}</li>
-     * </ul>
-     *
-     * @param payload the raw payload after {@code /fantasticfour}
-     * @return an {@code EFFECT_RESPONSE} message or {@code UNKNOWN} if invalid
-     */
-    private static Message parseFantasticFourCommand(String payload) {
-        if (payload == null || payload.isBlank()) {
-            return new Message(Type.UNKNOWN, "/fantasticfour");
-        }
-
-        String[] parts = payload.trim().split("\\s+");
-        if (parts.length != 5) {
-            return new Message(Type.UNKNOWN, "/fantasticfour " + payload);
-        }
-
-        String first = parts[0].trim();
-        String upper = first.toUpperCase();
-
-        String targets = parts[1].trim() + "," +
-                parts[2].trim() + "," +
-                parts[3].trim() + "," +
-                parts[4].trim();
-
-        if (isPlayableColor(upper)) {
-            return new Message(Type.EFFECT_RESPONSE, "FANTASTIC_FOUR|" + upper + "||" + targets);
-        }
-
-        if (isPlayableNumber(first)) {
-            return new Message(Type.EFFECT_RESPONSE, "FANTASTIC_FOUR||" + first.trim() + "|" + targets);
-        }
-
-        return new Message(Type.UNKNOWN, "/fantasticfour " + payload);
     }
 
     private static boolean isPlayableNumber(String text) {

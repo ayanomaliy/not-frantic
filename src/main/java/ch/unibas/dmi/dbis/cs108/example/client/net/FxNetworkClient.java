@@ -17,6 +17,8 @@ import ch.unibas.dmi.dbis.cs108.example.model.game.CardColor;
 import java.util.function.Consumer;
 import java.util.function.BiConsumer;
 
+import static ch.unibas.dmi.dbis.cs108.example.service.Message.Type.RECONNECT_TOKEN;
+
 /**
  * JavaFX adapter around the shared protocol client.
  *
@@ -61,6 +63,9 @@ public class FxNetworkClient implements ClientMessageHandler {
 
     private CardTransferListener cardTransferListener;
 
+    private String lastHost = "";
+    private int lastPort = 0;
+    private volatile boolean reconnecting = false;
 
 
     @FunctionalInterface
@@ -98,6 +103,12 @@ public class FxNetworkClient implements ClientMessageHandler {
      * @throws IOException if the connection fails
      */
     public void connect(String host, int port, String username) throws IOException {
+        this.lastHost = host;
+        this.lastPort = port;
+
+        state.setServerHost(host);
+        state.setServerPort(port);
+
         protocolClient.connect(host, port);
 
         gameViewShown = false;
@@ -582,6 +593,16 @@ public class FxNetworkClient implements ClientMessageHandler {
                 state.getGameMessages().add("[HAND] " + message.content());
             });
 
+            case RECONNECT_TOKEN -> Platform.runLater(() -> {
+                String[] reconnectParts = message.content().split("\\|", 2);
+
+                if (reconnectParts.length == 2) {
+                    state.setUsername(reconnectParts[0].trim());
+                    state.setReconnectToken(reconnectParts[1].trim());
+                    state.getGameMessages().add("[INFO] Reconnect token received.");
+                }
+            });
+
             case GAME -> Platform.runLater(() -> {
                 String content = message.content();
                 state.getGameMessages().add("[GAME] " + content);
@@ -602,6 +623,7 @@ public class FxNetworkClient implements ClientMessageHandler {
                             // Ignore malformed card ids.
                         }
                     }
+
                 }
 
                 if (content.startsWith("CARD_DRAWN:")) {
@@ -728,7 +750,11 @@ public class FxNetworkClient implements ClientMessageHandler {
 
     @Override
     public void onDisconnected(String reason) {
-        clearLocalState(reason);
+        Platform.runLater(() ->
+                state.setStatusText(reason + " Trying to reconnect...")
+        );
+
+        tryAutoReconnect();
     }
 
     /**
@@ -965,4 +991,70 @@ public class FxNetworkClient implements ClientMessageHandler {
     public void setCardTransferListener(CardTransferListener cardTransferListener) {
         this.cardTransferListener = cardTransferListener;
     }
+
+    /**
+     * Tries to reconnect automatically using the last known server address,
+     * username, and reconnect token.
+     */
+    private void tryAutoReconnect() {
+        if (reconnecting) {
+            return;
+        }
+
+        String username = state.getUsername();
+        String token = state.getReconnectToken();
+
+        if (username == null || username.isBlank()
+                || token == null || token.isBlank()
+                || lastHost == null || lastHost.isBlank()
+                || lastPort <= 0) {
+            clearLocalState("Connection lost.");
+            return;
+        }
+
+        reconnecting = true;
+
+        Thread reconnectThread = new Thread(() -> {
+            int maxAttempts = 10;
+
+            for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+                try {
+                    Thread.sleep(1500);
+
+                    final int currentAttempt = attempt;
+                    Platform.runLater(() ->
+                            state.setStatusText("Reconnecting... attempt " + currentAttempt + "/" + maxAttempts)
+                    );
+
+                    protocolClient.connect(lastHost, lastPort);
+                    protocolClient.reconnect(username, token);
+
+                    reconnecting = false;
+
+                    Platform.runLater(() ->
+                            state.setStatusText("Reconnected.")
+                    );
+
+                    return;
+
+                } catch (Exception ignored) {
+                    // Try again.
+                }
+            }
+
+            reconnecting = false;
+            clearLocalState("Reconnect failed.");
+        }, "auto-reconnect");
+
+        reconnectThread.setDaemon(true);
+        reconnectThread.start();
+    }
+
+    /**
+     * Simulates an unexpected network loss for reconnect testing.
+     */
+    public void simulateNetworkLossForTesting() {
+        protocolClient.simulateNetworkLossForTesting();
+    }
+
 }

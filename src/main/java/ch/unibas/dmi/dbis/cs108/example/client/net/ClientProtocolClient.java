@@ -437,4 +437,22 @@ public class ClientProtocolClient {
     public Message parseRawCommand(String rawInput) {
         return Message.parse(rawInput);
     }
+
+    /**
+     * Sends an automatic reconnect request.
+     *
+     * @param username the previous username
+     * @param token the reconnect token issued by the server
+     */
+    public void reconnect(String username, String token) {
+        send(new Message(Message.Type.RECONNECT, username + "|" + token));
+    }
+
+    /**
+     * Simulates an unexpected network loss for reconnect testing.
+     */
+    public void simulateNetworkLossForTesting() {
+        core.simulateNetworkLossForTesting();
+    }
+
 }

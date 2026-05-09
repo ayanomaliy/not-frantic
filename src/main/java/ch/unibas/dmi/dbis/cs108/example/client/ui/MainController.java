@@ -903,6 +903,14 @@ public class MainController {
                 networkClient.cheatWin();
                 event.consume();
             }
+
+            if (event.isControlDown()
+                    && event.isShiftDown()
+                    && event.getCode() == KeyCode.D) {
+
+                networkClient.simulateNetworkLossForTesting();
+                event.consume();
+            }
         });
     }
 

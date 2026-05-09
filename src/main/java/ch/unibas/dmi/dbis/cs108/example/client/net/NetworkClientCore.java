@@ -51,7 +51,11 @@ public class NetworkClientCore {
      * @param port the server port
      * @throws IOException if the connection cannot be established
      */
-    public void connect(String host, int port) throws IOException {
+    public synchronized void connect(String host, int port) throws IOException {
+        if (socket != null && !socket.isClosed()) {
+            disconnect(false);
+        }
+
         socket = new Socket(host, port);
         serverIn = new BufferedReader(
                 new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
@@ -188,4 +192,21 @@ public class NetworkClientCore {
         } catch (Exception ignored) {
         }
     }
+
+    /**
+     * Simulates an unexpected network loss for testing reconnect behavior.
+     *
+     * <p>This closes the socket without marking the client as intentionally
+     * disconnected, so the read loop can detect the broken connection and trigger
+     * the reconnect logic.</p>
+     */
+    public void simulateNetworkLossForTesting() {
+        try {
+            if (socket != null && !socket.isClosed()) {
+                socket.close();
+            }
+        } catch (IOException ignored) {
+        }
+    }
+
 }
