@@ -74,7 +74,7 @@ public final class CardTextFormatter {
         }
 
         if (cardId == 124) {
-            return "Fuck You";
+            return "F%&/ U";
         }
 
         return "Card #" + cardId;
