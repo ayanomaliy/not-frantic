@@ -257,6 +257,22 @@ public class MainController {
 
         view.getLeaveLobbyButton().setOnAction(e -> leaveCurrentLobbyAndShowLobbyView());
 
+        view.getNameButton().setOnAction(e -> {
+            TextInputDialog dialog = new TextInputDialog(state.getUsername());
+            dialog.setTitle("Change Name");
+            dialog.setHeaderText("Choose a new player name");
+            dialog.setContentText("New name");
+
+            dialog.showAndWait().ifPresent(name -> {
+                String trimmed = name.trim();
+
+                if (!trimmed.isBlank()) {
+                    networkClient.setName(trimmed);
+                }
+            });
+
+        });
+
         view.getStartButton().setOnAction(e -> networkClient.startGame());
 
         view.getDisconnectButton().setOnAction(e -> {

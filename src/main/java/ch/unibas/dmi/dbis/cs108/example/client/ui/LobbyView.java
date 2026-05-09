@@ -44,6 +44,7 @@ public class LobbyView extends BorderPane {
 
     private final Button chatModeButton = new Button("Global");
 
+    private final Button nameButton = new Button("Change Name");
     /**
      * Creates the lobby view.
      *
@@ -109,6 +110,7 @@ public class LobbyView extends BorderPane {
                 createSectionTitle("Command"),
                 commandBox,
                 startButton,
+                nameButton,
                 disconnectButton
         );
         rightPanel.getStyleClass().add("panel");
@@ -152,6 +154,8 @@ public class LobbyView extends BorderPane {
         leaveLobbyButton.getStyleClass().addAll("frantic-button", "danger-button");
 
         chatModeButton.getStyleClass().addAll("frantic-button", "secondary-button");
+
+        nameButton.getStyleClass().addAll("frantic-button", "primary-button");
 
         joinLobbyButton.setDisable(true);
     }
@@ -444,5 +448,9 @@ public class LobbyView extends BorderPane {
      */
     public Button getLeaveLobbyButton() {
         return leaveLobbyButton;
+    }
+
+    public Button getNameButton() {
+        return nameButton;
     }
 }
