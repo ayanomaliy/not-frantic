@@ -121,6 +121,8 @@ public class GameView extends BorderPane {
     // Sound
     private Consumer<Double> musicVolumeHandler = volume -> {};
     private double initialMusicVolume = 0.35;
+    private double initialEffectsVolume = 0.75;
+    private Consumer<Double> effectsVolumeHandler = volume -> {};
 
     /**
      * Creates the game view.
@@ -936,7 +938,7 @@ public class GameView extends BorderPane {
             return;
         }
 
-        settingsView = new SettingsView(initialMusicVolume);
+        settingsView = new SettingsView(initialMusicVolume, initialEffectsVolume);
         settingsView.prefWidthProperty().bind(rootStack.widthProperty());
         settingsView.prefHeightProperty().bind(rootStack.heightProperty());
 
@@ -944,6 +946,12 @@ public class GameView extends BorderPane {
             double volume = newValue.doubleValue() / 100.0;
             initialMusicVolume = volume;
             musicVolumeHandler.accept(volume);
+        });
+
+        settingsView.getEffectsVolumeSlider().valueProperty().addListener((obs, oldValue, newValue) -> {
+            double volume = newValue.doubleValue() / 100.0;
+            initialEffectsVolume = volume;
+            effectsVolumeHandler.accept(volume);
         });
 
         settingsView.getOkButton().setOnAction(e -> hideSettingsView());
@@ -990,5 +998,25 @@ public class GameView extends BorderPane {
         this.musicVolumeHandler = musicVolumeHandler == null
                 ? volume -> {}
                 : musicVolumeHandler;
+    }
+
+    /**
+     * Sets the initial sound-effects volume shown when the settings overlay opens.
+     *
+     * @param initialEffectsVolume volume between 0.0 and 1.0
+     */
+    public void setInitialEffectsVolume(double initialEffectsVolume) {
+        this.initialEffectsVolume = Math.max(0.0, Math.min(1.0, initialEffectsVolume));
+    }
+
+    /**
+     * Sets the callback invoked when the sound-effects volume slider changes.
+     *
+     * @param effectsVolumeHandler callback receiving a value between 0.0 and 1.0
+     */
+    public void setEffectsVolumeHandler(Consumer<Double> effectsVolumeHandler) {
+        this.effectsVolumeHandler = effectsVolumeHandler == null
+                ? volume -> {}
+                : effectsVolumeHandler;
     }
 }

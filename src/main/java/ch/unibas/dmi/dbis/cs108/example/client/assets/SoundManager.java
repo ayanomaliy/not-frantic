@@ -25,6 +25,7 @@ public final class SoundManager {
     private MediaPlayer backgroundPlayer;
     private String currentBackgroundSoundId;
     private double musicVolume = 0.35;
+    private double effectsVolume = 0.75;
 
     public SoundManager(AssetRegistry registry) {
         this.registry = registry;
@@ -43,6 +44,7 @@ public final class SoundManager {
         try {
             AudioClip clip = cache.computeIfAbsent(soundId, this::loadClip);
             if (clip != null) {
+                clip.setVolume(effectsVolume);
                 clip.play();
             }
         } catch (Exception e) {
@@ -134,6 +136,33 @@ public final class SoundManager {
      */
     public double getMusicVolume() {
         return musicVolume;
+    }
+
+    /**
+     * Sets the volume for short sound effects.
+     *
+     * <p>This affects card sounds, draw sounds, game start/end sounds,
+     * and all other non-background sounds.</p>
+     *
+     * @param volume value between 0.0 and 1.0
+     */
+    public void setEffectsVolume(double volume) {
+        effectsVolume = clamp(volume);
+
+        for (AudioClip clip : cache.values()) {
+            if (clip != null) {
+                clip.setVolume(effectsVolume);
+            }
+        }
+    }
+
+    /**
+     * Returns the current sound-effects volume.
+     *
+     * @return value between 0.0 and 1.0
+     */
+    public double getEffectsVolume() {
+        return effectsVolume;
     }
 
     /**

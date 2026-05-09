@@ -303,6 +303,9 @@ public class MainController {
         view.setInitialMusicVolume(soundManager.getMusicVolume());
         view.setMusicVolumeHandler(soundManager::setMusicVolume);
 
+        view.setInitialEffectsVolume(soundManager.getEffectsVolume());
+        view.setEffectsVolumeHandler(soundManager::setEffectsVolume);
+
         view.getPlayersList().setItems(state.getPlayers());
         installSelfHighlight(view.getPlayersList());
         view.getGameInfoList().setItems(state.getGameMessages());
@@ -1877,12 +1880,20 @@ public class MainController {
             return;
         }
 
-        SettingsView settingsView = new SettingsView(soundManager.getMusicVolume());
+        SettingsView settingsView = new SettingsView(
+                soundManager.getMusicVolume(),
+                soundManager.getEffectsVolume()
+        );
+
         settingsView.prefWidthProperty().bind(rootStack.widthProperty());
         settingsView.prefHeightProperty().bind(rootStack.heightProperty());
 
         settingsView.getMusicVolumeSlider().valueProperty().addListener((obs, oldValue, newValue) ->
                 soundManager.setMusicVolume(newValue.doubleValue() / 100.0)
+        );
+
+        settingsView.getEffectsVolumeSlider().valueProperty().addListener((obs, oldValue, newValue) ->
+                soundManager.setEffectsVolume(newValue.doubleValue() / 100.0)
         );
 
         settingsView.getOkButton().setOnAction(e ->

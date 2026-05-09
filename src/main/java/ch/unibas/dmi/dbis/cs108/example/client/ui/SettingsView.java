@@ -12,7 +12,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Rectangle;
 
 /**
@@ -30,20 +29,28 @@ public class SettingsView extends StackPane {
     private final Slider musicVolumeSlider = new Slider(0, 100, 35);
     private final Label musicVolumeValueLabel = new Label("35%");
 
+    private final Slider effectsVolumeSlider = new Slider(0, 100, 75);
+    private final Label effectsVolumeValueLabel = new Label("75%");
+
     /**
      * Creates the settings overlay.
      *
      * @param initialMusicVolume initial music volume between 0.0 and 1.0
+     * @param initialEffectsVolume initial sound-effects volume between 0.0 and 1.0
      */
-    public SettingsView(double initialMusicVolume) {
+    public SettingsView(double initialMusicVolume, double initialEffectsVolume) {
         setId("settings-overlay");
         getStyleClass().add("settings-overlay");
         setAlignment(Pos.CENTER);
         setPickOnBounds(true);
 
-        double percent = Math.round(clamp(initialMusicVolume) * 100.0);
-        musicVolumeSlider.setValue(percent);
-        musicVolumeValueLabel.setText((int) percent + "%");
+        double musicPercent = Math.round(clamp(initialMusicVolume) * 100.0);
+        musicVolumeSlider.setValue(musicPercent);
+        musicVolumeValueLabel.setText((int) musicPercent + "%");
+
+        double effectsPercent = Math.round(clamp(initialEffectsVolume) * 100.0);
+        effectsVolumeSlider.setValue(effectsPercent);
+        effectsVolumeValueLabel.setText((int) effectsPercent + "%");
 
         buildPanel();
 
@@ -70,7 +77,18 @@ public class SettingsView extends StackPane {
         settingsContent.getStyleClass().add("settings-content");
 
         settingsContent.getChildren().addAll(
-                createMusicVolumeRow(),
+                createVolumeRow(
+                        "Music volume",
+                        "Controls the looping background music.",
+                        musicVolumeSlider,
+                        musicVolumeValueLabel
+                ),
+                createVolumeRow(
+                        "Sound effects volume",
+                        "Controls card sounds, draw sounds, and event sounds.",
+                        effectsVolumeSlider,
+                        effectsVolumeValueLabel
+                ),
                 createToggleRow("Mute sound effects", "Temporarily disables local card and event sounds."),
                 createToggleRow("Reduce animations", "Useful if animations feel distracting or slow."),
                 createToggleRow("Compact sidebar", "Reserved for a later layout setting.")
@@ -91,38 +109,35 @@ public class SettingsView extends StackPane {
         );
     }
 
-    private HBox createMusicVolumeRow() {
+    private HBox createVolumeRow(
+            String titleText,
+            String descriptionText,
+            Slider slider,
+            Label valueLabel
+    ) {
         VBox textBox = new VBox(4);
 
-        Label title = new Label("Music volume");
+        Label title = new Label(titleText);
         title.getStyleClass().add("settings-row-title");
 
-        Label description = new Label("Controls the looping background music.");
+        Label description = new Label(descriptionText);
         description.getStyleClass().add("settings-row-description");
         description.setWrapText(true);
 
         textBox.getChildren().addAll(title, description);
         HBox.setHgrow(textBox, Priority.ALWAYS);
 
-        musicVolumeSlider.getStyleClass().add("settings-volume-slider");
-        musicVolumeSlider.setShowTickMarks(false);
-        musicVolumeSlider.setShowTickLabels(false);
-        musicVolumeSlider.setBlockIncrement(5);
+        slider.getStyleClass().add("settings-volume-slider");
+        slider.setShowTickMarks(false);
+        slider.setShowTickLabels(false);
+        slider.setBlockIncrement(5);
 
-        /*
-         * Keep the actual slider small.
-         */
-        musicVolumeSlider.setMinWidth(180);
-        musicVolumeSlider.setPrefWidth(180);
-        musicVolumeSlider.setMaxWidth(180);
-        HBox.setHgrow(musicVolumeSlider, Priority.NEVER);
+        slider.setMinWidth(180);
+        slider.setPrefWidth(180);
+        slider.setMaxWidth(180);
+        HBox.setHgrow(slider, Priority.NEVER);
 
-        /*
-         * Important:
-         * The wrapper clips the slider skin so the track cannot visually escape
-         * across the whole settings overlay / screen.
-         */
-        StackPane sliderBox = new StackPane(musicVolumeSlider);
+        StackPane sliderBox = new StackPane(slider);
         sliderBox.getStyleClass().add("settings-slider-box");
         sliderBox.setMinWidth(190);
         sliderBox.setPrefWidth(190);
@@ -137,17 +152,17 @@ public class SettingsView extends StackPane {
         clip.heightProperty().bind(sliderBox.heightProperty());
         sliderBox.setClip(clip);
 
-        musicVolumeValueLabel.getStyleClass().add("settings-volume-value");
-        musicVolumeValueLabel.setMinWidth(52);
-        musicVolumeValueLabel.setPrefWidth(52);
-        musicVolumeValueLabel.setMaxWidth(52);
-        musicVolumeValueLabel.setAlignment(Pos.CENTER_RIGHT);
+        valueLabel.getStyleClass().add("settings-volume-value");
+        valueLabel.setMinWidth(52);
+        valueLabel.setPrefWidth(52);
+        valueLabel.setMaxWidth(52);
+        valueLabel.setAlignment(Pos.CENTER_RIGHT);
 
-        musicVolumeSlider.valueProperty().addListener((obs, oldValue, newValue) ->
-                musicVolumeValueLabel.setText(Math.round(newValue.doubleValue()) + "%")
+        slider.valueProperty().addListener((obs, oldValue, newValue) ->
+                valueLabel.setText(Math.round(newValue.doubleValue()) + "%")
         );
 
-        HBox controlBox = new HBox(12, sliderBox, musicVolumeValueLabel);
+        HBox controlBox = new HBox(12, sliderBox, valueLabel);
         controlBox.setAlignment(Pos.CENTER_RIGHT);
         controlBox.setMinWidth(260);
         controlBox.setPrefWidth(260);
@@ -176,13 +191,25 @@ public class SettingsView extends StackPane {
         HBox.setHgrow(textBox, Priority.ALWAYS);
 
         CheckBox checkBox = new CheckBox();
-        checkBox.setDisable(true);
+        checkBox.getStyleClass().add("settings-checkbox");
 
         HBox row = new HBox(16, textBox, checkBox);
         row.getStyleClass().add("settings-row");
         row.setAlignment(Pos.CENTER_LEFT);
 
         return row;
+    }
+
+    public Slider getMusicVolumeSlider() {
+        return musicVolumeSlider;
+    }
+
+    public Slider getEffectsVolumeSlider() {
+        return effectsVolumeSlider;
+    }
+
+    public Button getOkButton() {
+        return okButton;
     }
 
     private double clamp(double value) {
@@ -195,17 +222,5 @@ public class SettingsView extends StackPane {
         }
 
         return value;
-    }
-
-    public Button getOkButton() {
-        return okButton;
-    }
-
-    public VBox getSettingsContent() {
-        return settingsContent;
-    }
-
-    public Slider getMusicVolumeSlider() {
-        return musicVolumeSlider;
     }
 }
