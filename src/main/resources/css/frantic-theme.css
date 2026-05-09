@@ -257,6 +257,18 @@
     -fx-text-fill: selection-text;
 }
 
+.list-view.frantic-list-view .scroll-bar:horizontal {
+    -fx-opacity: 0;
+    -fx-pref-height: 0;
+    -fx-max-height: 0;
+}
+
+.wrapped-list-cell-label {
+    -fx-text-fill: text-main;
+    -fx-font-size: 13px;
+    -fx-wrap-text: true;
+}
+
 .winner-cell {
     -fx-background-color: linear-gradient(to right, #f0c77b, #d79b54);
     -fx-text-fill: #1d1b18;

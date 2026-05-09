@@ -211,6 +211,7 @@ public class MainController {
             switch (state.getChatMode()) {
                 case "Global" -> state.setChatMode("Lobby");
                 case "Lobby" -> state.setChatMode("Whisper");
+                case "Whisper" -> state.setChatMode("Game Info");
                 default -> state.setChatMode("Global");
             }
 
@@ -384,18 +385,19 @@ public class MainController {
             switch (state.getChatMode()) {
                 case "Global" -> state.setChatMode("Lobby");
                 case "Lobby" -> state.setChatMode("Whisper");
+                case "Whisper" -> state.setChatMode("Game Info");
                 default -> state.setChatMode("Global");
             }
 
             updateDisplayedChat(view);
         });
 
-        view.getSendButton().setOnAction(e -> sendChat(view));
-        view.getChatInput().setOnAction(e -> sendChat(view));
+        view.getSendButton().setOnAction(e -> sendGameViewInput(view));
+        view.getChatInput().setOnAction(e -> sendGameViewInput(view));
+
 
         view.getCommandButton().setOnAction(e -> sendCommand(view));
         view.getCommandInput().setOnAction(e -> sendCommand(view));
-
         view.getDrawPilePane().setOnMouseClicked(e -> {
             requestDrawWithAnimation(view);
         });
@@ -663,7 +665,10 @@ public class MainController {
     }
 
     /**
-     * Updates the game-view chat area to show the message list for the active chat mode.
+     * Updates the game-view chat area to show the selected mode.
+     *
+     * <p>In Game Info mode, the same panel acts as the game log and the input
+     * field becomes the command input.</p>
      *
      * @param view the game view whose chat controls should be updated
      */
@@ -672,14 +677,22 @@ public class MainController {
             case "Lobby" -> {
                 view.getChatList().setItems(state.getLobbyChatMessages());
                 view.getChatInput().setPromptText("Type a lobby message...");
+                view.getSendButton().setText("Send");
             }
             case "Whisper" -> {
                 view.getChatList().setItems(state.getWhisperChatMessages());
                 view.getChatInput().setPromptText("player: message");
+                view.getSendButton().setText("Send");
+            }
+            case "Game Info" -> {
+                view.getChatList().setItems(state.getGameMessages());
+                view.getChatInput().setPromptText("/hand, /gamestate, /dev default, /cheatwin, /peek...");
+                view.getSendButton().setText("Run");
             }
             default -> {
                 view.getChatList().setItems(state.getGlobalChatMessages());
                 view.getChatInput().setPromptText("Type a global message...");
+                view.getSendButton().setText("Send");
             }
         }
     }
@@ -707,6 +720,51 @@ public class MainController {
     }
 
     /**
+     * Sends either a chat message or a command from the unified game-view input.
+     *
+     * <p>Global, Lobby, and Whisper modes behave like normal chat.
+     * Game Info mode uses the same input field as the command line.</p>
+     *
+     * @param view the game view containing the unified input field
+     */
+    private void sendGameViewInput(GameView view) {
+        if ("Game Info".equals(state.getChatMode())) {
+            sendCommandFromChatInput(view);
+        } else {
+            sendChat(view);
+        }
+    }
+
+    /**
+     * Executes a command from the game-view chat input while Game Info mode is active.
+     *
+     * <p>This replaces the old visible command input in the sidebar. The old command
+     * input still exists for compatibility, but the user now types commands into the
+     * unified input field.</p>
+     *
+     * @param view the game view containing the unified input field
+     */
+    private void sendCommandFromChatInput(GameView view) {
+        String command = view.getChatInput().getText().trim();
+        if (command.isBlank()) {
+            return;
+        }
+
+        if ("/peek".equalsIgnoreCase(command)) {
+            togglePeek(view);
+            view.getChatInput().clear();
+            return;
+        }
+
+        boolean disconnected = networkClient.sendCommand(command);
+        view.getChatInput().clear();
+
+        if (disconnected) {
+            showConnectView();
+        }
+    }
+
+    /**
      * Sends the current game-view chat input using the selected chat mode.
      *
      * @param view the game view containing the chat input field
@@ -714,6 +772,11 @@ public class MainController {
     private void sendChat(GameView view) {
         String text = view.getChatInput().getText().trim();
         if (text.isBlank()) {
+            return;
+        }
+
+        if ("Game Info".equals(state.getChatMode())) {
+            sendCommandFromChatInput(view);
             return;
         }
 

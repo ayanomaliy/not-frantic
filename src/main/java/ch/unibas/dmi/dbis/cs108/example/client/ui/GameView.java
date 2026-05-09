@@ -27,6 +27,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
+import javafx.scene.control.ListCell;
 
 /**
  * Game screen for the Frantic^-1 GUI client.
@@ -45,13 +46,11 @@ public class GameView extends BorderPane {
 
     private static final double SIDEBAR_MIN_WIDTH = 250;
 
-    private static final double PLAYERS_HEIGHT_COLLAPSED = 230;
-    private static final double INFO_HEIGHT_COLLAPSED = 230;
+    private static final double PLAYERS_HEIGHT_COLLAPSED = 350;
     private static final double CHAT_HEIGHT_COLLAPSED = 78;
 
     private static final double PLAYERS_HEIGHT_EXPANDED = 150;
-    private static final double INFO_HEIGHT_EXPANDED = 170;
-    private static final double CHAT_HEIGHT_EXPANDED = 320;
+    private static final double CHAT_HEIGHT_EXPANDED = 560;
 
     private static final Duration PANEL_ANIMATION_DURATION = Duration.millis(260);
     private static final Duration CHAT_HIDE_DELAY = Duration.millis(180);
@@ -154,6 +153,9 @@ public class GameView extends BorderPane {
         playersList.getStyleClass().add("frantic-list-view");
         gameInfoList.getStyleClass().add("frantic-list-view");
         chatList.getStyleClass().add("frantic-list-view");
+
+        installWrappingListCells(chatList);
+        installWrappingListCells(gameInfoList);
 
         currentPlayerLabel.getStyleClass().add("field-label");
         phaseLabel.getStyleClass().add("field-label");
@@ -392,8 +394,8 @@ public class GameView extends BorderPane {
     }
 
     /**
-     * Builds the right sidebar containing players, game info, command input,
-     * and chat.
+     * Builds the right sidebar containing the player list and the unified
+     * chat / game-info / command panel.
      *
      * @return the configured sidebar
      */
@@ -413,29 +415,11 @@ public class GameView extends BorderPane {
         playersBox.setPrefHeight(PLAYERS_HEIGHT_COLLAPSED);
         playersBox.setMaxHeight(Double.MAX_VALUE);
 
-        playersList.setMinHeight(80);
+        playersList.setMinHeight(120);
         VBox.setVgrow(playersList, Priority.ALWAYS);
 
-        HBox commandBox = new HBox(10, commandInput, commandButton);
-        commandBox.setAlignment(Pos.CENTER_LEFT);
-        HBox.setHgrow(commandInput, Priority.ALWAYS);
-
-        infoBox = new VBox(
-                8,
-                createSectionTitle("Game Info"),
-                gameInfoList,
-                createSectionTitle("Command"),
-                commandBox
-        );
-        infoBox.getStyleClass().add("panel");
-        infoBox.setMinHeight(150);
-        infoBox.setPrefHeight(INFO_HEIGHT_COLLAPSED);
-        infoBox.setMaxHeight(Double.MAX_VALUE);
-
-        gameInfoList.setMinHeight(120);
-        VBox.setVgrow(gameInfoList, Priority.ALWAYS);
-
         chatInputRow = new HBox(10, chatInput, sendButton);
+        chatInputRow.setAlignment(Pos.CENTER_LEFT);
         HBox.setHgrow(chatInput, Priority.ALWAYS);
 
         chatContentBox = new VBox(10, chatList, chatInputRow);
@@ -449,13 +433,14 @@ public class GameView extends BorderPane {
         chatBox.getStyleClass().add("panel");
         chatBox.setPrefHeight(CHAT_HEIGHT_COLLAPSED);
         chatBox.setMinHeight(CHAT_HEIGHT_COLLAPSED);
+        chatBox.setMaxHeight(Double.MAX_VALUE);
 
         chatList.setMinHeight(120);
 
         VBox.setVgrow(playersBox, Priority.ALWAYS);
-        VBox.setVgrow(infoBox, Priority.ALWAYS);
+        VBox.setVgrow(chatBox, Priority.ALWAYS);
 
-        sideBar.getChildren().addAll(playersBox, infoBox, chatBox);
+        sideBar.getChildren().addAll(playersBox, chatBox);
 
         return sideBar;
     }
@@ -468,7 +453,6 @@ public class GameView extends BorderPane {
         toggleChatButton.setText("Expand Chat");
 
         playersBox.setPrefHeight(PLAYERS_HEIGHT_COLLAPSED);
-        infoBox.setPrefHeight(INFO_HEIGHT_COLLAPSED);
         chatBox.setPrefHeight(CHAT_HEIGHT_COLLAPSED);
 
         chatModeButton.setManaged(false);
@@ -493,7 +477,7 @@ public class GameView extends BorderPane {
     }
 
     /**
-     * Expands the chat panel and animates the other panels smaller.
+     * Expands the chat panel and animates the player panel smaller.
      */
     private void expandChat() {
         toggleChatButton.setText("Collapse Chat");
@@ -508,7 +492,6 @@ public class GameView extends BorderPane {
                 new KeyFrame(
                         PANEL_ANIMATION_DURATION,
                         new KeyValue(playersBox.prefHeightProperty(), PLAYERS_HEIGHT_EXPANDED, Interpolator.EASE_BOTH),
-                        new KeyValue(infoBox.prefHeightProperty(), INFO_HEIGHT_EXPANDED, Interpolator.EASE_BOTH),
                         new KeyValue(chatBox.prefHeightProperty(), CHAT_HEIGHT_EXPANDED, Interpolator.EASE_BOTH)
                 )
         );
@@ -519,33 +502,29 @@ public class GameView extends BorderPane {
     }
 
     /**
-     * Collapses the chat panel and animates the other panels back to their
-     * default sizes.
+     * Collapses the chat panel and animates the player panel back to its
+     * default size.
      */
     private void collapseChat() {
         toggleChatButton.setText("Expand Chat");
-
-        new FadeOutDown(chatContentBox).play();
-
-        PauseTransition hideDelay = new PauseTransition(CHAT_HIDE_DELAY);
-        hideDelay.setOnFinished(e -> {
-            chatContentBox.setManaged(false);
-            chatContentBox.setVisible(false);
-            chatContentBox.setOpacity(0.0);
-
-            chatModeButton.setManaged(false);
-            chatModeButton.setVisible(false);
-        });
-        hideDelay.play();
 
         Timeline timeline = new Timeline(
                 new KeyFrame(
                         PANEL_ANIMATION_DURATION,
                         new KeyValue(playersBox.prefHeightProperty(), PLAYERS_HEIGHT_COLLAPSED, Interpolator.EASE_BOTH),
-                        new KeyValue(infoBox.prefHeightProperty(), INFO_HEIGHT_COLLAPSED, Interpolator.EASE_BOTH),
                         new KeyValue(chatBox.prefHeightProperty(), CHAT_HEIGHT_COLLAPSED, Interpolator.EASE_BOTH)
                 )
         );
+
+        timeline.setOnFinished(e -> {
+            chatModeButton.setManaged(false);
+            chatModeButton.setVisible(false);
+
+            chatContentBox.setManaged(false);
+            chatContentBox.setVisible(false);
+            chatContentBox.setOpacity(0.0);
+        });
+
         timeline.play();
     }
 
@@ -894,6 +873,47 @@ public class GameView extends BorderPane {
         CardBacksideView back = new CardBacksideView();
         back.setMouseTransparent(true);
         drawPilePane.getChildren().setAll(back);
+    }
+
+    /**
+     * Installs wrapping cells so long chat/game-info messages continue
+     * on the next line instead of creating a horizontal scrollbar.
+     *
+     * @param listView the list view whose string items should wrap
+     */
+    private void installWrappingListCells(ListView<String> listView) {
+        listView.setCellFactory(view -> new ListCell<>() {
+            private final Label label = new Label();
+
+            {
+                label.setWrapText(true);
+                label.getStyleClass().add("wrapped-list-cell-label");
+
+                /*
+                 * Bind the label width to the list width.
+                 * The subtraction leaves room for padding and the vertical scrollbar.
+                 */
+                label.maxWidthProperty().bind(view.widthProperty().subtract(36));
+                label.prefWidthProperty().bind(view.widthProperty().subtract(36));
+
+                setPrefWidth(0);
+            }
+
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+
+                if (empty || item == null || item.isBlank()) {
+                    setText(null);
+                    setGraphic(null);
+                    return;
+                }
+
+                label.setText(item);
+                setText(null);
+                setGraphic(label);
+            }
+        });
     }
 
 }
