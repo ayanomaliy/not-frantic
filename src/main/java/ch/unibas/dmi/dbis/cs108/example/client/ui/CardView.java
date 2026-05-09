@@ -251,8 +251,7 @@ public class CardView extends StackPane {
 
         return switch (card.type()) {
             case COLOR, BLACK -> card.value() > 0 ? String.valueOf(card.value()) : "";
-            case SPECIAL_SINGLE, SPECIAL_FOUR -> "10";
-            case FUCK_YOU -> "50";
+            case SPECIAL_SINGLE, SPECIAL_FOUR, FUCK_YOU -> " ";
             case EVENT -> "";
         };
     }
