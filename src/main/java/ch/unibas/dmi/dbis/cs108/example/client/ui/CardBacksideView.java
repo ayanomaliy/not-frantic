@@ -1,49 +1,61 @@
 package ch.unibas.dmi.dbis.cs108.example.client.ui;
 
-import com.fluxvend.svgfx.utils.SvgLoader;
+import javafx.geometry.Pos;
+import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 
 /**
- * A card-sized pane displaying the card backside asset.
+ * A card-sized pane displaying the backside of a card.
  *
- * <p>Has the same fixed dimensions (90×130 px) as {@link CardView} so it can be
- * used as a face-down placeholder wherever a card slot is needed.</p>
+ * <p>This view is used for opponent hands, the draw pile, and draw animations.
+ * The card surface is styled through CSS using {@code card-backside}. The center
+ * logo is only decorative and does not define the card background.</p>
  *
  * <p>Must be created on the JavaFX Application Thread.</p>
  */
 public class CardBacksideView extends StackPane {
 
-    static final double CARD_WIDTH = 90;
-    static final double CARD_HEIGHT = 130;
+    public static final double CARD_WIDTH = 90;
+    public static final double CARD_HEIGHT = 130;
 
-    private static final String ASSET_PATH = "/icons/card_backside.svg";
+    private static final String LOGO_PATH = "/icons/frantic_logo.png";
 
     /**
      * Creates a new card backside view.
-     *
-     * <p>If the backside SVG asset is present on the classpath it is rendered inside the
-     * pane. Construction succeeds silently if the asset is missing.</p>
      */
     public CardBacksideView() {
-        getStyleClass().addAll("card-view", "card-backside");
+        getStyleClass().addAll("card-view", "card-backside", "game-card-button");
+
         setPrefSize(CARD_WIDTH, CARD_HEIGHT);
         setMinSize(CARD_WIDTH, CARD_HEIGHT);
         setMaxSize(CARD_WIDTH, CARD_HEIGHT);
 
-        if (getClass().getResource(ASSET_PATH) != null) {
-            try {
-                Image img = SvgLoader.getInstance().loadSvgImage(ASSET_PATH, null, false, CARD_WIDTH, null);
-                ImageView imgView = new ImageView(img);
-                imgView.setPreserveRatio(true);
-                imgView.setFitWidth(CARD_WIDTH);
-                imgView.setFitHeight(CARD_HEIGHT);
-                imgView.setMouseTransparent(true);
-                getChildren().add(imgView);
-            } catch (Exception e) {
-                System.err.println("[CardBacksideView] Cannot load backside asset: " + e.getMessage());
-            }
+        setFocusTraversable(false);
+        setMouseTransparent(true);
+
+        StackPane logoBox = new StackPane();
+        logoBox.getStyleClass().add("card-backside-logo-box");
+        logoBox.setMouseTransparent(true);
+
+        if (getClass().getResource(LOGO_PATH) != null) {
+            Image image = new Image(getClass().getResource(LOGO_PATH).toExternalForm());
+            ImageView logo = new ImageView(image);
+            logo.getStyleClass().add("card-backside-logo-image");
+            logo.setPreserveRatio(true);
+            logo.setFitWidth(46);
+            logo.setFitHeight(46);
+            logo.setMouseTransparent(true);
+            logoBox.getChildren().add(logo);
+        } else {
+            Label fallbackLogo = new Label("F");
+            fallbackLogo.getStyleClass().add("card-backside-logo-text");
+            fallbackLogo.setMouseTransparent(true);
+            logoBox.getChildren().add(fallbackLogo);
         }
+
+        StackPane.setAlignment(logoBox, Pos.CENTER);
+        getChildren().add(logoBox);
     }
 }

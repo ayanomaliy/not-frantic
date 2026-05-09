@@ -15,6 +15,7 @@ import java.util.Map;
 
 import ch.unibas.dmi.dbis.cs108.example.model.game.CardColor;
 import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 /**
  * JavaFX adapter around the shared protocol client.
@@ -53,6 +54,20 @@ public class FxNetworkClient implements ClientMessageHandler {
     private Consumer<String> effectRequestListener;
 
     private Consumer<Integer> eventCardFlippedListener;
+
+    private Consumer<String> cardDrawnListener;
+
+    private BiConsumer<String, Integer> cardPlayedListener;
+
+    private CardTransferListener cardTransferListener;
+
+
+
+    @FunctionalInterface
+    public interface CardTransferListener {
+        void accept(String sourcePlayer, String targetPlayer, int count);
+    }
+
 
     /**
      * Creates a new GUI network adapter.
@@ -351,6 +366,15 @@ public class FxNetworkClient implements ClientMessageHandler {
     // --------------------------------------------------------------------------------
 
     /**
+     * Registers a callback invoked when a public CARD_DRAWN game event is received.
+     *
+     * @param cardDrawnListener callback receiving the player name that drew a card
+     */
+    public void setCardDrawnListener(Consumer<String> cardDrawnListener) {
+        this.cardDrawnListener = cardDrawnListener;
+    }
+
+    /**
      * Set Game end Listener
      *
      * @param gameEndListener as Runnable
@@ -562,6 +586,58 @@ public class FxNetworkClient implements ClientMessageHandler {
                 String content = message.content();
                 state.getGameMessages().add("[GAME] " + content);
 
+                if (content.startsWith("CARD_PLAYED:")) {
+                    String[] parts = content.split(":", 3);
+
+                    if (parts.length == 3) {
+                        String playingPlayer = parts[1].trim();
+
+                        try {
+                            int playedCardId = Integer.parseInt(parts[2].trim());
+
+                            if (!playingPlayer.isBlank() && cardPlayedListener != null) {
+                                cardPlayedListener.accept(playingPlayer, playedCardId);
+                            }
+                        } catch (NumberFormatException ignored) {
+                            // Ignore malformed card ids.
+                        }
+                    }
+                }
+
+                if (content.startsWith("CARD_DRAWN:")) {
+                    String[] parts = content.split(":", 3);
+
+                    if (parts.length >= 2) {
+                        String drawingPlayer = parts[1].trim();
+
+                        if (!drawingPlayer.isBlank() && cardDrawnListener != null) {
+                            cardDrawnListener.accept(drawingPlayer);
+                        }
+                    }
+                }
+
+                if (content.startsWith("CARD_TRANSFERRED:")) {
+                    String[] parts = content.split(":", 4);
+
+                    if (parts.length == 4) {
+                        String sourcePlayer = parts[1].trim();
+                        String targetPlayer = parts[2].trim();
+
+                        try {
+                            int count = Integer.parseInt(parts[3].trim());
+
+                            if (!sourcePlayer.isBlank()
+                                    && !targetPlayer.isBlank()
+                                    && count > 0
+                                    && cardTransferListener != null) {
+                                cardTransferListener.accept(sourcePlayer, targetPlayer, count);
+                            }
+                        } catch (NumberFormatException ignored) {
+                            // Ignore malformed transfer counts.
+                        }
+                    }
+                }
+
                 if (content.startsWith("EVENT_CARD_FLIPPED:")) {
                     String idPart = content.substring("EVENT_CARD_FLIPPED:".length()).trim();
                     try {
@@ -717,6 +793,14 @@ public class FxNetworkClient implements ClientMessageHandler {
                     }
                 }
 
+                case "drawPileSize" -> {
+                    try {
+                        state.setDrawPileSize(Integer.parseInt(value));
+                    } catch (NumberFormatException ignored) {
+                        state.setDrawPileSize(0);
+                    }
+                }
+
                 case "currentPlayer" -> state.setCurrentPlayer(value);
 
                 case "requestedColor" -> {
@@ -756,6 +840,8 @@ public class FxNetworkClient implements ClientMessageHandler {
                         }
                     }
                 }
+
+
 
                 default -> {
                     // Ignore unknown fields for forward compatibility.
@@ -815,6 +901,7 @@ public class FxNetworkClient implements ClientMessageHandler {
         state.setRequestedColor("");
         state.setRequestedNumber("");
         state.setCurrentRound(1);
+        state.setDrawPileSize(0);
     }
 
     /**
@@ -845,6 +932,7 @@ public class FxNetworkClient implements ClientMessageHandler {
             state.setCurrentPlayer("Unknown");
             state.setCurrentPhase("WAITING");
             state.setTopCardText("-");
+            state.setDrawPileSize(0);
 
             state.getGlobalChatMessages().clear();
             state.getLobbyChatMessages().clear();
@@ -868,5 +956,13 @@ public class FxNetworkClient implements ClientMessageHandler {
 
     public void setEventCardFlippedListener(Consumer<Integer> eventCardFlippedListener) {
         this.eventCardFlippedListener = eventCardFlippedListener;
+    }
+
+    public void setCardPlayedListener(BiConsumer<String, Integer> cardPlayedListener) {
+        this.cardPlayedListener = cardPlayedListener;
+    }
+
+    public void setCardTransferListener(CardTransferListener cardTransferListener) {
+        this.cardTransferListener = cardTransferListener;
     }
 }

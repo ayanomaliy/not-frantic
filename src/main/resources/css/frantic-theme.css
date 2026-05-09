@@ -218,8 +218,8 @@
 
 .list-view.frantic-list-view {
     -fx-background-color: surface-main;
-    -fx-background-radius: 18;
-    -fx-border-radius: 18;
+    -fx-background-radius: radius-card;
+    -fx-border-radius: radius-card;
     -fx-border-color: border-soft;
     -fx-padding: 4;
 }
@@ -228,7 +228,7 @@
     -fx-background-color: transparent;
     -fx-text-fill: text-main;
     -fx-padding: 10 10 10 10;
-    -fx-background-radius: 12;
+    -fx-background-radius: radius-input;
 }
 
 .list-view.frantic-list-view .list-cell:filled:selected {
@@ -288,7 +288,7 @@
 
 .scroll-pane .thumb {
     -fx-background-color: rgba(255,255,255,0.10);
-    -fx-background-radius: 999;
+    -fx-background-radius: radius-pill;
 }
 
 /* =========================
@@ -297,8 +297,8 @@
 
 .pile-placeholder {
     -fx-background-color: surface-main;
-    -fx-background-radius: radius-card;
-    -fx-border-radius: radius-card;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
     -fx-border-color: border-main;
     -fx-border-width: 1;
 }
@@ -308,55 +308,158 @@
 }
 
 .game-card-button {
-    -fx-background-radius: radius-card;
-    -fx-border-radius: radius-card;
-    -fx-border-color: rgba(255,255,255,0.08);
-    -fx-border-width: 1;
-    -fx-padding: 10 10 10 10;
-    -fx-font-weight: 700;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-border-color: rgba(255, 248, 243, 0.42);
+    -fx-border-width: 2.5;
+    -fx-padding: 10;
     -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.32), 24, 0.22, 0, 8);
 }
 
+.game-card-button:hover {
+    -fx-border-color: rgba(255, 248, 243, 0.66);
+    -fx-effect:
+            dropshadow(gaussian, rgba(0, 0, 0, 0.42), 30, 0.24, 0, 12),
+            dropshadow(gaussian, rgba(255, 255, 255, 0.14), 22, 0.16, 0, 0);
+}
 
 .game-card-button:pressed {
-    -fx-background-color: surface-soft;
+    -fx-border-color: rgba(255, 248, 243, 0.82);
 }
 
-.card-view {
-    -fx-background-radius: radius-card;
-    -fx-border-radius: radius-card;
+.card-view,
+.wish-card {
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
 }
+
+/* Colored normal and single-color special cards */
 
 .card-red {
-    -fx-background-color: game-red;
+    -fx-background-color:
+            linear-gradient(from 0% 0% to 100% 100%, rgba(255,255,255,0.38), rgba(255,255,255,0.08)),
+            linear-gradient(from 0% 0% to 100% 100%, #dd9e9c, #e5423b 58%, #c61e65);
 }
 
 .card-yellow {
-    -fx-background-color: game-yellow;
+    -fx-background-color:
+            linear-gradient(from 0% 0% to 100% 100%, rgba(255,255,255,0.38), rgba(255,255,255,0.08)),
+            linear-gradient(from 0% 0% to 100% 100%, #f2df8d, #ebcf76 58%, #de8f47);
 }
 
 .card-green {
-    -fx-background-color: game-green;
+    -fx-background-color:
+            linear-gradient(from 0% 0% to 100% 100%, rgba(255,255,255,0.34), rgba(255,255,255,0.07)),
+            linear-gradient(from 0% 0% to 100% 100%, #9fedb2, #52ed7f 58%, #1ecd8a);
 }
 
 .card-blue {
-    -fx-background-color: game-blue;
+    -fx-background-color:
+            linear-gradient(from 0% 0% to 100% 100%, rgba(255,255,255,0.38), rgba(255,255,255,0.08)),
+            linear-gradient(from 0% 0% to 100% 100%, #9ebde9, #4e92f4 58%, #4935f2);
 }
 
+/* Black cards */
+
 .card-black {
-    -fx-background-color: game-black;
+    -fx-background-color:
+            radial-gradient(center 50% 18%, radius 72%, rgba(255,255,255,0.18), transparent),
+            linear-gradient(from 0% 0% to 100% 100%, #111319, #2a2f39 54%, #8a5742);
+    -fx-border-color: rgba(255, 248, 243, 0.34);
+}
+
+/* Four-color / rainbow special cards:
+   Fantastic, Fantastic Four, Equality, Counterattack, Nice Try */
+
+.card-four-color {
+    -fx-background-color:
+            linear-gradient(from 0% 0% to 100% 100%, rgba(255,255,255,0.30), rgba(255,255,255,0.05)),
+            linear-gradient(from 0% 0% to 100% 100%, #e65a77, #f4ce5f, #55d68f, #5687ee, #8e5eea);
+    -fx-border-color: rgba(255, 248, 243, 0.52);
+}
+
+/* Unique card */
+
+.card-fuck-you {
+    -fx-background-color:
+            radial-gradient(center 50% 18%, radius 72%, rgba(255,255,255,0.16), transparent),
+            linear-gradient(from 0% 0% to 100% 100%, #72505b, #554042 48%, #111319);
+    -fx-border-color: rgba(255, 248, 243, 0.40);
 }
 
 .card-neutral {
-    -fx-background-color: game-neutral;
+    -fx-background-color:
+            radial-gradient(center 50% 20%, radius 80%, rgba(255,255,255,0.18), transparent),
+            linear-gradient(from 0% 0% to 100% 100%, #72505b, #554042 52%, #2a2f39);
 }
 
 .card-fallback {
-    -fx-background-color: game-fallback;
+    -fx-background-color:
+            radial-gradient(center 50% 20%, radius 80%, rgba(255,255,255,0.18), transparent),
+            linear-gradient(from 0% 0% to 100% 100%, #4d525c, #2a2f39 52%, #111319);
 }
 
+/* Website-style card typography */
+
+.card-center-box {
+    -fx-alignment: center;
+    -fx-spacing: 4;
+}
+
+.card-top-text,
+.card-bottom-text {
+    -fx-font-family: "Arial", "Segoe UI", sans-serif;
+    -fx-font-size: 10px;
+    -fx-font-weight: 900;
+    -fx-effect: dropshadow(gaussian, rgba(255,255,255,0.22), 1.5, 0.20, 0, 1);
+}
+
+.card-subtitle-text {
+    -fx-font-family: "Arial", "Segoe UI", sans-serif;
+    -fx-font-size: 9px;
+    -fx-font-weight: 900;
+    -fx-text-alignment: center;
+    -fx-alignment: center;
+    -fx-wrap-text: true;
+    -fx-effect: dropshadow(gaussian, rgba(255,255,255,0.22), 1.5, 0.20, 0, 1);
+}
+
+.card-text-dark {
+    -fx-text-fill: #1f232b;
+}
+
+.card-text-light {
+    -fx-text-fill: #fffaf5;
+}
+
+.card-main-fallback {
+    -fx-font-family: "Arial", "Segoe UI", sans-serif;
+    -fx-font-size: 44px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #fffaf5;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.30), 4, 0.3, 0, 2);
+}
+
+.card-main-icon {
+    -fx-opacity: 0.98;
+}
+
+.card-number-icon {
+    -fx-scale-x: 1.08;
+    -fx-scale-y: 1.08;
+}
+
+.card-effect-icon {
+    -fx-scale-x: 1.00;
+    -fx-scale-y: 1.00;
+}
+
+/* Compatibility with older classes */
+
 .card-label {
-    -fx-font-weight: 700;
+    -fx-font-weight: 800;
+    -fx-text-fill: #fffaf5;
 }
 
 .card-label-with-icon {
@@ -389,19 +492,34 @@
    ========================= */
 
 .wish-card {
-    -fx-background-radius: radius-card;
-    -fx-border-radius: radius-card;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
 }
 
 .wish-card-number {
-    -fx-background-color: color-warm-dark;
+    -fx-background-color:
+            linear-gradient(from 0% 0% to 100% 100%, rgba(255,255,255,0.30), rgba(255,255,255,0.06)),
+            linear-gradient(from 0% 0% to 100% 100%, #72505b, #554042 52%, #2a2f39);
 }
 
 .wish-card-color {
-    -fx-border-color: rgba(255,255,255,0.08);
-    -fx-border-width: 1;
+    -fx-border-color: rgba(255,255,255,0.42);
+    -fx-border-width: 2.5;
 }
 
+.wish-card-main-text {
+    -fx-font-size: 15px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #fffaf5;
+    -fx-text-alignment: center;
+    -fx-alignment: center;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.28), 4, 0.3, 0, 2);
+}
+
+
+/* =========================
+   Player icons
+   ========================= */
 
 .player-icon {
     -fx-fill: #72505b;
@@ -589,10 +707,10 @@
 
 .round-results-panel {
     -fx-background-color: #1e1a17;
-    -fx-background-radius: 12;
+    -fx-background-radius: radius-input;
     -fx-border-color: #5a3e2b;
     -fx-border-width: 2;
-    -fx-border-radius: 12;
+    -fx-border-radius: radius-input;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.70), 36, 0.30, 0, 12);
 }
 
@@ -607,18 +725,60 @@
    ========================= */
 
 .card-backside {
-    -fx-background-color: #ffffff;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-border-color: rgba(255, 248, 243, 0.52);
+    -fx-border-width: 2.5;
+    -fx-padding: 10;
+
+    -fx-background-color:
+            radial-gradient(center 18% 16%, radius 40%, rgba(255,255,255,0.34), transparent),
+            radial-gradient(center 78% 20%, radius 46%, rgba(246,171,61,0.72), transparent),
+            radial-gradient(center 22% 82%, radius 52%, rgba(129,55,247,0.72), transparent),
+            radial-gradient(center 75% 78%, radius 58%, rgba(54,32,120,0.78), transparent),
+            linear-gradient(from 0% 0% to 100% 100%, #F6AB3D, #8137F7);
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.42), 24, 0.24, 0, 9);
 }
 
-/* =========================
-   Player colors
-   ========================= */
+.card-backside:hover {
+    -fx-border-color: rgba(255, 248, 243, 0.72);
+}
 
-.player-color-red    { -fx-fill: #e74c3c; }
-.player-color-green  { -fx-fill: #2ecc71; }
-.player-color-blue   { -fx-fill: #3498db; }
-.player-color-yellow { -fx-fill: #f1c40f; }
-.player-color-purple { -fx-fill: #9b59b6; }
-.player-color-pink   { -fx-fill: #e91e8c; }
-.player-color-orange { -fx-fill: #e67e22; }
-.player-color-teal   { -fx-fill: #1abc9c; }
+.card-backside-logo-box {
+    -fx-pref-width: 50;
+    -fx-pref-height: 50;
+    -fx-max-width: 50;
+    -fx-max-height: 50;
+
+    -fx-background-radius: 999;
+    -fx-border-radius: 999;
+    -fx-border-width: 2.5;
+    -fx-border-color: rgba(255, 248, 243, 0.62);
+    -fx-background-color:
+            radial-gradient(center 50% 30%, radius 72%, rgba(255,255,255,0.22), transparent),
+            linear-gradient(from 0% 0% to 100% 100%, rgba(17,19,25,0.84), rgba(34,24,72,0.88));
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.36), 8, 0.22, 0, 2);
+}
+
+.card-backside-logo-image {
+    -fx-opacity: 0.94;
+}
+
+.card-backside-logo-text {
+    -fx-font-size: 30px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #fffaf5;
+}
+
+.draw-pile-empty {
+    -fx-background-color: surface-main;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-border-color: border-main;
+    -fx-border-width: 1;
+}
+
+.draw-pile-has-cards {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}

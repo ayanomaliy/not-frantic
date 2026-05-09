@@ -20,6 +20,21 @@ import javafx.scene.paint.Paint;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 
+import javafx.animation.Interpolator;
+import javafx.animation.ScaleTransition;
+import javafx.animation.TranslateTransition;
+import javafx.geometry.Bounds;
+import javafx.geometry.Point2D;
+import javafx.scene.layout.StackPane;
+import javafx.util.Duration;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import java.util.ArrayDeque;
+import java.util.Queue;
+
+
 /**
  * Coordinates screen changes and user interaction in the Frantic^-1 JavaFX client.
  *
@@ -43,6 +58,27 @@ public class MainController {
     private ListChangeListener<String> handCardsListener;
     private ListChangeListener<ClientState.PlayerInfo> playerInfoListener;
     private boolean peekActive = false;
+
+    private boolean drawAnimationPending = false;
+    private boolean drawAnimationRunning = false;
+    private int handSizeBeforeDrawAnimation = -1;
+    private String pendingOpponentDrawPlayer = null;
+    private boolean opponentDrawAnimationRunning = false;
+
+    private boolean playAnimationRunning = false;
+    private boolean hiddenTransferAnimationRunning = false;
+
+    private final Queue<String> opponentDrawAnimationQueue = new ArrayDeque<>();
+    private final Queue<CardTransferAnimation> hiddenTransferAnimationQueue = new ArrayDeque<>();
+
+    private static final Duration PLAY_ANIMATION_DURATION = Duration.millis(430);
+    private static final Duration HIDDEN_TRANSFER_ANIMATION_DURATION = Duration.millis(430);
+
+    private record CardTransferAnimation(String sourcePlayer, String targetPlayer, int count) {}
+
+    private final Map<String, Integer> knownPublicHandSizes = new HashMap<>();
+
+    private static final Duration DRAW_ANIMATION_DURATION = Duration.millis(430);
 
 
     private static final double HAND_VERTICAL_LIFT = 40.0;
@@ -259,12 +295,31 @@ public class MainController {
             state.getCurrentHandCards().removeListener(handCardsListener);
         }
 
-        handCardsListener = change -> renderHand(view);
+        handCardsListener = change -> {
+            if (drawAnimationPending) {
+                int newHandSize = state.getCurrentHandCards().size();
+
+                if (newHandSize > handSizeBeforeDrawAnimation) {
+                    drawAnimationPending = false;
+                    playDrawCardAnimationThenRender(view);
+                    return;
+                }
+
+                drawAnimationPending = false;
+            }
+
+            if (!drawAnimationRunning && !playAnimationRunning && !hiddenTransferAnimationRunning) {
+                renderHand(view);
+            }
+        };
+
         state.getCurrentHandCards().addListener(handCardsListener);
         renderHand(view);
 
         view.getHandFanPane().widthProperty().addListener((obs, oldW, newW) -> {
-            if (newW.doubleValue() > 0) renderHand(view);
+            if (newW.doubleValue() > 0 && !drawAnimationRunning) {
+                renderHand(view);
+            }
         });
 
         view.getCircularTablePane().setRegistry(registry);
@@ -274,15 +329,49 @@ public class MainController {
         }
         playerInfoListener = change -> {
             peekActive = false;
+
+            if (playAnimationRunning || hiddenTransferAnimationRunning || opponentDrawAnimationRunning) {
+                return;
+            }
+
+            if (shouldAnimateOpponentDraw()) {
+                String targetPlayer = pendingOpponentDrawPlayer;
+                pendingOpponentDrawPlayer = null;
+
+                enqueueOpponentDrawAnimation(view, targetPlayer);
+                return;
+            }
+
             refreshOtherPlayers(view);
         };
+
         state.getPlayerInfoList().addListener(playerInfoListener);
         refreshOtherPlayers(view);
 
-        state.topCardIdProperty().addListener((obs, oldValue, newValue) -> renderDiscardPile(view));
-        state.requestedColorProperty().addListener((obs, oldValue, newValue) -> renderDiscardPile(view));
-        state.requestedNumberProperty().addListener((obs, oldValue, newValue) -> renderDiscardPile(view));
+        state.topCardIdProperty().addListener((obs, oldValue, newValue) -> {
+            if (!playAnimationRunning) {
+                renderDiscardPile(view);
+            }
+        });
+
+        state.requestedColorProperty().addListener((obs, oldValue, newValue) -> {
+            if (!playAnimationRunning) {
+                renderDiscardPile(view);
+            }
+        });
+
+        state.requestedNumberProperty().addListener((obs, oldValue, newValue) -> {
+            if (!playAnimationRunning) {
+                renderDiscardPile(view);
+            }
+        });
+
         renderDiscardPile(view);
+
+        state.drawPileSizeProperty().addListener((obs, oldValue, newValue) ->
+                view.renderDrawPile(newValue.intValue())
+        );
+        view.renderDrawPile(state.getDrawPileSize());
 
         updateDisplayedChat(view);
 
@@ -305,14 +394,7 @@ public class MainController {
         view.getCommandInput().setOnAction(e -> sendCommand(view));
 
         view.getDrawPilePane().setOnMouseClicked(e -> {
-            registry.getSoundId("CARD_DRAWN").ifPresent(soundManager::play);
-
-            if (isSecondChanceActiveForMe()) {
-                networkClient.resolveSecondChanceDrawPenalty();
-                clearPendingEffectIfSecondChance();
-            } else {
-                networkClient.drawCard();
-            }
+            requestDrawWithAnimation(view);
         });
 
         view.getEndTurnButton().setOnAction(e -> networkClient.endTurn());
@@ -373,9 +455,60 @@ public class MainController {
             }
         });
 
+        networkClient.setCardDrawnListener(drawingPlayer -> {
+            if (drawingPlayer == null || drawingPlayer.isBlank()) {
+                return;
+            }
+
+            if (drawingPlayer.equals(state.getUsername())) {
+                /*
+                 * If I clicked the draw pile myself, requestDrawWithAnimation(...)
+                 * already set drawAnimationPending. Do not set it twice.
+                 *
+                 * If I receive a card from Fantastic Four, Nice Try, event effects, etc.,
+                 * this public CARD_DRAWN event prepares the same local draw animation.
+                 */
+                if (!drawAnimationPending) {
+                    drawAnimationPending = true;
+                    handSizeBeforeDrawAnimation = state.getCurrentHandCards().size();
+                }
+                return;
+            }
+
+            enqueueOpponentDrawAnimation(view, drawingPlayer);
+        });
+
+        networkClient.setCardPlayedListener((playingPlayer, playedCardId) -> {
+            if (playingPlayer == null || playingPlayer.isBlank()) {
+                return;
+            }
+
+            playCardToDiscardAnimationThenRefresh(view, playingPlayer, playedCardId);
+        });
+
+        networkClient.setCardTransferListener((sourcePlayer, targetPlayer, count) -> {
+            enqueueHiddenTransferAnimation(view, sourcePlayer, targetPlayer, count);
+        });
+
         networkClient.setEventCardFlippedListener(eventCardId -> {
             EventBannerData data = describeEventCard(eventCardId);
             view.playEventOverlay(data.title(), data.description());
+        });
+
+        networkClient.setCardDrawnListener(drawingPlayer -> {
+            if (drawingPlayer == null || drawingPlayer.isBlank()) {
+                return;
+            }
+
+            /*
+             * The local player already gets the larger hand animation through HAND_UPDATE.
+             * Remote players should be animated into their opponent slot.
+             */
+            if (drawingPlayer.equals(state.getUsername())) {
+                return;
+            }
+
+            pendingOpponentDrawPlayer = drawingPlayer;
         });
 
         Scene scene = createStyledScene(view, 1280, 800);
@@ -509,7 +642,13 @@ public class MainController {
         java.util.List<ClientState.PlayerInfo> others = state.getPlayerInfoList().stream()
                 .filter(p -> !p.name().equals(username))
                 .toList();
+
         view.getCircularTablePane().setPlayerSlots(others, username);
+
+        knownPublicHandSizes.clear();
+        for (ClientState.PlayerInfo info : state.getPlayerInfoList()) {
+            knownPublicHandSizes.put(info.name(), info.handSize());
+        }
     }
 
     /**
@@ -1121,6 +1260,467 @@ public class MainController {
 
         view.getRootStack().getChildren().add(effectView);
     }
+
+    private void requestDrawWithAnimation(GameView view) {
+        drawAnimationPending = true;
+        handSizeBeforeDrawAnimation = state.getCurrentHandCards().size();
+
+        registry.getSoundId("CARD_DRAWN").ifPresent(soundManager::play);
+
+        if (isSecondChanceActiveForMe()) {
+            networkClient.resolveSecondChanceDrawPenalty();
+            clearPendingEffectIfSecondChance();
+        } else {
+            networkClient.drawCard();
+        }
+    }
+
+
+    private void playDrawCardAnimationThenRender(GameView view) {
+        StackPane animationLayer = view.getRootStack();
+
+        CardBacksideView movingCard = new CardBacksideView();
+        movingCard.setManaged(false);
+        movingCard.setMouseTransparent(true);
+        movingCard.setViewOrder(-2000);
+
+        Bounds drawBounds = view.getDrawPilePane().localToScene(
+                view.getDrawPilePane().getBoundsInLocal()
+        );
+
+        Bounds handBounds = view.getHandFanPane().localToScene(
+                view.getHandFanPane().getBoundsInLocal()
+        );
+
+        Point2D start = animationLayer.sceneToLocal(
+                drawBounds.getMinX() + drawBounds.getWidth() / 2,
+                drawBounds.getMinY() + drawBounds.getHeight() / 2
+        );
+
+        Point2D end = animationLayer.sceneToLocal(
+                handBounds.getMinX() + handBounds.getWidth() / 2,
+                handBounds.getMinY() + handBounds.getHeight() * 0.55
+        );
+
+        double startX = start.getX() - CardBacksideView.CARD_WIDTH / 2;
+        double startY = start.getY() - CardBacksideView.CARD_HEIGHT / 2;
+
+        double endX = end.getX() - CardBacksideView.CARD_WIDTH / 2;
+        double endY = end.getY() - CardBacksideView.CARD_HEIGHT / 2;
+
+        animationLayer.getChildren().add(movingCard);
+
+        /*
+         * IMPORTANT:
+         * unmanaged Regions are not automatically sized by the parent.
+         * Without an explicit size, only the logo child may appear,
+         * while the card background itself remains effectively invisible.
+         */
+        movingCard.resize(CardBacksideView.CARD_WIDTH, CardBacksideView.CARD_HEIGHT);
+        movingCard.autosize();
+        movingCard.applyCss();
+
+        movingCard.relocate(startX, startY);
+
+        drawAnimationRunning = true;
+
+        TranslateTransition slide = new TranslateTransition(DRAW_ANIMATION_DURATION, movingCard);
+        slide.setByX(endX - startX);
+        slide.setByY(endY - startY);
+        slide.setInterpolator(Interpolator.EASE_BOTH);
+
+        ScaleTransition shrink = new ScaleTransition(DRAW_ANIMATION_DURATION, movingCard);
+        shrink.setFromX(1.0);
+        shrink.setFromY(1.0);
+        shrink.setToX(0.82);
+        shrink.setToY(0.82);
+        shrink.setInterpolator(Interpolator.EASE_BOTH);
+
+        javafx.animation.ParallelTransition animation =
+                new javafx.animation.ParallelTransition(slide, shrink);
+
+        animation.setOnFinished(e -> {
+            animationLayer.getChildren().remove(movingCard);
+            drawAnimationRunning = false;
+            renderHand(view);
+        });
+
+        animation.play();
+    }
+
+    private boolean shouldAnimateOpponentDraw() {
+        if (pendingOpponentDrawPlayer == null || pendingOpponentDrawPlayer.isBlank()) {
+            return false;
+        }
+
+        if (opponentDrawAnimationRunning) {
+            return false;
+        }
+
+        if (pendingOpponentDrawPlayer.equals(state.getUsername())) {
+            return false;
+        }
+
+        Integer oldSize = knownPublicHandSizes.get(pendingOpponentDrawPlayer);
+        if (oldSize == null) {
+            return false;
+        }
+
+        return state.getPlayerInfoList().stream()
+                .filter(info -> info.name().equals(pendingOpponentDrawPlayer))
+                .findFirst()
+                .map(info -> info.handSize() > oldSize)
+                .orElse(false);
+    }
+
+    private void playOpponentDrawAnimationThenRefresh(GameView view, String targetPlayer) {
+        OtherPlayerView targetSlot = view.getCircularTablePane()
+                .getPlayerSlots()
+                .get(targetPlayer);
+
+        if (targetSlot == null) {
+            refreshOtherPlayers(view);
+            return;
+        }
+
+        StackPane animationLayer = view.getRootStack();
+
+        CardBacksideView movingCard = new CardBacksideView();
+        movingCard.setManaged(false);
+        movingCard.setMouseTransparent(true);
+        movingCard.setViewOrder(-2000);
+
+        Bounds drawBounds = view.getDrawPilePane().localToScene(
+                view.getDrawPilePane().getBoundsInLocal()
+        );
+
+        Point2D start = animationLayer.sceneToLocal(
+                drawBounds.getMinX() + drawBounds.getWidth() / 2,
+                drawBounds.getMinY() + drawBounds.getHeight() / 2
+        );
+
+        Point2D targetScenePoint = targetSlot.getHandTargetScenePoint();
+        Point2D end = animationLayer.sceneToLocal(targetScenePoint);
+
+        double startX = start.getX() - CardBacksideView.CARD_WIDTH / 2;
+        double startY = start.getY() - CardBacksideView.CARD_HEIGHT / 2;
+
+        double endX = end.getX() - CardBacksideView.CARD_WIDTH / 2;
+        double endY = end.getY() - CardBacksideView.CARD_HEIGHT / 2;
+
+        animationLayer.getChildren().add(movingCard);
+
+        /*
+         * Important because the animated card is unmanaged.
+         * Without explicit sizing, only the logo may render.
+         */
+        movingCard.resize(CardBacksideView.CARD_WIDTH, CardBacksideView.CARD_HEIGHT);
+        movingCard.autosize();
+        movingCard.applyCss();
+        movingCard.relocate(startX, startY);
+
+        opponentDrawAnimationRunning = true;
+
+        TranslateTransition slide = new TranslateTransition(DRAW_ANIMATION_DURATION, movingCard);
+        slide.setByX(endX - startX);
+        slide.setByY(endY - startY);
+        slide.setInterpolator(Interpolator.EASE_BOTH);
+
+        ScaleTransition shrink = new ScaleTransition(DRAW_ANIMATION_DURATION, movingCard);
+        shrink.setFromX(1.0);
+        shrink.setFromY(1.0);
+        shrink.setToX(OtherPlayerView.OPPONENT_CARD_SCALE);
+        shrink.setToY(OtherPlayerView.OPPONENT_CARD_SCALE);
+        shrink.setInterpolator(Interpolator.EASE_BOTH);
+
+        javafx.animation.ParallelTransition animation =
+                new javafx.animation.ParallelTransition(slide, shrink);
+
+        animation.setOnFinished(e -> {
+            animationLayer.getChildren().remove(movingCard);
+            opponentDrawAnimationRunning = false;
+
+            refreshOtherPlayers(view);
+
+            String nextTarget = opponentDrawAnimationQueue.poll();
+            if (nextTarget != null) {
+                enqueueOpponentDrawAnimation(view, nextTarget);
+            }
+        });
+
+        animation.play();
+    }
+
+    private Point2D getPlayerHandScenePoint(GameView view, String playerName) {
+        if (playerName != null && playerName.equals(state.getUsername())) {
+            Bounds handBounds = view.getHandFanPane().localToScene(
+                    view.getHandFanPane().getBoundsInLocal()
+            );
+
+            return new Point2D(
+                    handBounds.getMinX() + handBounds.getWidth() / 2,
+                    handBounds.getMinY() + handBounds.getHeight() * 0.55
+            );
+        }
+
+        OtherPlayerView slot = view.getCircularTablePane()
+                .getPlayerSlots()
+                .get(playerName);
+
+        if (slot != null) {
+            return slot.getHandTargetScenePoint();
+        }
+
+        Bounds tableBounds = view.getCircularTablePane().localToScene(
+                view.getCircularTablePane().getBoundsInLocal()
+        );
+
+        return new Point2D(
+                tableBounds.getMinX() + tableBounds.getWidth() / 2,
+                tableBounds.getMinY() + tableBounds.getHeight() / 2
+        );
+    }
+
+    private double getPlayerCardScale(String playerName) {
+        if (playerName != null && playerName.equals(state.getUsername())) {
+            return 1.0;
+        }
+
+        return OtherPlayerView.OPPONENT_CARD_SCALE;
+    }
+
+    private Point2D findLocalCardScenePoint(GameView view, int cardId) {
+        for (javafx.scene.Node node : view.getHandFanPane().getChildren()) {
+            if (node instanceof CardView && Integer.valueOf(cardId).equals(node.getUserData())) {
+                Bounds bounds = node.localToScene(node.getBoundsInLocal());
+
+                return new Point2D(
+                        bounds.getMinX() + bounds.getWidth() / 2,
+                        bounds.getMinY() + bounds.getHeight() / 2
+                );
+            }
+        }
+
+        return getPlayerHandScenePoint(view, state.getUsername());
+    }
+
+
+    private void hideLocalCardDuringPlayAnimation(GameView view, int cardId) {
+        for (javafx.scene.Node node : view.getHandFanPane().getChildren()) {
+            if (node instanceof CardView && Integer.valueOf(cardId).equals(node.getUserData())) {
+                node.setVisible(false);
+                node.setManaged(false);
+                return;
+            }
+        }
+    }
+
+    private void playCardToDiscardAnimationThenRefresh(
+            GameView view,
+            String playingPlayer,
+            int playedCardId
+    ) {
+        if (playAnimationRunning) {
+            renderHand(view);
+            refreshOtherPlayers(view);
+            renderDiscardPile(view);
+            return;
+        }
+
+        StackPane animationLayer = view.getRootStack();
+
+        boolean localPlayer = playingPlayer.equals(state.getUsername());
+
+        Point2D startScenePoint = localPlayer
+                ? findLocalCardScenePoint(view, playedCardId)
+                : getPlayerHandScenePoint(view, playingPlayer);
+
+        double startScale = getPlayerCardScale(playingPlayer);
+
+        Bounds discardBounds = view.getDiscardPilePane().localToScene(
+                view.getDiscardPilePane().getBoundsInLocal()
+        );
+
+        Point2D start = animationLayer.sceneToLocal(startScenePoint);
+
+        Point2D end = animationLayer.sceneToLocal(
+                discardBounds.getMinX() + discardBounds.getWidth() / 2,
+                discardBounds.getMinY() + discardBounds.getHeight() / 2
+        );
+
+        CardView movingCard = new CardView(playedCardId, registry, null, false);
+        movingCard.setManaged(false);
+        movingCard.setMouseTransparent(true);
+        movingCard.setViewOrder(-3000);
+
+        double startX = start.getX() - CardView.CARD_WIDTH / 2;
+        double startY = start.getY() - CardView.CARD_HEIGHT / 2;
+
+        double endX = end.getX() - CardView.CARD_WIDTH / 2;
+        double endY = end.getY() - CardView.CARD_HEIGHT / 2;
+
+        animationLayer.getChildren().add(movingCard);
+
+        movingCard.resize(CardView.CARD_WIDTH, CardView.CARD_HEIGHT);
+        movingCard.autosize();
+        movingCard.applyCss();
+        movingCard.relocate(startX, startY);
+
+        movingCard.setScaleX(startScale);
+        movingCard.setScaleY(startScale);
+
+        playAnimationRunning = true;
+
+        if (localPlayer) {
+            hideLocalCardDuringPlayAnimation(view, playedCardId);
+        }
+
+        TranslateTransition slide = new TranslateTransition(PLAY_ANIMATION_DURATION, movingCard);
+        slide.setByX(endX - startX);
+        slide.setByY(endY - startY);
+        slide.setInterpolator(Interpolator.EASE_BOTH);
+
+        ScaleTransition scale = new ScaleTransition(PLAY_ANIMATION_DURATION, movingCard);
+        scale.setFromX(startScale);
+        scale.setFromY(startScale);
+        scale.setToX(1.0);
+        scale.setToY(1.0);
+        scale.setInterpolator(Interpolator.EASE_BOTH);
+
+        javafx.animation.ParallelTransition animation =
+                new javafx.animation.ParallelTransition(slide, scale);
+
+        animation.setOnFinished(e -> {
+            animationLayer.getChildren().remove(movingCard);
+            playAnimationRunning = false;
+
+            renderHand(view);
+            refreshOtherPlayers(view);
+            renderDiscardPile(view);
+        });
+
+        animation.play();
+    }
+
+    private void enqueueOpponentDrawAnimation(GameView view, String targetPlayer) {
+        if (targetPlayer == null || targetPlayer.isBlank()) {
+            return;
+        }
+
+        if (opponentDrawAnimationRunning) {
+            opponentDrawAnimationQueue.add(targetPlayer);
+            return;
+        }
+
+        playOpponentDrawAnimationThenRefresh(view, targetPlayer);
+    }
+
+    private void enqueueHiddenTransferAnimation(
+            GameView view,
+            String sourcePlayer,
+            String targetPlayer,
+            int count
+    ) {
+        if (sourcePlayer == null || sourcePlayer.isBlank()
+                || targetPlayer == null || targetPlayer.isBlank()
+                || count <= 0) {
+            return;
+        }
+
+        CardTransferAnimation transfer = new CardTransferAnimation(sourcePlayer, targetPlayer, count);
+
+        if (hiddenTransferAnimationRunning) {
+            hiddenTransferAnimationQueue.add(transfer);
+            return;
+        }
+
+        playHiddenTransferAnimationThenRefresh(view, transfer);
+    }
+
+    private void playHiddenTransferAnimationThenRefresh(
+            GameView view,
+            CardTransferAnimation transfer
+    ) {
+        StackPane animationLayer = view.getRootStack();
+
+        Point2D startScenePoint = getPlayerHandScenePoint(view, transfer.sourcePlayer());
+        Point2D endScenePoint = getPlayerHandScenePoint(view, transfer.targetPlayer());
+
+        Point2D start = animationLayer.sceneToLocal(startScenePoint);
+        Point2D end = animationLayer.sceneToLocal(endScenePoint);
+
+        double startScale = getPlayerCardScale(transfer.sourcePlayer());
+        double endScale = getPlayerCardScale(transfer.targetPlayer());
+
+        int visibleCount = Math.min(transfer.count(), 4);
+
+        java.util.List<javafx.animation.Animation> animations = new java.util.ArrayList<>();
+        java.util.List<CardBacksideView> movingCards = new java.util.ArrayList<>();
+
+        hiddenTransferAnimationRunning = true;
+
+        for (int i = 0; i < visibleCount; i++) {
+            CardBacksideView movingCard = new CardBacksideView();
+            movingCard.setManaged(false);
+            movingCard.setMouseTransparent(true);
+            movingCard.setViewOrder(-2500 - i);
+
+            double offset = (i - (visibleCount - 1) / 2.0) * 8.0;
+
+            double startX = start.getX() - CardBacksideView.CARD_WIDTH / 2 + offset;
+            double startY = start.getY() - CardBacksideView.CARD_HEIGHT / 2 + offset * 0.25;
+
+            double endX = end.getX() - CardBacksideView.CARD_WIDTH / 2 + offset;
+            double endY = end.getY() - CardBacksideView.CARD_HEIGHT / 2 + offset * 0.25;
+
+            animationLayer.getChildren().add(movingCard);
+
+            movingCard.resize(CardBacksideView.CARD_WIDTH, CardBacksideView.CARD_HEIGHT);
+            movingCard.autosize();
+            movingCard.applyCss();
+            movingCard.relocate(startX, startY);
+
+            movingCard.setScaleX(startScale);
+            movingCard.setScaleY(startScale);
+
+            movingCards.add(movingCard);
+
+            TranslateTransition slide = new TranslateTransition(HIDDEN_TRANSFER_ANIMATION_DURATION, movingCard);
+            slide.setByX(endX - startX);
+            slide.setByY(endY - startY);
+            slide.setInterpolator(Interpolator.EASE_BOTH);
+            slide.setDelay(Duration.millis(i * 55L));
+
+            ScaleTransition scale = new ScaleTransition(HIDDEN_TRANSFER_ANIMATION_DURATION, movingCard);
+            scale.setFromX(startScale);
+            scale.setFromY(startScale);
+            scale.setToX(endScale);
+            scale.setToY(endScale);
+            scale.setInterpolator(Interpolator.EASE_BOTH);
+            scale.setDelay(Duration.millis(i * 55L));
+
+            animations.add(new javafx.animation.ParallelTransition(slide, scale));
+        }
+
+        javafx.animation.ParallelTransition all =
+                new javafx.animation.ParallelTransition(animations.toArray(new javafx.animation.Animation[0]));
+
+        all.setOnFinished(e -> {
+            animationLayer.getChildren().removeAll(movingCards);
+            hiddenTransferAnimationRunning = false;
+
+            renderHand(view);
+            refreshOtherPlayers(view);
+
+            CardTransferAnimation next = hiddenTransferAnimationQueue.poll();
+            if (next != null) {
+                enqueueHiddenTransferAnimation(view, next.sourcePlayer(), next.targetPlayer(), next.count());
+            }
+        });
+
+        all.play();
+    }
+
 
 
     private record EventBannerData(String title, String description) {}

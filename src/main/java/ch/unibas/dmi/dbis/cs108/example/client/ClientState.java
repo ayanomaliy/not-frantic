@@ -9,6 +9,7 @@ import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
+
 /**
  * Shared observable state for the Frantic^-1 GUI client.
  *
@@ -85,6 +86,8 @@ public class ClientState {
     /** Current round number, updated from each {@code GAME_STATE} and {@code NEXT_ROUND} message. */
     private final IntegerProperty currentRound = new SimpleIntegerProperty(1);
 
+
+    private final IntegerProperty drawPileSize = new SimpleIntegerProperty(0);
 
     /**
      * Creates a new shared client state object.
@@ -479,5 +482,17 @@ public class ClientState {
 
     public void setCurrentRound(int round) {
         currentRound.set(round);
+    }
+
+    public IntegerProperty drawPileSizeProperty() {
+        return drawPileSize;
+    }
+
+    public int getDrawPileSize() {
+        return drawPileSize.get();
+    }
+
+    public void setDrawPileSize(int size) {
+        drawPileSize.set(size);
     }
 }

@@ -172,13 +172,25 @@ public class EffectResolver {
         PlayerGameState actor = state.getPlayer(actingPlayer);
         PlayerGameState target = state.getPlayer(args.getTargetPlayer());
 
+        int movedCount = 0;
+
         for (Card card : args.getSelectedCards()) {
             actor.removeCard(card);
             target.addCard(card);
+            movedCount++;
+
             events.add(new GameEvent(
                     GameEvent.EventType.EFFECT_TRIGGERED,
                     SpecialEffect.GIFT.name() + ":" + actingPlayer
                             + ">" + args.getTargetPlayer() + ":" + card.id()
+            ));
+        }
+
+        if (movedCount > 0) {
+            events.add(GameEvent.cardTransferred(
+                    actingPlayer,
+                    args.getTargetPlayer(),
+                    movedCount
             ));
         }
 
@@ -229,6 +241,22 @@ public class EffectResolver {
                 SpecialEffect.EXCHANGE.name() + ":" + actingPlayer
                         + "<>" + args.getTargetPlayer()
         ));
+
+        if (!actorCards.isEmpty()) {
+            events.add(GameEvent.cardTransferred(
+                    actingPlayer,
+                    args.getTargetPlayer(),
+                    actorCards.size()
+            ));
+        }
+
+        if (!targetCards.isEmpty()) {
+            events.add(GameEvent.cardTransferred(
+                    args.getTargetPlayer(),
+                    actingPlayer,
+                    targetCards.size()
+            ));
+        }
 
         if (TurnEngine.endRoundIfAnyPlayerHasNoCards(state, events)) {
             return events;
