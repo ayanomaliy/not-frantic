@@ -1403,6 +1403,15 @@ public class ServerService {
         }
 
         List<GameEvent> events = TurnEngine.playCard(state, playerName, card);
+
+        GameEvent errorEvent = findErrorEvent(events);
+
+        if (errorEvent != null) {
+            session.send(new Message(Message.Type.ERROR, errorEvent.detail()).encode());
+            broadcastGameState(lobby);
+            return;
+        }
+
         broadcastEvents(lobby, events);
         broadcastAllHands(lobby);
 
@@ -1484,6 +1493,14 @@ public class ServerService {
         String playerName = session.getPlayerName();
 
         List<GameEvent> events = TurnEngine.drawCard(state, playerName);
+
+        GameEvent errorEvent = findErrorEvent(events);
+        if (errorEvent != null) {
+            session.send(new Message(Message.Type.ERROR, errorEvent.detail()).encode());
+            broadcastGameState(lobby);
+            return;
+        }
+
         broadcastEvents(lobby, events);
         broadcastAllHands(lobby);
         broadcastGameState(lobby);
@@ -1531,6 +1548,14 @@ public class ServerService {
         }
 
         List<GameEvent> events = TurnEngine.endTurn(state);
+
+        GameEvent errorEvent = findErrorEvent(events);
+        if (errorEvent != null) {
+            session.send(new Message(Message.Type.ERROR, errorEvent.detail()).encode());
+            broadcastGameState(lobby);
+            return;
+        }
+
         broadcastEvents(lobby, events);
 
         if (state.getPhase() == GamePhase.ROUND_END) {
@@ -1567,6 +1592,34 @@ public class ServerService {
         GameState state = lobby.getGameState();
         String playerName = session.getPlayerName();
 
+        if (state.getPhase() != GamePhase.RESOLVING_EFFECT) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "No effect is currently waiting for resolution."
+            ).encode());
+            return;
+        }
+
+        String expectedTarget = state.getPendingEffectTarget();
+
+        if (expectedTarget != null
+                && !expectedTarget.isBlank()
+                && !expectedTarget.equals(playerName)) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "This effect must be resolved by " + expectedTarget + "."
+            ).encode());
+            return;
+        }
+
+        if (state.getPendingEffects().isEmpty()) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "No pending effect to resolve."
+            ).encode());
+            return;
+        }
+
         final Object[] parsed;
         try {
             parsed = GameMessageParser.parseEffectResponse(payload, state, playerName);
@@ -1592,6 +1645,16 @@ public class ServerService {
         final SpecialEffect effect;
         try {
             effect = SpecialEffect.valueOf(effectName);
+
+            String expectedEffect = state.getPendingEffects().peek().name();
+
+            if (!expectedEffect.equals(effectName)) {
+                session.send(new Message(
+                        Message.Type.ERROR,
+                        "Expected effect response for " + expectedEffect + ", but got " + effectName + "."
+                ).encode());
+                return;
+            }
         } catch (IllegalArgumentException e) {
             session.send(new Message(
                     Message.Type.ERROR,
@@ -1910,12 +1973,11 @@ public class ServerService {
     }
 
 
-    private static Integer parseNumber(String text) {
-        try {
-            int number = Integer.parseInt(text.trim());
-            return number >= 1 && number <= 9 ? number : null;
-        } catch (NumberFormatException e) {
-            return null;
-        }
+
+    private GameEvent findErrorEvent(List<GameEvent> events) {
+        return events.stream()
+                .filter(event -> event.type() == GameEvent.EventType.ERROR)
+                .findFirst()
+                .orElse(null);
     }
 }

@@ -609,6 +609,11 @@ public class MainController {
                     networkClient.resolveSecondChance(cid);
                     clearPendingEffectIfSecondChance();
                 } else {
+                    if (!canLocalPlayerPlayNow()) {
+                        state.getGameMessages().add("[CLIENT] You cannot play right now.");
+                        return;
+                    }
+
                     networkClient.playCard(cid);
                 }
             });
@@ -1314,17 +1319,27 @@ public class MainController {
     }
 
     private void requestDrawWithAnimation(GameView view) {
+        if (isSecondChanceActiveForMe()) {
+            drawAnimationPending = true;
+            handSizeBeforeDrawAnimation = state.getCurrentHandCards().size();
+
+            registry.getSoundId("CARD_DRAWN").ifPresent(soundManager::play);
+
+            networkClient.resolveSecondChanceDrawPenalty();
+            clearPendingEffectIfSecondChance();
+            return;
+        }
+
+        if (!canLocalPlayerPlayNow()) {
+            state.getGameMessages().add("[CLIENT] You cannot draw right now.");
+            return;
+        }
+
         drawAnimationPending = true;
         handSizeBeforeDrawAnimation = state.getCurrentHandCards().size();
 
         registry.getSoundId("CARD_DRAWN").ifPresent(soundManager::play);
-
-        if (isSecondChanceActiveForMe()) {
-            networkClient.resolveSecondChanceDrawPenalty();
-            clearPendingEffectIfSecondChance();
-        } else {
-            networkClient.drawCard();
-        }
+        networkClient.drawCard();
     }
 
 
@@ -1801,5 +1816,11 @@ public class MainController {
             case 19 -> new EventBannerData("Double Scoring", "This round will count double.");
             default -> new EventBannerData("Event Triggered", "A global event changes the game.");
         };
+    }
+
+
+    private boolean canLocalPlayerPlayNow() {
+        return isCurrentTurnForMe(state.getCurrentPlayer())
+                && "AWAITING_PLAY".equals(state.getCurrentPhase());
     }
 }
