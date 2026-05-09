@@ -362,17 +362,10 @@ public class GameView extends BorderPane {
         VBox discardPileBox = createPileBox("Discard Pile", discardPilePane);
         pilesBox.getChildren().addAll(drawPileBox, discardPileBox);
 
-        currentPlayerLabel.setWrapText(true);
-        phaseLabel.setWrapText(true);
-        discardTopLabel.setWrapText(true);
-
-        HBox statusRow = new HBox(20, currentPlayerLabel, phaseLabel, discardTopLabel);
-        statusRow.setAlignment(Pos.CENTER);
-
         HBox buttonRow = new HBox(endTurnButton);
         buttonRow.setAlignment(Pos.CENTER);
 
-        VBox centerWrapper = new VBox(24, pilesBox, statusRow, buttonRow);
+        VBox centerWrapper = new VBox(24, pilesBox, buttonRow);
         centerWrapper.setAlignment(Pos.CENTER);
         centerWrapper.setMaxWidth(Double.MAX_VALUE);
         centerWrapper.setTranslateY(36);

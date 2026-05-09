@@ -190,4 +190,11 @@ public class CircularTablePane extends Pane {
     List<Double> getSlotAngles() {
         return Collections.unmodifiableList(slotAngles);
     }
+
+    public void highlightCurrentPlayer(String currentPlayerName) {
+        for (Map.Entry<String, OtherPlayerView> entry : playerSlots.entrySet()) {
+            boolean isActive = entry.getKey().equals(currentPlayerName);
+            entry.getValue().setActiveTurn(isActive);
+        }
+    }
 }

@@ -351,6 +351,7 @@ public class MainController {
 
         state.getPlayerInfoList().addListener(playerInfoListener);
         refreshOtherPlayers(view);
+        updateCurrentTurnHighlight(view);
 
         state.topCardIdProperty().addListener((obs, oldValue, newValue) -> {
             if (!playAnimationRunning) {
@@ -506,6 +507,8 @@ public class MainController {
         new FadeIn(view).play();
 
         state.currentPlayerProperty().addListener((obs, oldValue, newValue) -> {
+            updateCurrentTurnHighlight(view);
+
             if (newValue == null) {
                 return;
             }
@@ -640,13 +643,13 @@ public class MainController {
                 .toList();
 
         view.getCircularTablePane().setPlayerSlots(others, username);
+        updateCurrentTurnHighlight(view);
 
         knownPublicHandSizes.clear();
         for (ClientState.PlayerInfo info : state.getPlayerInfoList()) {
             knownPublicHandSizes.put(info.name(), info.handSize());
         }
     }
-
     /**
      * Updates the lobby chat area to show the message list for the active chat mode.
      *
@@ -1822,5 +1825,14 @@ public class MainController {
     private boolean canLocalPlayerPlayNow() {
         return isCurrentTurnForMe(state.getCurrentPlayer())
                 && "AWAITING_PLAY".equals(state.getCurrentPhase());
+    }
+
+
+    private void updateCurrentTurnHighlight(GameView view) {
+        if (view == null || view.getCircularTablePane() == null) {
+            return;
+        }
+
+        view.getCircularTablePane().highlightCurrentPlayer(state.getCurrentPlayer());
     }
 }

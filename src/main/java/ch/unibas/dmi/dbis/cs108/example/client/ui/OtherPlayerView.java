@@ -47,6 +47,8 @@ public class OtherPlayerView extends Group {
     private final Group infoGroup;
     private double seatAngleDegrees = 0.0;
     private int handSize;
+    private final Circle iconCircle;
+    private final Label nameLabel;
 
     /**
      * Creates a view with no asset registry; {@link #revealCards} will be a no-op.
@@ -62,16 +64,16 @@ public class OtherPlayerView extends Group {
         this.registry = registry;
         this.handSize = handSize;
 
-        Node iconNode = buildIconNode(colorClass);
+        this.iconCircle = buildFallbackIcon(colorClass);
 
-        Label nameLabel = new Label(playerName);
-        nameLabel.getStyleClass().add("field-label");
-        nameLabel.setMouseTransparent(true);
+        this.nameLabel = new Label(playerName);
+        this.nameLabel.getStyleClass().addAll("field-label", "player-name-label");
+        this.nameLabel.setMouseTransparent(true);
 
         fanPane = new Pane();
         fanGroup = new Group(fanPane);
 
-        VBox infoBox = new VBox(2, iconNode, nameLabel);
+        VBox infoBox = new VBox(2, iconCircle, nameLabel);
         infoBox.setAlignment(Pos.CENTER);
         infoGroup = new Group(infoBox);
 
@@ -131,13 +133,22 @@ public class OtherPlayerView extends Group {
         return buildFallbackIcon(colorClass);
     }
 
-    private Node buildFallbackIcon(String colorClass) {
+    private Circle buildFallbackIcon(String colorClass) {
         Circle circle = new Circle(ICON_SIZE / 2);
-        circle.getStyleClass().add("player-color-" + colorClass);
+        circle.getStyleClass().addAll(
+                "player-icon",
+                "player-color-" + colorClass
+        );
         return circle;
     }
 
+    public void setActiveTurn(boolean active) {
+        getStyleClass().remove("active-turn-player");
 
+        if (active) {
+            getStyleClass().add("active-turn-player");
+        }
+    }
 
     private void buildFan(int n) {
         fanPane.getChildren().clear();

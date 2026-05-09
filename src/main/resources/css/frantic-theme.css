@@ -569,6 +569,28 @@
     -fx-fill: #1abc9c;
 }
 
+.player-icon {
+    -fx-stroke: transparent;
+    -fx-stroke-width: 0;
+}
+
+.player-name-label {
+    -fx-font-weight: 500;
+}
+
+.active-turn-player .player-icon {
+    -fx-stroke: text-heading;
+    -fx-stroke-width: 4;
+    -fx-effect:
+            dropshadow(gaussian, color-warm, 20, 0.45, 0, 0);
+}
+
+.active-turn-player .player-name-label {
+    -fx-font-weight: 800;
+    -fx-text-fill: text-heading;
+    -fx-effect: dropshadow(gaussian, panel-shadow, 8, 0.35, 0, 2);
+}
+
 /* =========================
    Turn overlay
    ========================= */
