@@ -195,6 +195,13 @@ public class FxNetworkClient implements ClientMessageHandler {
     }
 
     /**
+     * Requests to end the current match immediately using the cheat shortcut.
+     */
+    public void cheatWin() {
+        protocolClient.cheatWin();
+    }
+
+    /**
      * Requests the current hand from the server.
      */
     public void requestHand() {

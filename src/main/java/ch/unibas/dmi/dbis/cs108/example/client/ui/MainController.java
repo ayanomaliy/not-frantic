@@ -17,7 +17,8 @@ import javafx.stage.Stage;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
-
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 
 /**
  * Coordinates screen changes and user interaction in the Frantic^-1 JavaFX client.
@@ -690,6 +691,23 @@ public class MainController {
     }
 
     /**
+     * Installs keyboard shortcuts for hidden developer actions.
+     *
+     * @param scene the active scene
+     */
+    private void installKeyboardShortcuts(Scene scene) {
+        scene.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+            if (event.isControlDown()
+                    && event.isShiftDown()
+                    && event.getCode() == KeyCode.W) {
+
+                networkClient.cheatWin();
+                event.consume();
+            }
+        });
+    }
+
+    /**
      * Creates a scene and attaches the shared CSS theme if the resource is available.
      *
      * @param root the root node of the scene
@@ -699,6 +717,8 @@ public class MainController {
      */
     private Scene createStyledScene(Parent root, double width, double height) {
         Scene scene = new Scene(root, width, height);
+
+        installKeyboardShortcuts(scene);
 
         var stylesheet = getClass().getResource(THEME_STYLESHEET);
         if (stylesheet != null) {
