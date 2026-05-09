@@ -794,3 +794,53 @@
     -fx-background-color: transparent;
     -fx-border-color: transparent;
 }
+
+/* =========================
+    Settings
+   ========================= */
+.settings-overlay {
+    -fx-background-color: rgba(0, 0, 0, 0.62);
+}
+
+.settings-panel {
+    -fx-background-color: rgba(33, 37, 45, 0.98);
+    -fx-background-radius: 24;
+    -fx-border-color: rgba(255, 245, 235, 0.16);
+    -fx-border-width: 1.2;
+    -fx-border-radius: 24;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.65), 34, 0.25, 0, 14);
+}
+
+.settings-title {
+    -fx-font-size: 34px;
+    -fx-font-weight: 800;
+    -fx-text-fill: text-heading;
+}
+
+.settings-subtitle {
+    -fx-font-size: 14px;
+    -fx-text-fill: text-secondary;
+}
+
+.settings-content {
+    -fx-spacing: 12;
+}
+
+.settings-row {
+    -fx-background-color: rgba(255, 245, 235, 0.045);
+    -fx-background-radius: 16;
+    -fx-border-color: rgba(255, 245, 235, 0.08);
+    -fx-border-radius: 16;
+    -fx-padding: 14 16 14 16;
+}
+
+.settings-row-title {
+    -fx-font-size: 15px;
+    -fx-font-weight: 700;
+    -fx-text-fill: text-heading;
+}
+
+.settings-row-description {
+    -fx-font-size: 12px;
+    -fx-text-fill: text-muted;
+}

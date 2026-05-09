@@ -44,10 +44,10 @@ import javafx.scene.control.ListCell;
  */
 public class GameView extends BorderPane {
 
-    private static final double SIDEBAR_MIN_WIDTH = 250;
+    private static final double SIDEBAR_MIN_WIDTH = 220;
 
     private static final double PLAYERS_HEIGHT_COLLAPSED = 350;
-    private static final double CHAT_HEIGHT_COLLAPSED = 78;
+    private static final double CHAT_HEIGHT_COLLAPSED = 70;
 
     private static final double PLAYERS_HEIGHT_EXPANDED = 150;
     private static final double CHAT_HEIGHT_EXPANDED = 560;
@@ -76,6 +76,7 @@ public class GameView extends BorderPane {
 
     private final ListView<String> playersList = new ListView<>();
     private final Button leaveButton = new Button("Leave Lobby");
+    private final Button settingsButton = new Button("Settings");
 
     private final ListView<String> gameInfoList = new ListView<>();
 
@@ -96,6 +97,8 @@ public class GameView extends BorderPane {
     private final VBox eventPanel = new VBox(18);
     private final Label eventTitleLabel = new Label();
     private final Label eventDescriptionLabel = new Label();
+
+    private SettingsView settingsView;
 
     private CircularTablePane circularTablePane;
 
@@ -138,6 +141,7 @@ public class GameView extends BorderPane {
 
         endTurnButton.getStyleClass().addAll("frantic-button", "secondary-button");
         leaveButton.getStyleClass().addAll("frantic-button", "danger-button");
+        settingsButton.getStyleClass().addAll("frantic-button", "secondary-button");
 
         sendButton.getStyleClass().addAll("frantic-button", "primary-button");
         commandButton.getStyleClass().addAll("frantic-button", "secondary-button");
@@ -164,6 +168,7 @@ public class GameView extends BorderPane {
         playerHandPane.getStyleClass().add("hand-pane");
 
         toggleChatButton.setOnAction(e -> toggleChat());
+        settingsButton.setOnAction(e -> showSettingsView());
     }
 
     /**
@@ -327,7 +332,7 @@ public class GameView extends BorderPane {
          * This binding is intentionally conservative so that the sidebar
          * still keeps enough room on medium-sized screens.
          */
-        gameArea.prefWidthProperty().bind(widthProperty().multiply(0.70));
+        gameArea.prefWidthProperty().bind(widthProperty().multiply(0.76));
 
         buildCenterArea();
         buildBottomHandArea();
@@ -402,13 +407,16 @@ public class GameView extends BorderPane {
     private VBox buildSidebar() {
         sideBar.setFillWidth(true);
         sideBar.setMinWidth(SIDEBAR_MIN_WIDTH);
-        sideBar.prefWidthProperty().bind(widthProperty().multiply(0.28));
+        sideBar.prefWidthProperty().bind(widthProperty().multiply(0.22));
+
+        HBox lobbyButtonRow = new HBox(10, leaveButton, settingsButton);
+        lobbyButtonRow.setAlignment(Pos.CENTER_LEFT);
 
         playersBox = new VBox(
                 8,
                 createSectionTitle("Players in Lobby"),
                 playersList,
-                leaveButton
+                lobbyButtonRow
         );
         playersBox.getStyleClass().add("panel");
         playersBox.setMinHeight(130);
@@ -433,12 +441,12 @@ public class GameView extends BorderPane {
         chatBox.getStyleClass().add("panel");
         chatBox.setPrefHeight(CHAT_HEIGHT_COLLAPSED);
         chatBox.setMinHeight(CHAT_HEIGHT_COLLAPSED);
-        chatBox.setMaxHeight(Double.MAX_VALUE);
+        chatBox.setMaxHeight(Region.USE_PREF_SIZE);
 
         chatList.setMinHeight(120);
 
         VBox.setVgrow(playersBox, Priority.ALWAYS);
-        VBox.setVgrow(chatBox, Priority.ALWAYS);
+        VBox.setVgrow(chatBox, Priority.NEVER);
 
         sideBar.getChildren().addAll(playersBox, chatBox);
 
@@ -714,6 +722,15 @@ public class GameView extends BorderPane {
     }
 
     /**
+     * Returns the button used to open settings
+     *
+     * @return the settings button
+     */
+    public Button getSettingsButton() {
+        return settingsButton;
+    }
+
+    /**
      * Returns the button used to expand or collapse the chat panel.
      *
      * @return the chat toggle button
@@ -915,5 +932,40 @@ public class GameView extends BorderPane {
             }
         });
     }
+
+    private void showSettingsView() {
+        if (settingsView != null && rootStack.getChildren().contains(settingsView)) {
+            return;
+        }
+
+        settingsView = new SettingsView();
+        settingsView.prefWidthProperty().bind(rootStack.widthProperty());
+        settingsView.prefHeightProperty().bind(rootStack.heightProperty());
+
+        settingsView.getOkButton().setOnAction(e -> hideSettingsView());
+
+        rootStack.getChildren().add(settingsView);
+    }
+
+    private void hideSettingsView() {
+        if (settingsView == null) {
+            return;
+        }
+
+        SettingsView viewToRemove = settingsView;
+
+        FadeTransition fadeOut = new FadeTransition(Duration.millis(180), viewToRemove);
+        fadeOut.setFromValue(1.0);
+        fadeOut.setToValue(0.0);
+        fadeOut.setOnFinished(e -> {
+            rootStack.getChildren().remove(viewToRemove);
+            if (settingsView == viewToRemove) {
+                settingsView = null;
+            }
+        });
+
+        fadeOut.play();
+    }
+
 
 }
