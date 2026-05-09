@@ -955,7 +955,7 @@ We will meet tomorrow and try to finish these tasks:
 
 ## Date: May 9, 2026
 
-### GUI Polish, Animations, and Visual Identity
+### GUI Polish, Animations, and Visual Identity (Aiysha)
 
 #### What did I do today?
 
@@ -1008,4 +1008,46 @@ We will meet tomorrow and try to finish these tasks:
   * loading/game screens.
 * Continue polishing the overall visual consistency of the GUI.
 
+## Date: May 9, 2026
 
+### Card Design & Lobby Feature Updates (Sevval, Aiysha)
+
+## What did we do today?
+
+* We added a **Change Name** button in the **lobby**.
+* We added **white numbers** on the **black cards** to improve visibility.
+* We removed the **small numbers** on the **special cards** because they were confusing.
+* We changed the names of our **F U cards** back to its **original name**.
+
+## Work Summary
+
+During today’s work session, we focused on improving the usability, clarity, and overall player experience of the game interface.
+
+### Lobby Name Change Feature
+
+One of the main tasks today was adding a **Change Name** button in the lobby. This new feature allows players to easily update their displayed name before starting or joining a game. This improves flexibility and makes the lobby experience more user-friendly.
+
+### Card Visibility Improvements
+
+We also improved the visibility of the cards by adding **white numbers** on the **black cards**. Previously, the numbers were harder to recognize during gameplay, so this change makes card values much easier to read and improves accessibility for players.
+
+Got it—here’s the corrected version of that section:
+
+### Special Card Design Changes
+
+Another important update was removing the **small numbers** displayed on the **special cards**. These numbers caused confusion during gameplay because, unlike the other cards where the number represents the actual card value, the numbers on the special cards represented the **score** of the card instead. This often led to misunderstandings for players. By removing them, the card design is now clearer, more consistent, and easier to understand.
+
+### Card Name Adjustments
+
+We also changed the names of our **F U cards** back to its **original name**. This helps maintain consistency with the intended game design and makes the cards easier for players to recognize and remember.
+
+### Conclusion
+
+Overall, today’s session focused on improving the user interface and reducing confusion during gameplay. The new lobby feature and the visual improvements to the cards make the game more intuitive and polished.
+
+## Future Plans
+
+* Add a **Settings** button for adjusting **sound**.
+* Find and implement a **bug tracker system**.
+* Create our own custom sound effects and audio for the game.
+* Remove an unnecessary or unbalanced **card** from the game.
