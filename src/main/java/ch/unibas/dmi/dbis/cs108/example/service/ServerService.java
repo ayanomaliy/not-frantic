@@ -1158,8 +1158,12 @@ public class ServerService {
     }
 
     /**
-     * Handles a cheat command that instantly ends the current match
-     * and declares the requesting player as the winner.
+     * Handles a cheat command by publicly punishing the triggering player.
+     *
+     * <p>The real session name is not changed because the active {@link GameState}
+     * still uses the original player name internally. Instead, the punishment is
+     * shown in the round-end and game-end results by displaying the player as
+     * {@code CHEATER_<name>} and adding 6999 penalty points.</p>
      *
      * @param session the client session triggering the cheat
      */
@@ -1184,21 +1188,43 @@ public class ServerService {
 
         GameState state = lobby.getGameState();
 
-        // calculate round scores from current hands
+        String originalName = session.getPlayerName();
+        String punishedName = "CHEATER_" + originalName;
+        int cheatPenalty = 6999;
+
+        // Calculate round scores from current hands.
+        // This also updates each player's total score internally.
         Map<String, Integer> roundScores =
                 ScoreCalculator.calculateRoundScores(state.getPlayerOrder(), state);
 
-        // keep cumulative scores in the lobby
+        // Rebuild cumulative scores cleanly to avoid keeping both old and punished names.
+        lobby.getCumulativeScores().clear();
+
         for (PlayerGameState player : state.getPlayerOrder()) {
-            lobby.getCumulativeScores().put(player.getPlayerName(), player.getTotalScore());
+            String playerName = player.getPlayerName();
+            int totalScore = player.getTotalScore();
+
+            if (playerName.equals(originalName)) {
+                lobby.getCumulativeScores().put(punishedName, totalScore + cheatPenalty);
+            } else {
+                lobby.getCumulativeScores().put(playerName, totalScore);
+            }
         }
 
-        // build ROUND_END payload: player:roundPoints:totalPoints,...
+        // Build ROUND_END payload: player:roundPoints:totalPoints,...
         String roundEndPayload = state.getPlayerOrder().stream()
                 .map(player -> {
-                    int roundPoints = roundScores.getOrDefault(player.getPlayerName(), 0);
+                    String playerName = player.getPlayerName();
+                    int roundPoints = roundScores.getOrDefault(playerName, 0);
                     int totalPoints = player.getTotalScore();
-                    return player.getPlayerName() + ":" + roundPoints + ":" + totalPoints;
+
+                    if (playerName.equals(originalName)) {
+                        return punishedName + ":"
+                                + (roundPoints + cheatPenalty) + ":"
+                                + (totalPoints + cheatPenalty);
+                    }
+
+                    return playerName + ":" + roundPoints + ":" + totalPoints;
                 })
                 .collect(java.util.stream.Collectors.joining(","));
 
@@ -1207,8 +1233,8 @@ public class ServerService {
                 roundEndPayload
         ));
 
-        // winner stays the cheat user if that is your intended cheat behavior
-        String winner = session.getPlayerName();
+        String winner = punishedName;
+
         highScoreHistory.appendFinishedGame(
                 lobby.getLobbyId(),
                 winner,
@@ -1227,7 +1253,9 @@ public class ServerService {
 
         broadcastLobbyListToAllClients();
 
-        log("CHEATWIN used by " + winner + " in lobby " + lobby.getLobbyId());
+        log("CHEATWIN punished " + originalName
+                + " as " + punishedName
+                + " in lobby " + lobby.getLobbyId());
     }
 
     /**
