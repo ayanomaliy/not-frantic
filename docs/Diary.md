@@ -1062,4 +1062,38 @@ Overall, today’s session focused on improving the user interface and reducing 
 
 #### Future Plans
 
+## Date: May 10, 2026
 
+### Spectator Mode and Reconnect Improvements (Senanur)
+
+## What did I do today?
+
+* Implemented a new **spectator mode** for active games.
+* Added a **Spectate Lobby** button to the GUI.
+* Made spectators automatically follow the **current player’s perspective**.
+* Allowed spectators to see the current player’s hand while preventing gameplay actions.
+* Blocked spectators from:
+  * drawing cards,
+  * playing cards,
+  * ending turns,
+  * resolving effects.
+* Added server-side spectator handling and cleanup.
+* Fixed spectator reconnect after connection loss.
+* Fixed rejoining spectator mode after leaving a lobby.
+* Updated the game UI so spectators see **“Watching Current Player”** instead of **“Your Hand”**.
+* Fixed the lobby player list for spectators.
+
+## Work Summary
+
+Today I focused on implementing and polishing the spectator mode. Spectators can now join a running game from the GUI using the **Spectate Lobby** button. They do not participate as players, but they can watch the game from the perspective of the current player.
+
+I also improved synchronization so spectators receive live game state, hand updates, and player list updates. Additionally, I fixed reconnect-related issues so spectator mode still works after a connection loss or after leaving and joining again.
+
+## Conclusion
+
+Spectator mode is now working through the GUI. It supports current-player perspective, reconnect handling, and prevents spectators from interacting with the game.
+
+## Future Plans
+
+* Improve spectator UI polish.
+* Continue testing reconnect and lobby edge cases.
