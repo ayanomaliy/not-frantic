@@ -33,6 +33,9 @@ public class Lobby {
     /** Active client sessions currently inside this lobby. */
     private final List<ClientSession> sessions = new ArrayList<>();
 
+    /** Spectators currently watching this lobby. */
+    private final List<ClientSession> spectators = new ArrayList<>();
+
     /** Players that disconnected during an active game. */
     private final Set<String> disconnectedPlayers = new HashSet<>();
 
@@ -343,4 +346,32 @@ public class Lobby {
                 session.getPlayerName().equalsIgnoreCase(playerName)
         );
     }
+
+    /**
+     * Adds a spectator to the lobby.
+     *
+     * @param session spectator session
+     */
+    public void addSpectator(ClientSession session) {
+        spectators.add(session);
+    }
+
+    /**
+     * Removes a spectator from the lobby.
+     *
+     * @param session spectator session
+     */
+    public void removeSpectator(ClientSession session) {
+        spectators.remove(session);
+    }
+
+    /**
+     * Returns all active spectators.
+     *
+     * @return spectator list copy
+     */
+    public List<ClientSession> getSpectators() {
+        return new ArrayList<>(spectators);
+    }
+
 }

@@ -63,6 +63,9 @@ public class FxNetworkClient implements ClientMessageHandler {
 
     private CardTransferListener cardTransferListener;
 
+    private boolean spectatingBeforeDisconnect = false;
+    private String lastSpectatedLobby = "";
+
     private String lastHost = "";
     private int lastPort = 0;
     private volatile boolean reconnecting = false;
@@ -204,6 +207,15 @@ public class FxNetworkClient implements ClientMessageHandler {
      */
     public void joinLobby(String lobbyId) {
         protocolClient.joinLobby(lobbyId);
+    }
+
+    /**
+     * Requests to spectate an active lobby.
+     *
+     * @param lobbyId the target lobby id
+     */
+    public void spectateLobby(String lobbyId) {
+        protocolClient.spectateLobby(lobbyId);
     }
 
     /**
@@ -508,6 +520,29 @@ public class FxNetworkClient implements ClientMessageHandler {
                     state.setCurrentLobby(info.substring("You are already in lobby: ".length()).trim());
                 } else if (info.startsWith("You left lobby: ")) {
                     state.setCurrentLobby("");
+                } else if (info.startsWith("You are now spectating lobby: ")) {
+
+                    lastSpectatedLobby =
+                            info.substring("You are now spectating lobby: ".length()).trim();
+
+                    spectatingBeforeDisconnect = true;
+
+                    state.setSpectatorMode(true);
+                    state.setCurrentLobby(lastSpectatedLobby);
+
+                    gameViewShown = false;
+
+                } else if (info.startsWith("You stopped spectating lobby: ")) {
+
+                    spectatingBeforeDisconnect = false;
+                    lastSpectatedLobby = "";
+
+                    state.setSpectatorMode(false);
+                    state.setCurrentLobby("");
+
+                    gameViewShown = false;
+
+                    clearLocalGameOnly();
                 }
 
                 if (info.startsWith("Your name has been set to ")) {
@@ -1027,7 +1062,12 @@ public class FxNetworkClient implements ClientMessageHandler {
                     );
 
                     protocolClient.connect(lastHost, lastPort);
-                    protocolClient.reconnect(username, token);
+                    if (spectatingBeforeDisconnect && lastSpectatedLobby != null && !lastSpectatedLobby.isBlank()) {
+                        protocolClient.setName(username);
+                        protocolClient.spectateLobby(lastSpectatedLobby);
+                    } else {
+                        protocolClient.reconnect(username, token);
+                    }
 
                     reconnecting = false;
 

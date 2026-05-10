@@ -39,6 +39,7 @@ public class LobbyView extends BorderPane {
     private final ListView<String> lobbiesList = new ListView<>();
     private final Button refreshLobbiesButton = new Button("Refresh Lobbies");
     private final Button joinLobbyButton = new Button("Join Selected Lobby");
+    private final Button spectateLobbyButton = new Button("Spectate Lobby");
     private final Button createLobbyButton = new Button("Create New Lobby");
     private final Button leaveLobbyButton = new Button("Leave Lobby");
 
@@ -83,6 +84,7 @@ public class LobbyView extends BorderPane {
                 refreshLobbiesButton,
                 createLobbyButton,
                 joinLobbyButton,
+                spectateLobbyButton,
                 leaveLobbyButton
         );
 
@@ -157,6 +159,9 @@ public class LobbyView extends BorderPane {
         createLobbyButton.getStyleClass().addAll("frantic-button", "primary-button");
         leaveLobbyButton.getStyleClass().addAll("frantic-button", "danger-button");
 
+        spectateLobbyButton.getStyleClass().addAll("frantic-button", "secondary-button");
+        spectateLobbyButton.setDisable(true);
+
         chatModeButton.getStyleClass().addAll("frantic-button", "secondary-button");
 
         nameButton.getStyleClass().addAll("frantic-button", "primary-button");
@@ -205,9 +210,23 @@ public class LobbyView extends BorderPane {
             }
         });
 
-        lobbiesList.getSelectionModel().selectedItemProperty().addListener((obs, oldValue, newValue) ->
-                joinLobbyButton.setDisable(!isJoinableLobbyEntry(newValue))
-        );
+        lobbiesList.getSelectionModel().selectedItemProperty().addListener((obs, oldValue, newValue) -> {
+            joinLobbyButton.setDisable(!isJoinableLobbyEntry(newValue));
+            spectateLobbyButton.setDisable(!isSpectatableLobbyEntry(newValue));
+        });
+    }
+
+    public boolean isSpectatableLobbyEntry(String lobbyEntry) {
+        if (lobbyEntry == null || lobbyEntry.isBlank()) {
+            return false;
+        }
+
+        String status = extractLobbyStatus(lobbyEntry);
+        return "PLAYING".equalsIgnoreCase(status);
+    }
+
+    public Button getSpectateLobbyButton() {
+        return spectateLobbyButton;
     }
 
     /**
@@ -243,11 +262,18 @@ public class LobbyView extends BorderPane {
      * @return the extracted status, or an empty string if no status is found
      */
     private String extractLobbyStatus(String lobbyEntry) {
-        String[] parts = lobbyEntry.split("\\|");
-        if (parts.length < 3) {
+        if (lobbyEntry == null || lobbyEntry.isBlank()) {
             return "";
         }
-        return parts[2].trim();
+
+        int start = lobbyEntry.indexOf("(");
+        int end = lobbyEntry.indexOf(")");
+
+        if (start >= 0 && end > start) {
+            return lobbyEntry.substring(start + 1, end).trim();
+        }
+
+        return "";
     }
 
     /**
@@ -257,13 +283,17 @@ public class LobbyView extends BorderPane {
      * @return {@code true} if the lobby is full, otherwise {@code false}
      */
     private boolean isLobbyFull(String lobbyEntry) {
-        String[] parts = lobbyEntry.split("\\|");
-        if (parts.length < 2) {
+        if (lobbyEntry == null || lobbyEntry.isBlank()) {
             return false;
         }
 
-        String playerPart = parts[1].trim();
-        String[] counts = playerPart.split("/");
+        String[] parts = lobbyEntry.trim().split("\\s+");
+        if (parts.length < 3) {
+            return false;
+        }
+
+        String countPart = parts[parts.length - 1];
+        String[] counts = countPart.split("/");
 
         if (counts.length != 2) {
             return false;

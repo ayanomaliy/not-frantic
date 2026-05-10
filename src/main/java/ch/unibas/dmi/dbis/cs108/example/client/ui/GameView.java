@@ -93,6 +93,8 @@ public class GameView extends BorderPane {
     private boolean chatExpanded = false;
     private final Button toggleChatButton = new Button("Expand Chat");
 
+    private final Label handTitleLabel = createSectionTitle("Your Hand");
+
     // events
     private final StackPane eventOverlay = new StackPane();
     private final VBox eventPanel = new VBox(18);
@@ -393,9 +395,26 @@ public class GameView extends BorderPane {
         handFanPane.prefWidthProperty().bind(widthProperty().multiply(0.60));
 
         handSection.getChildren().addAll(
-                createSectionTitle("Your Hand"),
+                handTitleLabel,
                 handFanPane
         );
+
+//        handSection.getChildren().addAll(
+//                createSectionTitle("Your Hand"),
+//                handFanPane
+//        );
+    }
+
+    public void setSpectatorMode(boolean spectatorMode) {
+        if (spectatorMode) {
+            handTitleLabel.setText("Watching Current Player");
+            endTurnButton.setDisable(true);
+            drawPilePane.setDisable(true);
+        } else {
+            handTitleLabel.setText("Your Hand");
+            endTurnButton.setDisable(false);
+            drawPilePane.setDisable(false);
+        }
     }
 
     /**

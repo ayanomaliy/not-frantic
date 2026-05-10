@@ -93,6 +93,16 @@ public class ClientState {
     private final IntegerProperty serverPort = new SimpleIntegerProperty(0);
     private final StringProperty reconnectToken = new SimpleStringProperty("");
 
+    private boolean spectatorMode = false;
+
+    public boolean isSpectatorMode() {
+        return spectatorMode;
+    }
+
+    public void setSpectatorMode(boolean spectatorMode) {
+        this.spectatorMode = spectatorMode;
+    }
+
     /**
      * Creates a new shared client state object.
      */

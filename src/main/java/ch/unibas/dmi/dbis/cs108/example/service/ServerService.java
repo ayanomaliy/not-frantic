@@ -37,6 +37,8 @@ public class ServerService {
     /** Maps each connected client session to the id of its current lobby. */
     private final Map<ClientSession, String> playerLobbyMap = new HashMap<>();
 
+    private final Map<ClientSession, String> spectatorLobbyMap = new HashMap<>();
+
     /** All currently connected client sessions. */
     private final List<ClientSession> connectedClients = new ArrayList<>();
 
@@ -77,6 +79,17 @@ public class ServerService {
     }
 
     /**
+     * Returns the spectated lobby of the given session.
+     *
+     * @param session spectator session
+     * @return spectated lobby or null
+     */
+    private Lobby getSpectatorLobbyOf(ClientSession session) {
+        String lobbyId = spectatorLobbyMap.get(session);
+        return lobbyId == null ? null : lobbies.get(lobbyId);
+    }
+
+    /**
      * Sends a structured message to all clients inside the given lobby.
      *
      * @param lobby the target lobby
@@ -84,8 +97,13 @@ public class ServerService {
      */
     private void broadcastToLobby(Lobby lobby, Message message) {
         log("Broadcast to lobby " + lobby.getLobbyId() + ": " + message.encode());
+
         for (ClientSession session : lobby.getSessions()) {
             session.send(message.encode());
+        }
+
+        for (ClientSession spectator : lobby.getSpectators()) {
+            spectator.send(message.encode());
         }
     }
 
@@ -201,6 +219,19 @@ public class ServerService {
      */
     public synchronized void unregisterClient(ClientSession session) {
         connectedClients.remove(session);
+
+        Lobby spectatedLobby = getSpectatorLobbyOf(session);
+
+        if (spectatedLobby != null) {
+            spectatedLobby.removeSpectator(session);
+            spectatorLobbyMap.remove(session);
+
+            log("Spectator disconnected from lobby " + spectatedLobby.getLobbyId()
+                    + ": " + session.getPlayerName());
+
+            broadcastAllPlayersListToAllClients();
+            return;
+        }
 
         Lobby lobby = getLobbyOf(session);
 
@@ -445,6 +476,7 @@ public class ServerService {
             case WHISPERCHAT -> handleWhisperChat(session, message.content());
             case CREATE -> handleCreateLobby(session, message.content());
             case JOIN -> handleJoinLobby(session, message.content());
+            case SPECTATE -> handleSpectate(session, message.content());
             case BROADCAST -> handleBroadcast(session, message.content());
             case RECONNECT -> handleReconnect(session, message.content());
 
@@ -749,6 +781,22 @@ public class ServerService {
     private void handleLeave(ClientSession session) {
         Lobby lobby = getLobbyOf(session);
 
+        Lobby spectatedLobby = getSpectatorLobbyOf(session);
+
+        if (spectatedLobby != null) {
+            spectatedLobby.removeSpectator(session);
+            spectatorLobbyMap.remove(session);
+
+            session.send(new Message(
+                    Message.Type.INFO,
+                    "You stopped spectating lobby: " + spectatedLobby.getLobbyId()
+            ).encode());
+
+            sendLobbyList(session);
+            sendAllPlayersList(session);
+            return;
+        }
+
         if (lobby == null) {
             session.send(new Message(
                     Message.Type.ERROR,
@@ -766,10 +814,24 @@ public class ServerService {
                 "You left lobby: " + oldLobbyId
         ).encode());
 
-        session.send(new Message(
-                Message.Type.PLAYERS,
-                ""
-        ).encode());
+        if (spectatedLobby != null) {
+            spectatedLobby.removeSpectator(session);
+            spectatorLobbyMap.remove(session);
+
+            session.send(new Message(
+                    Message.Type.INFO,
+                    "You stopped spectating lobby: " + spectatedLobby.getLobbyId()
+            ).encode());
+
+            session.send(new Message(
+                    Message.Type.PLAYERS,
+                    ""
+            ).encode());
+
+            sendLobbyList(session);
+            sendAllPlayersList(session);
+            return;
+        }
 
         sendLobbyList(session);
         sendAllPlayersList(session);
@@ -1402,6 +1464,37 @@ public class ServerService {
      */
     private void handleGetHand(ClientSession session) {
         Lobby lobby = getLobbyOf(session);
+
+        if (getSpectatorLobbyOf(session) != null) {
+
+            Lobby spectatorLobby = getSpectatorLobbyOf(session);
+
+            if (spectatorLobby == null
+                    || spectatorLobby.getGameState() == null) {
+
+                session.send(new Message(
+                        Message.Type.ERROR,
+                        "No active game."
+                ).encode());
+
+                return;
+            }
+
+            try {
+                PlayerGameState currentPlayer =
+                        spectatorLobby.getGameState().getCurrentPlayer();
+
+                session.send(new Message(
+                        Message.Type.HAND_UPDATE,
+                        GameStateSerializer.serializeHand(currentPlayer)
+                ).encode());
+
+            } catch (Exception ignored) {
+            }
+
+            return;
+        }
+
         if (lobby == null || lobby.getGameState() == null) {
             session.send(new Message(Message.Type.ERROR, "No active game.").encode());
             return;
@@ -1514,6 +1607,15 @@ public class ServerService {
      */
     private void handlePlayCard(ClientSession session, String payload) {
         Lobby lobby = getLobbyOf(session);
+
+        if (getSpectatorLobbyOf(session) != null) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Spectators cannot perform game actions."
+            ).encode());
+            return;
+        }
+
         if (lobby == null || lobby.getGameState() == null) {
             session.send(new Message(Message.Type.ERROR, "No active game.").encode());
             return;
@@ -1623,6 +1725,15 @@ public class ServerService {
      */
     private void handleDrawCard(ClientSession session) {
         Lobby lobby = getLobbyOf(session);
+
+        if (getSpectatorLobbyOf(session) != null) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Spectators cannot perform game actions."
+            ).encode());
+            return;
+        }
+
         if (lobby == null || lobby.getGameState() == null) {
             session.send(new Message(Message.Type.ERROR, "No active game.").encode());
             return;
@@ -1655,6 +1766,15 @@ public class ServerService {
      */
     private void handleEndTurn(ClientSession session) {
         Lobby lobby = getLobbyOf(session);
+
+        if (getSpectatorLobbyOf(session) != null) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Spectators cannot perform game actions."
+            ).encode());
+            return;
+        }
+
         if (lobby == null || lobby.getGameState() == null) {
             session.send(new Message(Message.Type.ERROR, "No active game.").encode());
             return;
@@ -1723,6 +1843,15 @@ public class ServerService {
      */
     private void handleEffectResponse(ClientSession session, String payload) {
         Lobby lobby = getLobbyOf(session);
+
+        if (getSpectatorLobbyOf(session) != null) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Spectators cannot perform game actions."
+            ).encode());
+            return;
+        }
+
         if (lobby == null || lobby.getGameState() == null) {
             session.send(new Message(Message.Type.ERROR, "No active game.").encode());
             return;
@@ -1943,6 +2072,93 @@ public class ServerService {
     }
 
     /**
+     * Handles a spectator join request.
+     *
+     * @param session spectator session
+     * @param lobbyId target lobby
+     */
+    private void handleSpectate(ClientSession session, String lobbyId) {
+
+        if (lobbyId == null || lobbyId.isBlank()) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Lobby name cannot be empty."
+            ).encode());
+            return;
+        }
+
+        String cleanLobbyId = lobbyId.trim();
+
+        Lobby lobby = lobbies.get(cleanLobbyId);
+
+        if (lobby == null) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Lobby does not exist."
+            ).encode());
+            return;
+        }
+
+        if (!lobby.isGameStarted() || lobby.getGameState() == null) {
+            session.send(new Message(
+                    Message.Type.ERROR,
+                    "Cannot spectate: no running game."
+            ).encode());
+            return;
+        }
+
+        // remove from current player lobby
+        leaveCurrentLobby(session, null);
+
+        // remove old spectate
+        Lobby oldSpectate = getSpectatorLobbyOf(session);
+
+        if (oldSpectate != null) {
+            oldSpectate.removeSpectator(session);
+            spectatorLobbyMap.remove(session);
+        }
+
+        lobby.addSpectator(session);
+        spectatorLobbyMap.put(session, cleanLobbyId);
+
+        session.send(new Message(
+                Message.Type.INFO,
+                "You are now spectating lobby: " + cleanLobbyId
+        ).encode());
+
+        // send public game state
+        session.send(new Message(
+                Message.Type.GAME_STATE,
+                GameStateSerializer.serializePublicState(
+                        lobby.getGameState()
+                )
+        ).encode());
+
+        try {
+            PlayerGameState currentPlayer = lobby.getGameState().getCurrentPlayer();
+
+            session.send(new Message(
+                    Message.Type.HAND_UPDATE,
+                    GameStateSerializer.serializeHand(currentPlayer)
+            ).encode());
+        } catch (Exception ignored) {
+            // Ignore if the current player hand cannot be sent.
+        }
+
+        List<String> names = new ArrayList<>();
+
+        for (Player player : lobby.getPlayers()) {
+            names.add(player.name());
+        }
+
+        session.send(new Message(
+                Message.Type.PLAYERS,
+                String.join(",", names)
+        ).encode());
+
+    }
+
+    /**
      * Sends a broadcast message from one client session to all connected clients.
      *
      * <p>This method validates the given broadcast text, rejects empty or
@@ -1999,7 +2215,8 @@ public class ServerService {
     }
 
     /**
-     * Sends each player in the lobby their private hand update.
+     * Sends private hand updates to players and current-player perspective
+     * hand updates to spectators.
      *
      * @param lobby the target lobby
      */
@@ -2017,7 +2234,20 @@ public class ServerService {
                         GameStateSerializer.serializeHand(p)
                 ).encode());
             } catch (IllegalArgumentException ignored) {
-                // session has a name not yet in game state — skip
+                // Session has a name not yet in game state — skip.
+            }
+        }
+
+        for (ClientSession spectator : lobby.getSpectators()) {
+            try {
+                PlayerGameState currentPlayer = state.getCurrentPlayer();
+
+                spectator.send(new Message(
+                        Message.Type.HAND_UPDATE,
+                        GameStateSerializer.serializeHand(currentPlayer)
+                ).encode());
+            } catch (Exception ignored) {
+                // Spectator hand update failed — keep the game running.
             }
         }
     }

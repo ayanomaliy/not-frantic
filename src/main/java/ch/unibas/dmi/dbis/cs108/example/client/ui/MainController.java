@@ -232,13 +232,25 @@ public class MainController {
             }
         });
 
+        view.getSpectateLobbyButton().setOnAction(e -> {
+            String selectedLobby = view.getLobbiesList()
+                    .getSelectionModel()
+                    .getSelectedItem();
+
+            if (selectedLobby != null && !selectedLobby.isBlank()) {
+                networkClient.spectateLobby(extractLobbyName(selectedLobby));
+            }
+        });
+
         // Double-clicking a lobby entry also triggers a join, using the same
         // lobby-name extraction logic as the Join button.
         view.getLobbiesList().setOnMouseClicked(e -> {
             if (e.getClickCount() == 2) {
                 String selectedLobby = view.getLobbiesList().getSelectionModel().getSelectedItem();
 
-                if (selectedLobby != null && !selectedLobby.isBlank()) {
+                if (selectedLobby != null
+                        && !selectedLobby.isBlank()
+                        && view.isJoinableLobbyEntry(selectedLobby)) {
                     networkClient.joinLobby(extractLobbyName(selectedLobby));
                 }
             }
@@ -299,6 +311,7 @@ public class MainController {
      */
     public void showGameView() {
         GameView view = new GameView();
+        view.setSpectatorMode(state.isSpectatorMode());
 
         view.setInitialMusicVolume(soundManager.getMusicVolume());
         view.setMusicVolumeHandler(soundManager::setMusicVolume);

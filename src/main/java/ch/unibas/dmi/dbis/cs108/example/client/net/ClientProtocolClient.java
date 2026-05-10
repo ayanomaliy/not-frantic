@@ -150,6 +150,15 @@ public class ClientProtocolClient {
     }
 
     /**
+     * Requests to spectate an active lobby.
+     *
+     * @param lobbyId the target lobby id
+     */
+    public void spectateLobby(String lobbyId) {
+        send(new Message(Message.Type.SPECTATE, lobbyId));
+    }
+
+    /**
      * Leaves the current lobby.
      */
     public void leaveLobby() {

@@ -54,6 +54,9 @@ public record Message(Type type, String content) {
         /** Message used to join an existing lobby. */
         JOIN,
 
+        /** Message used to spectate an existing lobby. */
+        SPECTATE,
+
         /** Heartbeat ping message. */
         PING,
 
@@ -199,6 +202,7 @@ public record Message(Type type, String content) {
                 case "/leave" -> new Message(Type.LEAVE, "");
                 case "/create" -> new Message(Type.CREATE, payload);
                 case "/join" -> new Message(Type.JOIN, payload);
+                case "/spectate", "/watch" -> new Message(Type.SPECTATE, payload);
                 case "/lobbies" -> new Message(Type.LOBBIES, "");
                 case "/play", "/card" -> new Message(Type.PLAY_CARD, payload);
                 case "/draw", "/pickup" -> new Message(Type.DRAW_CARD, "");
@@ -240,6 +244,7 @@ public record Message(Type type, String content) {
             case "LEAVE" -> Type.LEAVE;
             case "CREATE" -> Type.CREATE;
             case "JOIN" -> Type.JOIN;
+            case "SPECTATE" -> Type.SPECTATE;
             case "LOBBIES" -> Type.LOBBIES;
             case "PING" -> Type.PING;
             case "PONG" -> Type.PONG;
@@ -280,7 +285,7 @@ public record Message(Type type, String content) {
                  GLOBALCHAT, LOBBYCHAT, WHISPERCHAT,
                  PLAYERS, ALLPLAYERS,
                  INFO, ERROR, GAME,
-                 CREATE, LOBBIES, JOIN,
+                 CREATE, LOBBIES, JOIN, SPECTATE,
                  PLAY_CARD, EFFECT_RESPONSE, DEV,
                  GAME_STATE, HAND_UPDATE, EFFECT_REQUEST,
                  ROUND_END, GAME_END, NEXT_ROUND,
@@ -311,7 +316,7 @@ public record Message(Type type, String content) {
                  GLOBALCHAT, LOBBYCHAT, WHISPERCHAT,
                  PLAYERS, ALLPLAYERS,
                  INFO, ERROR, GAME,
-                 CREATE, LOBBIES, JOIN,
+                 CREATE, LOBBIES, JOIN, SPECTATE,
                  PLAY_CARD, EFFECT_RESPONSE, DEV,
                  GAME_STATE, HAND_UPDATE, EFFECT_REQUEST,
                  ROUND_END, GAME_END, NEXT_ROUND,
