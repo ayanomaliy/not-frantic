@@ -29,6 +29,9 @@ import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 import javafx.scene.control.ListCell;
 import java.util.function.Consumer;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+
 
 /**
  * Game screen for the Frantic^-1 GUI client.
@@ -349,7 +352,7 @@ public class GameView extends BorderPane {
         VBox.setVgrow(centerTablePane, Priority.ALWAYS);
 
         gameArea.getChildren().addAll(
-                createSectionTitle("Game Table"),
+                createGameHeader(),
                 centerTablePane,
                 handSection
         );
@@ -553,6 +556,68 @@ public class GameView extends BorderPane {
         });
 
         timeline.play();
+    }
+
+
+    /**
+     * Creates the compact header for the game panel.
+     *
+     * <p>The old textual "Game Table" label is replaced by the project logo. The logo
+     * is kept small and aligned to the top-left so it identifies the screen without
+     * overlapping the circular table or opponent players.</p>
+     *
+     * @return the configured game header
+     */
+    private HBox createGameHeader() {
+        ImageView logoView = createGameLogoView();
+
+        HBox header = new HBox();
+        header.getStyleClass().add("game-header");
+        header.setAlignment(Pos.CENTER_LEFT);
+        header.setMinHeight(42);
+
+        if (logoView != null) {
+            header.getChildren().add(logoView);
+        } else {
+            Label fallbackTitle = createSectionTitle("Frantic^-1");
+            header.getChildren().add(fallbackTitle);
+        }
+
+        return header;
+    }
+
+    /**
+     * Creates a small logo image for the game panel header.
+     *
+     * @return the logo image view, or {@code null} if the SVG could not be rendered
+     */
+    private ImageView createGameLogoView() {
+        Image logoImage = SvgImageLoader.loadSvgAsImage(
+                GameView.class,
+                "/icons/logo_font.svg",
+                700f,
+                240f
+        );
+
+        if (logoImage == null) {
+            return null;
+        }
+
+        ImageView logoView = new ImageView(logoImage);
+        logoView.getStyleClass().add("game-logo-image");
+        logoView.setPreserveRatio(true);
+        logoView.setSmooth(true);
+        logoView.setMouseTransparent(true);
+
+        /*
+         * Technical display size:
+         * The SVG is rendered larger for sharpness, but displayed as a compact header
+         * logo so it does not interfere with players, the circular table, or overlays.
+         */
+        logoView.setFitWidth(220);
+        logoView.setFitHeight(74);
+
+        return logoView;
     }
 
     /**
@@ -1038,4 +1103,7 @@ public class GameView extends BorderPane {
                 ? volume -> {}
                 : effectsVolumeHandler;
     }
+
+
+
 }

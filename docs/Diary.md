@@ -1225,11 +1225,11 @@ Overall, today’s session significantly improved the game’s audio design. By 
 
 ## Date: May 12, 2026
 
-### Logo Sketching and Manual SVG Asset Creation (Aiysha)
+### Logo Sketching, Manual SVG Asset Creation and GUI Integration (Aiysha)
 
 ## What did I do today?
 
-Today, I worked on the visual identity of the project and turned my own logo sketches from Clip Studio Paint into usable SVG assets.
+Today, I worked on the visual identity of the project and turned my own logo sketches from Clip Studio Paint into usable SVG assets. I also integrated these assets into the JavaFX GUI and solved several technical problems related to loading complex SVG files.
 
 * I designed and refined the **card backside** for the game.
 
@@ -1267,6 +1267,70 @@ Today, I worked on the visual identity of the project and turned my own logo ske
 * This was very tedious because the SVGs had to be created manually instead of simply exporting a finished vector file.
 
 * I repeatedly adjusted paths, gradients, outlines, and proportions so the result looked closer to my original sketch.
+
+* After creating the SVG assets, I integrated the new **card backside logo** into the JavaFX game view.
+
+* I replaced the old placeholder / PNG-based backside symbol with the new SVG-based logo asset.
+
+* I tested several approaches for displaying complex SVGs inside JavaFX:
+
+  * loading the SVG directly with JavaFX `Image`,
+  * using the existing lightweight SVG loading library,
+  * rendering it through a `WebView`,
+  * and finally rendering it with **Apache Batik**.
+
+* I found out that the direct JavaFX and lightweight SVG approaches were not reliable enough for this logo because the SVG contains complex gradients, filters, reusable shapes, and a large view box.
+
+* I also tested a `WebView` solution. While it could display the SVG, it introduced unwanted layout and rendering problems such as clipping and a white background rectangle behind the logo.
+
+* I then switched to **Apache Batik**, which renders the SVG into an in-memory PNG and then displays it as a normal JavaFX `ImageView`.
+
+* I debugged why Batik initially failed to render the SVG and found that the problem was the unsupported SVG filter primitive `feDropShadow`.
+
+* I replaced `feDropShadow` with a Batik-compatible SVG 1.1 shadow filter using:
+
+  * `feGaussianBlur`,
+  * `feOffset`,
+  * `feFlood`,
+  * `feComposite`,
+  * and `feMerge`.
+
+* I also updated SVG references from modern `href` syntax to the more Batik-compatible `xlink:href` syntax.
+
+* I adjusted the logo rendering so that the SVG is rendered at a high resolution for sharpness, but displayed at a smaller size inside the actual card.
+
+* I noticed that the colourful logo became hard to read when displayed very small on the card backside, so I created a much darker version of the circular logo.
+
+* I manually darkened the gradients while keeping subtle colour variation, so the logo now looks almost black but still retains the original visual identity and slight colour depth.
+
+* I integrated this darker version into the larger **Frantic^-1 game logo**, replacing the previous brighter mini-logo on the front card.
+
+* I made the full game logo more Batik-compatible by moving definitions into safer locations and using `xlink:href` consistently.
+
+* I then integrated the large `logo_font.svg` into the **ConnectView**, replacing the old text label `Frantic^-1`.
+
+* I created a reusable SVG rendering helper so complex SVGs can be loaded as JavaFX images using Batik.
+
+* I adjusted the ConnectView layout so the logo appears cleanly above the connection form.
+
+* I also started integrating the game logo into the **GameView** by replacing the unnecessary `"Game Table"` label with a small version of the logo.
+
+* I planned the placement carefully so the logo stays in the top-left header area and does not overlap the circular table, opponent cards, player markers, or other game elements.
+
+## What worked well?
+
+The final SVG integration works much better than the earlier attempts. Rendering the SVGs with Batik is more stable than relying on direct SVG loading or WebView. The card backside now uses the custom logo instead of a placeholder, and the ConnectView looks much more polished with the real project logo.
+
+## What was difficult?
+
+The most difficult part was making complex SVGs work reliably in JavaFX. Some SVG features that work in browsers do not work properly with Batik or JavaFX. I had to debug rendering errors, replace incompatible filters, adjust SVG syntax, and repeatedly test how the assets looked at very small sizes.
+
+## What are the next steps?
+
+Next, I want to create SVG icons for the missing card effects, especially for all special cards that currently still use fallback symbols or are missing proper visual assets. These icons should match the style of the existing card design, so the whole game looks more consistent.
+
+I also want to continue polishing the GUI visually. This includes improving spacing, proportions, logo placement, card readability, panel layout, and the general presentation of the game screens. The goal is to make the interface feel more polished, coherent, and visually appealing for the final demo.
+
 
 
 

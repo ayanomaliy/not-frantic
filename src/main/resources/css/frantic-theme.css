@@ -904,3 +904,21 @@
 .connect-logo-image {
     -fx-opacity: 0.98;
 }
+
+.connect-panel {
+    -fx-alignment: center;
+}
+
+.connect-content-box {
+    -fx-alignment: center;
+}
+
+
+.game-header {
+    -fx-alignment: center-left;
+    -fx-padding: 0 0 2 0;
+}
+
+.game-logo-image {
+    -fx-opacity: 0.96;
+}

@@ -10,6 +10,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.Priority;
 
 
 
@@ -53,8 +54,8 @@ public class ConnectView extends VBox {
                 ? System.getProperty("user.name", "Player") : initialUsername);
 
         getStyleClass().addAll("screen", "connect-screen");
-        setSpacing(18);
-        setPadding(new Insets(40));
+        setSpacing(0);
+        setPadding(new Insets(24));
         setAlignment(Pos.CENTER);
 
         Label fallbackTitleLabel = new Label("Frantic^-1");
@@ -80,6 +81,8 @@ public class ConnectView extends VBox {
         form.getStyleClass().add("form-grid");
         form.setHgap(12);
         form.setVgap(12);
+        form.setAlignment(Pos.CENTER);
+        form.setMaxWidth(520);
 
         Label hostLabel = new Label("Host");
         Label portLabel = new Label("Port");
@@ -105,10 +108,20 @@ public class ConnectView extends VBox {
 
         HBox buttonRow = new HBox(connectButton);
         buttonRow.setAlignment(Pos.CENTER_RIGHT);
+        buttonRow.setMaxWidth(520);
 
-        VBox card = new VBox(18, headerBox, form, buttonRow, statusLabel);
-        card.getStyleClass().add("panel");
-        card.setMaxWidth(520);
+        VBox contentBox = new VBox(18, headerBox, form, buttonRow, statusLabel);
+        contentBox.getStyleClass().add("connect-content-box");
+        contentBox.setAlignment(Pos.CENTER);
+        contentBox.setMaxWidth(620);
+
+        VBox card = new VBox(contentBox);
+        card.getStyleClass().addAll("panel", "connect-panel");
+        card.setAlignment(Pos.CENTER);
+        card.setMaxWidth(Double.MAX_VALUE);
+        card.setMaxHeight(Double.MAX_VALUE);
+
+        VBox.setVgrow(card, Priority.ALWAYS);
 
         getChildren().add(card);
     }
@@ -157,8 +170,8 @@ public class ConnectView extends VBox {
          * The SVG is rendered larger for sharpness, but displayed smaller so it fits
          * into the connect panel. This is layout sizing, not visual styling.
          */
-        logoView.setFitWidth(420);
-        logoView.setFitHeight(140);
+        logoView.setFitWidth(560);
+        logoView.setFitHeight(190);
 
         return logoView;
     }
