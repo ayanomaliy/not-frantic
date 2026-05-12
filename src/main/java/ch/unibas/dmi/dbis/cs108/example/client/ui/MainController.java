@@ -560,6 +560,8 @@ public class MainController {
         });
 
         networkClient.setEventCardFlippedListener(eventCardId -> {
+            registry.getSoundId("BLACK_EVENT_PANEL").ifPresent(soundManager::play);
+
             EventBannerData data = describeEventCard(eventCardId);
             view.playEventOverlay(data.title(), data.description());
         });
