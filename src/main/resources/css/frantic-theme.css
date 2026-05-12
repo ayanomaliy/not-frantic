@@ -934,9 +934,23 @@
 
 .circular-table-background {
     -fx-background-color:
-            radial-gradient(center 50% 45%, radius 65%, rgba(255, 122, 90, 0.08), transparent),
-            radial-gradient(center 50% 50%, radius 78%, rgba(127, 53, 247, 0.10), transparent),
-            #131c2c;
+            radial-gradient(
+                    center 50% 58%,
+                    radius 32%,
+                    rgba(255, 210, 112, 0.46),
+                    rgba(255, 143, 64, 0.28),
+                    rgba(127, 53, 247, 0.10),
+                    transparent
+            ),
+            radial-gradient(
+                    center 50% 58%,
+                    radius 62%,
+                    rgba(255, 122, 90, 0.13),
+                    rgba(127, 53, 247, 0.08),
+                    transparent
+            ),
+            #101929;
+
     -fx-background-radius: 999;
 }
 

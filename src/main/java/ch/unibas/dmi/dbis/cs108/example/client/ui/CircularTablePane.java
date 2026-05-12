@@ -2,15 +2,10 @@ package ch.unibas.dmi.dbis.cs108.example.client.ui;
 
 import ch.unibas.dmi.dbis.cs108.example.client.ClientState;
 import ch.unibas.dmi.dbis.cs108.example.client.assets.AssetRegistry;
-import com.fluxvend.svgfx.utils.SvgLoader;
 import javafx.geometry.Bounds;
 import javafx.scene.Node;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,10 +36,7 @@ public class CircularTablePane extends Pane {
 
     private static final double TOP_SLOT_LIFT = 34.0;
     private static final double SIDE_SLOT_PUSH = 34.0;
-    private static final String TABLE_ASSET_PATH = "/icons/table.svg";
 
-    private ImageView backgroundImageView;
-    private Circle fallbackCircle;
     private AssetRegistry registry;
 
     private final Node centerContent;
@@ -61,30 +53,9 @@ public class CircularTablePane extends Pane {
         this.centerContent = centerContent;
         setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
 
-        buildBackground();
-        if (backgroundImageView != null) getChildren().add(backgroundImageView);
-        if (fallbackCircle != null) getChildren().add(fallbackCircle);
         getChildren().add(centerContent);
     }
 
-    private void buildBackground() {
-        if (getClass().getResource(TABLE_ASSET_PATH) != null) {
-            try {
-                Image svgImage = SvgLoader.getInstance().loadSvgImage(TABLE_ASSET_PATH, null, false, 1200.0, null);
-                backgroundImageView = new ImageView(svgImage);
-                backgroundImageView.setPreserveRatio(false);
-                backgroundImageView.setMouseTransparent(true);
-                backgroundImageView.fitWidthProperty().bind(widthProperty());
-                backgroundImageView.fitHeightProperty().bind(heightProperty());
-                return;
-            } catch (Exception e) {
-                System.err.println("[CircularTablePane] Cannot load table asset: " + e.getMessage());
-            }
-        }
-        fallbackCircle = new Circle();
-        fallbackCircle.setFill(Color.web("#1a2234"));
-        fallbackCircle.setMouseTransparent(true);
-    }
 
     /**
      * Replaces all opponent player slots with new ones derived from {@code others}.
@@ -147,17 +118,7 @@ public class CircularTablePane extends Pane {
          */
         double radiusX = w * RADIUS_X_FACTOR;
         double radiusY = h * RADIUS_Y_FACTOR;
-
-        if (backgroundImageView != null) {
-            backgroundImageView.setLayoutX(0);
-            backgroundImageView.setLayoutY(0);
-        }
-
-        if (fallbackCircle != null) {
-            fallbackCircle.setRadius(Math.min(w, h) * 0.45);
-            fallbackCircle.setLayoutX(cx);
-            fallbackCircle.setLayoutY(cy);
-        }
+        
 
         positionCenter(cx, cy);
 

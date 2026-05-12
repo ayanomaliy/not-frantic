@@ -1,0 +1,38 @@
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <!-- outer circle -->
+    <circle
+            cx="50"
+            cy="50"
+            r="31"
+            fill="none"
+            stroke="#1f232b"
+            stroke-width="7"
+            stroke-linecap="round"/>
+
+    <!-- outer rainbow stripe -->
+    <path
+            d="M28 62
+               A22 22 0 0 1 72 62
+               L66 62
+               A16 16 0 0 0 34 62
+               Z"
+            fill="#1f232b"/>
+
+    <!-- middle rainbow stripe -->
+    <path
+            d="M36 62
+               A14 14 0 0 1 64 62
+               L58 62
+               A8 8 0 0 0 42 62
+               Z"
+            fill="#1f232b"/>
+
+    <!-- inner rainbow stripe -->
+    <path
+            d="M44 62
+               A6 6 0 0 1 56 62
+               L50 62
+               A0 0 0 0 0 50 62
+               Z"
+            fill="#1f232b"/>
+</svg>
