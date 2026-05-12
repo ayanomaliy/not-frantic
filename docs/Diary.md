@@ -955,6 +955,48 @@ We will meet tomorrow and try to finish these tasks:
 
 ## Date: May 9, 2026
 
+### Resolution-Independent Fullscreen Experiment (Senanur)
+
+## What did I do today?
+
+* Created a separate feature branch for the fullscreen and responsive layout work.
+* Started implementing **resolution-independent fullscreen support** for the JavaFX GUI.
+* Added an **F11 fullscreen toggle** instead of starting the game directly in fullscreen.
+* Improved the connect screen layout and centered the connect panel.
+* Adjusted the initial window size so the application opens in a usable windowed mode.
+* Tested fullscreen behavior during screen transitions such as:
+  * Connect → Lobby,
+  * Lobby → Game,
+  * Game → Lobby.
+* Improved parts of the `GameView` layout for different screen sizes.
+* Added dynamic card scaling so cards become smaller on small screens and larger on bigger screens.
+* Adjusted the hand card fan layout to reduce overlap and prevent cards from covering the **End Turn** button.
+* Tested the layout in both windowed mode and fullscreen mode.
+* Decided to stop working on the fullscreen implementation for now because it took more time than expected.
+
+## Work Summary
+
+Today I worked on making the JavaFX GUI more responsive and experimented with resolution-independent fullscreen mode. The first goal was to make the game usable on different screen sizes and allow the user to switch to fullscreen with **F11**.
+
+I improved the connect screen, adjusted the window startup behavior, and worked on the game screen layout. I also added dynamic scaling for the hand cards so that they adapt better when the window size changes. This improved the overall appearance of the game view, especially in fullscreen and smaller window sizes.
+
+However, the fullscreen and fully resolution-independent layout turned out to be more complex than expected. Some parts of the UI still need additional polishing, especially spacing, font scaling, and edge cases during screen transitions. Because this feature was taking too much time, I decided to pause it for now.
+
+## Conclusion
+
+The fullscreen and responsive layout experiment made good progress, especially for the connect screen and game card scaling. However, the implementation is not fully finished yet. I decided not to continue working on this feature for now, so I can focus on other project priorities. If there is enough time later, I may continue improving and finalizing the fullscreen mode.
+
+## Future Plans
+
+* Continue fullscreen polishing if time allows.
+* Improve responsive layout behavior in `GameView` and `LobbyView`.
+* Test the GUI on different screen sizes and resolutions.
+* Improve dynamic font scaling.
+* Clean up unused experimental code if the feature is not continued.
+* Decide later whether the fullscreen branch should be merged or discarded.
+
+## Date: May 9, 2026
+
 ### GUI Polish, Animations, and Visual Identity (Aiysha)
 
 #### What did I do today?
@@ -1051,16 +1093,6 @@ Overall, today’s session focused on improving the user interface and reducing 
 * Find and implement a **bug tracker system**.
 * Create our own custom sound effects and audio for the game.
 * Remove an unnecessary or unbalanced **card** from the game.
-
-
-## Date: May 9, 2026
-
-### Custom self-made background music in FL Studio (Aiysha)
-
-#### What did I do today?
-
-
-#### Future Plans
 
 ## Date: May 10, 2026
 
