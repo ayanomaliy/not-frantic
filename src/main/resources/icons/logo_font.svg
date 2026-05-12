@@ -1,0 +1,480 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="2172"
+     height="724"
+     viewBox="0 0 2172 724"
+     fill="none">
+
+    <defs>
+        <!-- ========================= -->
+        <!-- BIG LOGO GRADIENTS -->
+        <!-- ========================= -->
+
+        <!-- Card fill -->
+        <linearGradient id="cardGradient" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#F6AB3D"/>
+            <stop offset="48%" stop-color="#D86AAA"/>
+            <stop offset="100%" stop-color="#8137F7"/>
+        </linearGradient>
+
+        <!-- Card outline -->
+        <linearGradient id="cardBorder" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#FFF8F3" stop-opacity="0.95"/>
+            <stop offset="100%" stop-color="#EFC4FF" stop-opacity="0.85"/>
+        </linearGradient>
+
+        <!-- Frame / contour gradients -->
+        <linearGradient id="frameLeftTop" x1="330" y1="0" x2="1200" y2="0" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#7F35F7"/>
+            <stop offset="30%" stop-color="#9C39FF"/>
+            <stop offset="70%" stop-color="#FF7C48"/>
+            <stop offset="100%" stop-color="#FF4D85"/>
+        </linearGradient>
+
+        <linearGradient id="frameRightTop" x1="1280" y1="0" x2="2060" y2="0" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#FF8C34"/>
+            <stop offset="45%" stop-color="#FF5C73"/>
+            <stop offset="100%" stop-color="#FF2C8D"/>
+        </linearGradient>
+
+        <linearGradient id="frameLeftBottom" x1="330" y1="0" x2="1200" y2="0" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#7F35F7"/>
+            <stop offset="40%" stop-color="#A83DFF"/>
+            <stop offset="100%" stop-color="#FF52A2"/>
+        </linearGradient>
+
+        <linearGradient id="frameRightBottom" x1="1280" y1="0" x2="2060" y2="0" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#FF8C34"/>
+            <stop offset="45%" stop-color="#FF5C73"/>
+            <stop offset="100%" stop-color="#FF2C8D"/>
+        </linearGradient>
+
+        <!-- Sparkles -->
+        <linearGradient id="sparkleGradient" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#FFBB59"/>
+            <stop offset="100%" stop-color="#FF4A8C"/>
+        </linearGradient>
+
+        <!-- Motion streaks for big text logo -->
+        <linearGradient id="streakPurple" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#7E35F7" stop-opacity="0"/>
+            <stop offset="100%" stop-color="#C03EFF"/>
+        </linearGradient>
+
+        <linearGradient id="streakPink" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#FF5E74" stop-opacity="0"/>
+            <stop offset="100%" stop-color="#FF66B9"/>
+        </linearGradient>
+
+        <linearGradient id="streakOrange" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#FF7E45" stop-opacity="0"/>
+            <stop offset="100%" stop-color="#FF7E45"/>
+        </linearGradient>
+
+        <!-- Soft glow -->
+        <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feMerge>
+                <feMergeNode in="blur"/>
+                <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+        </filter>
+
+        <style>
+            .mainText {
+            font-family: "Orbitron", "Rajdhani", "Arial Black", Arial, sans-serif;
+            font-size: 244px;
+            font-weight: 800;
+            font-style: italic;
+            letter-spacing: 15px;
+            fill: #FFF3E5;
+            }
+
+            .mainTextShadow {
+            font-family: "Orbitron", "Rajdhani", "Arial Black", Arial, sans-serif;
+            font-size: 244px;
+            font-weight: 800;
+            font-style: italic;
+            letter-spacing: -4px;
+            fill: #09142C;
+            }
+
+            .suffix {
+            font-family: "Orbitron", "Rajdhani", "Arial Black", Arial, sans-serif;
+            font-size: 182px;
+            font-weight: 800;
+            font-style: italic;
+            fill: #FFF3E5;
+            }
+
+            .suffixShadow {
+            font-family: "Orbitron", "Rajdhani", "Arial Black", Arial, sans-serif;
+            font-size: 182px;
+            font-weight: 800;
+            font-style: italic;
+            fill: #09142C;
+            }
+
+            .caret {
+            font-family: "Orbitron", "Rajdhani", "Arial Black", Arial, sans-serif;
+            font-size: 132px;
+            font-weight: 800;
+            font-style: italic;
+            fill: #FFF3E5;
+            }
+
+            .caretShadow {
+            font-family: "Orbitron", "Rajdhani", "Arial Black", Arial, sans-serif;
+            font-size: 132px;
+            font-weight: 800;
+            font-style: italic;
+            fill: #09142C;
+            }
+        </style>
+
+        <!-- ========================= -->
+        <!-- SMALL CARD LOGO SYMBOL -->
+        <!-- ========================= -->
+
+        <symbol id="miniFranticLogo" viewBox="0 0 1200 1100" overflow="visible">
+
+            <!-- Small logo gradients -->
+            <linearGradient id="mini_gradientOuterTopLeft" x1="240" y1="520" x2="610" y2="145" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#FFD400"/>
+                <stop offset="40%" stop-color="#FF8A1F"/>
+                <stop offset="100%" stop-color="#78DD10"/>
+            </linearGradient>
+
+            <linearGradient id="mini_gradientOuterTopRight" x1="650" y1="145" x2="1000" y2="520" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#42D4B0"/>
+                <stop offset="40%" stop-color="#248BDE"/>
+                <stop offset="70%" stop-color="#5C00FF"/>
+                <stop offset="100%" stop-color="#FF00C8"/>
+            </linearGradient>
+
+            <linearGradient id="mini_gradientOuterBottomLeft" x1="230" y1="550" x2="615" y2="910" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#FFE600"/>
+                <stop offset="45%" stop-color="#FFB300"/>
+                <stop offset="100%" stop-color="#FF6B13"/>
+            </linearGradient>
+
+            <linearGradient id="mini_gradientOuterBottomRight" x1="650" y1="910" x2="1000" y2="550" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#FF6C16"/>
+                <stop offset="45%" stop-color="#FF3D75"/>
+                <stop offset="100%" stop-color="#F100D1"/>
+            </linearGradient>
+
+            <linearGradient id="mini_gradientInnerSwirlLeft" x1="0.12" y1="0.18" x2="0.88" y2="0.88" gradientUnits="objectBoundingBox">
+                <stop offset="0%" stop-color="#2B17C9"/>
+                <stop offset="35%" stop-color="#7E18D5"/>
+                <stop offset="70%" stop-color="#D30FCC"/>
+                <stop offset="100%" stop-color="#FF2EB5"/>
+            </linearGradient>
+
+            <linearGradient id="mini_gradientInnerSwirlTop" x1="0.08" y1="0.25" x2="0.92" y2="0.42" gradientUnits="objectBoundingBox">
+                <stop offset="0%" stop-color="#CFE91A"/>
+                <stop offset="38%" stop-color="#FFAA1D"/>
+                <stop offset="75%" stop-color="#FF4B66"/>
+                <stop offset="100%" stop-color="#FF00C8"/>
+            </linearGradient>
+
+            <linearGradient id="mini_gradientInnerSwirlRight" x1="0.38" y1="0.08" x2="0.76" y2="0.95" gradientUnits="objectBoundingBox">
+                <stop offset="0%" stop-color="#3E77E9"/>
+                <stop offset="45%" stop-color="#8E78C5"/>
+                <stop offset="78%" stop-color="#FF9066"/>
+                <stop offset="100%" stop-color="#FFD933"/>
+            </linearGradient>
+
+            <linearGradient id="mini_gradientInnerSwirlBottom" x1="0.00" y1="0.78" x2="1.00" y2="0.22" gradientUnits="objectBoundingBox">
+                <stop offset="0%" stop-color="#FF681A"/>
+                <stop offset="55%" stop-color="#FF8A18"/>
+                <stop offset="100%" stop-color="#FF00C7"/>
+            </linearGradient>
+
+            <linearGradient id="mini_gradientMinus" x1="420" y1="535" x2="620" y2="535" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#C400F0"/>
+                <stop offset="100%" stop-color="#FF00B2"/>
+            </linearGradient>
+
+            <linearGradient id="mini_gradientOne" x1="620" y1="400" x2="700" y2="720" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#FF1791"/>
+                <stop offset="100%" stop-color="#FF4154"/>
+            </linearGradient>
+
+            <linearGradient id="mini_gradientMotionStreak" x1="40" y1="0" x2="430" y2="0" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#C36BD1" stop-opacity="0"/>
+                <stop offset="65%" stop-color="#C36BD1" stop-opacity="0.35"/>
+                <stop offset="100%" stop-color="#FF9A50" stop-opacity="0.8"/>
+            </linearGradient>
+
+            <filter id="mini_shadow" x="-15%" y="-15%" width="130%" height="130%">
+                <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.4"/>
+            </filter>
+
+            <path id="mini_swirlArmShape"
+                  d="M-150 124
+                     C-65 193 54 210 167 161
+                     C226 135 278 88 330 2
+                     C311 99 253 192 143 224
+                     C27 256 -79 219 -150 124 Z"/>
+
+            <!-- Motion streaks -->
+            <g id="mini_motionStreaks" opacity="0.75">
+                <polygon points="0,210 330,206 215,245"
+                         transform="translate(150 -40)"
+                         fill="url(#mini_gradientMotionStreak)"/>
+
+                <polygon points="0,310 290,308 205,352"
+                         transform="translate(50 -30)"
+                         fill="url(#mini_gradientMotionStreak)"/>
+
+                <polygon points="0,405 265,404 200,450"
+                         transform="translate(10 0)"
+                         fill="url(#mini_gradientMotionStreak)"/>
+
+                <polygon points="0,500 255,500 205,548"
+                         transform="translate(15 100)"
+                         fill="url(#mini_gradientMotionStreak)"/>
+
+                <polygon points="0,660 285,660 225,712"
+                         transform="translate(50 50)"
+                         fill="url(#mini_gradientMotionStreak)"/>
+
+                <polygon points="0,745 320,748 350,800"
+                         transform="translate(40 70)"
+                         fill="url(#mini_gradientMotionStreak)"/>
+            </g>
+
+            <!-- Outer ring -->
+            <g id="mini_outerRing" filter="url(#mini_shadow)" stroke-linejoin="round">
+                <path d="M238 517 A392 392 0 0 1 612 147"
+                      stroke="#000"
+                      stroke-width="70"/>
+
+                <path d="M238 517 A392 392 0 0 1 612 147"
+                      stroke="url(#mini_gradientOuterTopLeft)"
+                      stroke-width="58"/>
+
+                <path d="M648 147 A392 392 0 0 1 1002 517"
+                      stroke="#000"
+                      stroke-width="70"/>
+
+                <path d="M648 147 A392 392 0 0 1 1002 517"
+                      stroke="url(#mini_gradientOuterTopRight)"
+                      stroke-width="58"/>
+
+                <path d="M1002 553 A392 392 0 0 1 648 908"
+                      stroke="#000"
+                      stroke-width="70"/>
+
+                <path d="M1002 553 A392 392 0 0 1 648 908"
+                      stroke="url(#mini_gradientOuterBottomRight)"
+                      stroke-width="58"/>
+
+                <path d="M612 908 A392 392 0 0 1 238 553"
+                      stroke="#000"
+                      stroke-width="70"/>
+
+                <path d="M612 908 A392 392 0 0 1 238 553"
+                      stroke="url(#mini_gradientOuterBottomLeft)"
+                      stroke-width="58"/>
+            </g>
+
+            <!-- Inner swirls -->
+            <g id="mini_innerSwirls"
+               transform="translate(620 520)"
+               filter="url(#mini_shadow)"
+               stroke="#000"
+               stroke-width="5"
+               stroke-linejoin="round">
+
+                <g id="mini_innerSwirlBottomSweep" transform="rotate(10)">
+                    <use href="#mini_swirlArmShape"
+                         fill="url(#mini_gradientInnerSwirlBottom)"/>
+                </g>
+
+                <g id="mini_innerSwirlLeftCrescent" transform="rotate(100)">
+                    <use href="#mini_swirlArmShape"
+                         fill="url(#mini_gradientInnerSwirlLeft)"/>
+                </g>
+
+                <g id="mini_innerSwirlTopSweep" transform="rotate(190)">
+                    <use href="#mini_swirlArmShape"
+                         fill="url(#mini_gradientInnerSwirlTop)"/>
+                </g>
+
+                <g id="mini_innerSwirlRightComma" transform="rotate(-80)">
+                    <use href="#mini_swirlArmShape"
+                         fill="url(#mini_gradientInnerSwirlRight)"/>
+                </g>
+            </g>
+
+            <!-- Center -1 -->
+            <g id="mini_centerMinusOne"
+               filter="url(#mini_shadow)"
+               stroke="#000"
+               stroke-width="5"
+               stroke-linejoin="round">
+
+                <path id="mini_centerMinus"
+                      d="M420 540 C485 520 548 520 620 535 C555 553 488 556 420 540 Z"
+                      fill="url(#mini_gradientMinus)"/>
+
+                <path id="mini_centerOne"
+                      d="M618 430 L673 367 L690 705 L672 749 L654 412 L623 444 Z"
+                      fill="url(#mini_gradientOne)"/>
+            </g>
+        </symbol>
+    </defs>
+
+    <!-- transparent background: intentionally no background rect -->
+
+    <!-- ========================= -->
+    <!-- LEFT PART OF THE COLOURFUL CONTOUR -->
+    <!-- ========================= -->
+    <g filter="url(#softGlow)">
+        <path d="M535 190 H1165"
+              stroke="url(#frameLeftTop)"
+              stroke-width="5"
+              stroke-linecap="round"/>
+
+        <path d="M490 532 H1165"
+              stroke="url(#frameLeftBottom)"
+              stroke-width="5"
+              stroke-linecap="round"/>
+    </g>
+
+    <!-- ========================= -->
+    <!-- BIG LOGO MOTION STREAKS -->
+    <!-- ========================= -->
+    <g filter="url(#softGlow)">
+        <polygon points="90,364 420,352 420,368" fill="url(#streakOrange)"/>
+        <polygon points="120,318 425,306 425,321" fill="url(#streakPurple)"/>
+        <polygon points="145,272 430,260 430,275" fill="url(#streakPurple)"/>
+        <polygon points="165,230 438,219 438,233" fill="url(#streakPurple)"/>
+        <polygon points="190,205 450,194 450,208" fill="url(#streakPurple)"/>
+
+        <polygon points="120,414 430,403 430,418" fill="url(#streakPurple)"/>
+        <polygon points="150,452 438,441 438,456" fill="url(#streakPurple)"/>
+        <polygon points="180,488 448,478 448,492" fill="url(#streakPurple)"/>
+        <polygon points="220,515 455,506 455,520" fill="url(#streakPurple)"/>
+
+        <polygon points="170,252 435,243 435,255" fill="url(#streakPink)"/>
+        <polygon points="160,392 438,382 438,395" fill="url(#streakPink)"/>
+        <polygon points="110,340 418,329 418,342" fill="url(#streakPurple)"/>
+    </g>
+
+    <!-- ========================= -->
+    <!-- CARD STACK -->
+    <!-- ========================= -->
+    <g id="cardStack" filter="url(#softGlow)">
+        <!-- back -->
+        <rect id="cardBack"
+              x="285" y="240"
+              width="248"
+              height="352"
+              rx="30"
+              fill="url(#cardGradient)"
+              stroke="url(#cardBorder)"
+              stroke-width="5"
+              opacity="0.78"
+              transform="rotate(-20 292 279)"/>
+
+        <!-- middle -->
+        <rect id="cardMiddle"
+              x="342" y="200"
+              width="248"
+              height="352"
+              rx="34"
+              fill="url(#cardGradient)"
+              stroke="url(#cardBorder)"
+              stroke-width="6"
+              transform="rotate(-5 342 223)"/>
+
+        <!-- front -->
+        <rect id="cardFront"
+              x="418" y="160"
+              width="248"
+              height="352"
+              rx="34"
+              fill="url(#cardGradient)"
+              stroke="url(#cardBorder)"
+              stroke-width="6"
+              transform="rotate(14 418 160)"/>
+    </g>
+
+    <!-- ========================= -->
+    <!-- SMALL LOGOS ON CARDS -->
+    <!-- ========================= -->
+    <g id="cardMiniLogos" filter="url(#softGlow)">
+
+        <!-- front card mini logo -->
+        <use id="miniLogoOnFrontCard"
+             href="#miniFranticLogo"
+             x="466"
+             y="260"
+             width="160"
+             height="147"
+             transform="rotate(14 418 160)"/>
+    </g>
+
+    <!-- ========================= -->
+    <!-- RIGHT PART OF THE COLOURFUL CONTOUR -->
+    <!-- ========================= -->
+    <g filter="url(#softGlow)">
+        <path d="M1245 190 H1980
+                 Q2048 190 2078 220
+                 Q2108 250 2108 318
+                 V404
+                 Q2108 472 2078 502
+                 Q2048 532 1980 532
+                 H1245"
+              stroke="url(#frameRightTop)"
+              stroke-width="5"
+              stroke-linecap="round"
+              stroke-linejoin="round"/>
+
+        <path d="M1245 532 H1980"
+              stroke="url(#frameRightBottom)"
+              stroke-width="5"
+              stroke-linecap="round"/>
+    </g>
+
+    <!-- ========================= -->
+    <!-- SPARKLES -->
+    <!-- ========================= -->
+    <g fill="url(#sparkleGradient)" filter="url(#softGlow)">
+        <!-- top sparkle -->
+        <path d="M1205 166 L1219 190 L1205 214 L1191 190 Z"/>
+        <path d="M1181 190 L1205 176 L1229 190 L1205 204 Z" opacity="0.92"/>
+
+        <!-- bottom sparkle -->
+        <path d="M1205 508 L1219 532 L1205 556 L1191 532 Z"/>
+        <path d="M1181 532 L1205 518 L1229 532 L1205 546 Z" opacity="0.92"/>
+    </g>
+
+    <!-- ========================= -->
+    <!-- TEXT SHADOW -->
+    <!-- ========================= -->
+    <g opacity="0.27">
+        <text x="695" y="466" class="mainTextShadow">Frantic</text>
+        <text x="1736" y="332" class="caretShadow">^</text>
+        <text x="1810" y="452" class="suffixShadow">-1</text>
+    </g>
+
+    <!-- ========================= -->
+    <!-- MAIN TEXT -->
+    <!-- ========================= -->
+    <text x="685" y="456" class="mainText">Frantic</text>
+    <text x="1726" y="322" class="caret">^</text>
+    <text x="1800" y="442" class="suffix">-1</text>
+
+
+    <filter id="miniLogoDarken" x="-20%" y="-20%" width="140%" height="140%">
+        <feComponentTransfer>
+            <feFuncR type="linear" slope="0.75"/>
+            <feFuncG type="linear" slope="0.75"/>
+            <feFuncB type="linear" slope="0.75"/>
+        </feComponentTransfer>
+    </filter>
+
+</svg>
