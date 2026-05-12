@@ -1052,6 +1052,28 @@ The fullscreen and responsive layout experiment made good progress, especially f
 
 ## Date: May 9, 2026
 
+### Background Music Production and Audio Settings (Aiysha)
+
+## What did I do today?
+
+Today, I produced a background track for the game in FL Studio. At first, I wanted to create something softer with pretty chords, delay-heavy arpeggios, and a lot of reverb. However, after testing the idea, I realized that this did not fit the playful and chaotic feeling of the game.
+
+Because of that, I researched how companies like Nintendo approach background music in well-known Wii games. I focused on how their tracks often stay light, loopable, and memorable without becoming too distracting during gameplay. I then applied these ideas to my own track.
+
+The track is built around a G minor / modal minor harmonic centre, using a progression similar to Gm7, Fadd9/A, Gm7, and F7. This gives the music a bright but slightly mischievous feeling. The rhythm is in 4/4 at around 124 BPM, with short chord stabs and longer responses, creating a bouncy call-and-response groove. I wanted the music to feel uplifting and energetic, but still simple enough to work as background music during the game.
+
+The track uses a modal minor harmonic colour, short rhythmic chord stabs, and a loop-friendly call-and-response structure to create an uplifting and bouncy background atmosphere without overpowering the gameplay.
+
+
+I made the sounds myself using the Serum and Nexus synthesizer plugins instead of only using finished loops. I shaped the synth sounds to make the track feel playful, clear, and game-like. The current version is not professionally mixed yet, but it already works as a recognizable background track for the project.
+
+I also integrated music settings so the background music can be made quieter. This was important because even a catchy track can become annoying if it is too loud during longer gameplay sessions.
+
+## Future Plans:
+If I have enough time, I want to properly mix the background track further so the instruments, volume balance, and overall sound become cleaner. I also want to work together with Sevval to create more custom sound effects for the game. Our goal is to make the audio, visuals, logos, and overall game identity ourselves, instead of stealing assets or relying on AI-generated material.
+
+## Date: May 9, 2026
+
 ### Card Design & Lobby Feature Updates (Sevval, Aiysha)
 
 ## What did we do today?
@@ -1156,3 +1178,159 @@ If the player does not reconnect within the timeout, they are removed from the g
 ## Conclusion
 
 The reconnect system is now more stable and prevents games from getting stuck when a player disconnects. The feature was tested successfully with both 2-player and 3-player scenarios.
+
+## Date: May 12, 2026
+
+### Sound Design and Audio Implementation (Sevval, Aiysha)
+
+## What did we do today?
+
+* We worked on the **sound design** for the game.
+* We recorded and edited sounds for the **F% U card**.
+* We recorded and edited sounds for **wrong card plays**.
+* We recorded and edited sounds for the **draw pile** and **discard pile**.
+* We added our **background music**, which was created earlier by Aiysha.
+* We added a **start sound** for the game.
+* We removed other **unnecessary sounds** to keep the audio experience cleaner.
+
+## Work Summary
+
+During today’s work session, we focused entirely on improving the audio experience of the game. Our main goal was to create custom sounds that make gameplay feel more interactive, immersive, and polished.
+
+### Recording and Editing Sound Effects
+
+One of the main tasks today was recording and editing several **custom sound effects** for important game actions. We created sounds for the **F% U card**, for situations where a player places the **wrong card**, and for interactions with both the **draw pile** and the **discard pile**.
+
+After recording the sounds, we edited them to improve their quality and ensure they fit well into the overall atmosphere of the game. This helps create stronger feedback for player actions and makes gameplay feel more dynamic.
+
+### Background Music and Start Sound
+
+We also integrated our **background music**, which Aiysha had already produced in FL Studio a few days ago. Adding the background music gives the game more personality and helps create a more engaging playing experience.
+
+In addition, we added a **start sound** that plays when the game begins. This creates a stronger first impression and makes the game feel more complete and professional.
+
+### Audio Cleanup
+
+Another important task was reviewing the existing sounds in the game and removing **unnecessary audio effects** that did not add much value. This cleanup helps keep the sound design focused and prevents the game from feeling overloaded with audio feedback.
+
+### Conclusion
+
+Overall, today’s session significantly improved the game’s audio design. By creating our own custom sound effects, adding background music, and cleaning up unnecessary sounds, the game now feels much more immersive and polished.
+
+## Future Plans
+
+* Finish editing sounds for the **special cards**.
+* Add and finalize sounds for the **black cards**.
+* Complete the remaining audio implementation so the **game’s sound design is fully finished**.
+
+## Date: May 12, 2026
+
+### Logo Sketching, Manual SVG Asset Creation and GUI Integration (Aiysha)
+
+## What did I do today?
+
+Today, I worked on the visual identity of the project and turned my own logo sketches from Clip Studio Paint into usable SVG assets. I also integrated these assets into the JavaFX GUI and solved several technical problems related to loading complex SVG files.
+
+* I designed and refined the **card backside** for the game.
+
+* I considered visual design principles such as:
+
+  * symmetry,
+  * contrast,
+  * colour balance,
+  * readability,
+  * visual meaning,
+  * and consistency with the game’s overall style.
+
+* I made sure that the contrast between the **card background** and the **logo elements** is high enough for readability, so the design remains visible even at smaller sizes.
+
+* I chose a strong orange-to-purple gradient because it fits the chaotic, energetic style of *Frantic^-1*.
+
+* I created a blank SVG version of the card backside with:
+
+  * transparent background,
+  * rounded corners,
+  * gradient fill,
+  * subtle highlight,
+  * and clean border styling.
+
+* I also worked on the larger **Frantic^-1 logo** based on my own sketch.
+
+* I tested how the blank card stack, motion streaks, wordmark, contour lines, and sparkle elements work together.
+
+* I adjusted the colourful contour so it fits the composition better and does not overlap the cards too much.
+
+* I then created a separate **circular Frantic symbol** based on my own Clip Studio Paint sketch.
+
+* I manually built the SVG shape step by step, including the circular segments, inner swirl, motion streaks, black outlines, and “-1” symbol.
+
+* This was very tedious because the SVGs had to be created manually instead of simply exporting a finished vector file.
+
+* I repeatedly adjusted paths, gradients, outlines, and proportions so the result looked closer to my original sketch.
+
+* After creating the SVG assets, I integrated the new **card backside logo** into the JavaFX game view.
+
+* I replaced the old placeholder / PNG-based backside symbol with the new SVG-based logo asset.
+
+* I tested several approaches for displaying complex SVGs inside JavaFX:
+
+  * loading the SVG directly with JavaFX `Image`,
+  * using the existing lightweight SVG loading library,
+  * rendering it through a `WebView`,
+  * and finally rendering it with **Apache Batik**.
+
+* I found out that the direct JavaFX and lightweight SVG approaches were not reliable enough for this logo because the SVG contains complex gradients, filters, reusable shapes, and a large view box.
+
+* I also tested a `WebView` solution. While it could display the SVG, it introduced unwanted layout and rendering problems such as clipping and a white background rectangle behind the logo.
+
+* I then switched to **Apache Batik**, which renders the SVG into an in-memory PNG and then displays it as a normal JavaFX `ImageView`.
+
+* I debugged why Batik initially failed to render the SVG and found that the problem was the unsupported SVG filter primitive `feDropShadow`.
+
+* I replaced `feDropShadow` with a Batik-compatible SVG 1.1 shadow filter using:
+
+  * `feGaussianBlur`,
+  * `feOffset`,
+  * `feFlood`,
+  * `feComposite`,
+  * and `feMerge`.
+
+* I also updated SVG references from modern `href` syntax to the more Batik-compatible `xlink:href` syntax.
+
+* I adjusted the logo rendering so that the SVG is rendered at a high resolution for sharpness, but displayed at a smaller size inside the actual card.
+
+* I noticed that the colourful logo became hard to read when displayed very small on the card backside, so I created a much darker version of the circular logo.
+
+* I manually darkened the gradients while keeping subtle colour variation, so the logo now looks almost black but still retains the original visual identity and slight colour depth.
+
+* I integrated this darker version into the larger **Frantic^-1 game logo**, replacing the previous brighter mini-logo on the front card.
+
+* I made the full game logo more Batik-compatible by moving definitions into safer locations and using `xlink:href` consistently.
+
+* I then integrated the large `logo_font.svg` into the **ConnectView**, replacing the old text label `Frantic^-1`.
+
+* I created a reusable SVG rendering helper so complex SVGs can be loaded as JavaFX images using Batik.
+
+* I adjusted the ConnectView layout so the logo appears cleanly above the connection form.
+
+* I also started integrating the game logo into the **GameView** by replacing the unnecessary `"Game Table"` label with a small version of the logo.
+
+* I planned the placement carefully so the logo stays in the top-left header area and does not overlap the circular table, opponent cards, player markers, or other game elements.
+
+## What worked well?
+
+The final SVG integration works much better than the earlier attempts. Rendering the SVGs with Batik is more stable than relying on direct SVG loading or WebView. The card backside now uses the custom logo instead of a placeholder, and the ConnectView looks much more polished with the real project logo.
+
+## What was difficult?
+
+The most difficult part was making complex SVGs work reliably in JavaFX. Some SVG features that work in browsers do not work properly with Batik or JavaFX. I had to debug rendering errors, replace incompatible filters, adjust SVG syntax, and repeatedly test how the assets looked at very small sizes.
+
+## What are the next steps?
+
+Next, I want to create SVG icons for the missing card effects, especially for all special cards that currently still use fallback symbols or are missing proper visual assets. These icons should match the style of the existing card design, so the whole game looks more consistent.
+
+I also want to continue polishing the GUI visually. This includes improving spacing, proportions, logo placement, card readability, panel layout, and the general presentation of the game screens. The goal is to make the interface feel more polished, coherent, and visually appealing for the final demo.
+
+
+
+

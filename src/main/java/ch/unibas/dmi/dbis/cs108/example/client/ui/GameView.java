@@ -29,6 +29,9 @@ import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 import javafx.scene.control.ListCell;
 import java.util.function.Consumer;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+
 
 /**
  * Game screen for the Frantic^-1 GUI client.
@@ -349,7 +352,7 @@ public class GameView extends BorderPane {
         VBox.setVgrow(centerTablePane, Priority.ALWAYS);
 
         gameArea.getChildren().addAll(
-                createSectionTitle("Game Table"),
+                createGameHeader(),
                 centerTablePane,
                 handSection
         );
@@ -380,6 +383,8 @@ public class GameView extends BorderPane {
         centerWrapper.setTranslateY(36);
 
         circularTablePane = new CircularTablePane(centerWrapper);
+        circularTablePane.getStyleClass().add("circular-table-background");
+
         centerTablePane.getChildren().add(circularTablePane);
     }
 
@@ -390,19 +395,39 @@ public class GameView extends BorderPane {
      * using a circular arc formula so the hand curves up from the bottom center.</p>
      */
     private void buildBottomHandArea() {
+        handSection.setAlignment(Pos.CENTER);
+        handSection.setSpacing(0);
+
         handFanPane = new Pane();
-        handFanPane.setPrefHeight(180);
-        handFanPane.prefWidthProperty().bind(widthProperty().multiply(0.60));
 
-        handSection.getChildren().addAll(
-                handTitleLabel,
-                handFanPane
-        );
+        /*
+         * Vertical room for tilted cards.
+         * The fan stays inside the decorative contour.
+         */
+        handFanPane.setPrefHeight(220);
+        handFanPane.setMinHeight(220);
+        handFanPane.prefWidthProperty().bind(widthProperty().multiply(0.62));
 
-//        handSection.getChildren().addAll(
-//                createSectionTitle("Your Hand"),
-//                handFanPane
-//        );
+        FancyHandFrame handFrame = new FancyHandFrame();
+
+        /*
+         * The title is inside the contour again.
+         * The top padding leaves room for the top line and sparkle,
+         * so the label does not overlap the frame decoration.
+         */
+        VBox handContent = new VBox(2, handTitleLabel, handFanPane);
+        handContent.setAlignment(Pos.TOP_CENTER);
+        handContent.setPadding(new Insets(42, 34, 34, 34));
+        handContent.setMaxWidth(Double.MAX_VALUE);
+
+        StackPane framedHandPane = new StackPane(handFrame, handContent);
+        framedHandPane.setAlignment(Pos.CENTER);
+        framedHandPane.setMaxWidth(Double.MAX_VALUE);
+
+        framedHandPane.setPrefHeight(310);
+        framedHandPane.setMinHeight(310);
+
+        handSection.getChildren().setAll(framedHandPane);
     }
 
     public void setSpectatorMode(boolean spectatorMode) {
@@ -437,7 +462,7 @@ public class GameView extends BorderPane {
                 playersList,
                 lobbyButtonRow
         );
-        playersBox.getStyleClass().add("panel");
+        playersBox.getStyleClass().addAll("panel", "panel-accent-top");
         playersBox.setMinHeight(130);
         playersBox.setPrefHeight(PLAYERS_HEIGHT_COLLAPSED);
         playersBox.setMaxHeight(Double.MAX_VALUE);
@@ -457,7 +482,7 @@ public class GameView extends BorderPane {
                 createChatHeader(),
                 chatContentBox
         );
-        chatBox.getStyleClass().add("panel");
+        chatBox.getStyleClass().addAll("panel", "panel-accent-top");
         chatBox.setPrefHeight(CHAT_HEIGHT_COLLAPSED);
         chatBox.setMinHeight(CHAT_HEIGHT_COLLAPSED);
         chatBox.setMaxHeight(Region.USE_PREF_SIZE);
@@ -553,6 +578,68 @@ public class GameView extends BorderPane {
         });
 
         timeline.play();
+    }
+
+
+    /**
+     * Creates the compact header for the game panel.
+     *
+     * <p>The old textual "Game Table" label is replaced by the project logo. The logo
+     * is kept small and aligned to the top-left so it identifies the screen without
+     * overlapping the circular table or opponent players.</p>
+     *
+     * @return the configured game header
+     */
+    private HBox createGameHeader() {
+        ImageView logoView = createGameLogoView();
+
+        HBox header = new HBox();
+        header.getStyleClass().add("game-header");
+        header.setAlignment(Pos.CENTER_LEFT);
+        header.setMinHeight(42);
+
+        if (logoView != null) {
+            header.getChildren().add(logoView);
+        } else {
+            Label fallbackTitle = createSectionTitle("Frantic^-1");
+            header.getChildren().add(fallbackTitle);
+        }
+
+        return header;
+    }
+
+    /**
+     * Creates a small logo image for the game panel header.
+     *
+     * @return the logo image view, or {@code null} if the SVG could not be rendered
+     */
+    private ImageView createGameLogoView() {
+        Image logoImage = SvgImageLoader.loadSvgAsImage(
+                GameView.class,
+                "/icons/logo_font.svg",
+                700f,
+                240f
+        );
+
+        if (logoImage == null) {
+            return null;
+        }
+
+        ImageView logoView = new ImageView(logoImage);
+        logoView.getStyleClass().add("game-logo-image");
+        logoView.setPreserveRatio(true);
+        logoView.setSmooth(true);
+        logoView.setMouseTransparent(true);
+
+        /*
+         * Technical display size:
+         * The SVG is rendered larger for sharpness, but displayed as a compact header
+         * logo so it does not interfere with players, the circular table, or overlays.
+         */
+        logoView.setFitWidth(220);
+        logoView.setFitHeight(74);
+
+        return logoView;
     }
 
     /**
@@ -1038,4 +1125,7 @@ public class GameView extends BorderPane {
                 ? volume -> {}
                 : effectsVolumeHandler;
     }
+
+
+
 }

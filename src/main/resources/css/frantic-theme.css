@@ -87,6 +87,12 @@
 .game-screen {
     -fx-padding: 16;
 }
+.game-screen {
+    -fx-background-color:
+            radial-gradient(center 12% 8%, radius 45%, rgba(127, 53, 247, 0.10), transparent),
+            radial-gradient(center 88% 92%, radius 42%, rgba(255, 92, 115, 0.08), transparent),
+            bg-color;
+}
 
 .game-end-screen {
     -fx-alignment: center;
@@ -193,9 +199,11 @@
 }
 
 .secondary-button {
-    -fx-background-color: secondary-bg;
+    -fx-background-color:
+            linear-gradient(to bottom, rgba(255,255,255,0.06), rgba(255,255,255,0.01)),
+            #252b36;
     -fx-text-fill: text-main;
-    -fx-border-color: secondary-border;
+    -fx-border-color: rgba(255, 248, 243, 0.16);
     -fx-border-width: 1;
 }
 
@@ -778,24 +786,14 @@
     -fx-border-color: rgba(255, 248, 243, 0.72);
 }
 
-.card-backside-logo-box {
-    -fx-pref-width: 50;
-    -fx-pref-height: 50;
-    -fx-max-width: 50;
-    -fx-max-height: 50;
 
-    -fx-background-radius: 999;
-    -fx-border-radius: 999;
-    -fx-border-width: 2.5;
-    -fx-border-color: rgba(255, 248, 243, 0.62);
-    -fx-background-color:
-            radial-gradient(center 50% 30%, radius 72%, rgba(255,255,255,0.22), transparent),
-            linear-gradient(from 0% 0% to 100% 100%, rgba(17,19,25,0.84), rgba(34,24,72,0.88));
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.36), 8, 0.22, 0, 2);
+.card-backside-logo-box {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
 }
 
 .card-backside-logo-image {
-    -fx-opacity: 0.94;
+    -fx-opacity: 0.96;
 }
 
 .card-backside-logo-text {
@@ -908,4 +906,59 @@
     -fx-text-fill: text-secondary;
     -fx-font-size: 13px;
     -fx-font-weight: bold;
+}
+
+
+.connect-logo-image {
+    -fx-opacity: 0.98;
+}
+
+.connect-panel {
+    -fx-alignment: center;
+}
+
+.connect-content-box {
+    -fx-alignment: center;
+}
+
+
+.game-header {
+    -fx-alignment: center-left;
+    -fx-padding: 0 0 2 0;
+}
+
+.game-logo-image {
+    -fx-opacity: 0.96;
+}
+
+
+.circular-table-background {
+    -fx-background-color:
+            radial-gradient(center 50% 45%, radius 65%, rgba(255, 122, 90, 0.08), transparent),
+            radial-gradient(center 50% 50%, radius 78%, rgba(127, 53, 247, 0.10), transparent),
+            #131c2c;
+    -fx-background-radius: 999;
+}
+
+.panel-accent-top {
+    -fx-border-color:
+            linear-gradient(to right, #7F35F7, #FF7C48, #FF2C8D),
+            panel-border;
+    -fx-border-width:
+            2 0 0 0,
+            1;
+    -fx-border-radius:
+            radius-panel radius-panel 0 0,
+            radius-panel;
+}
+
+
+.list-view.frantic-list-view .list-cell.current-lobby-cell,
+.list-view.frantic-list-view .list-cell.self-player-cell {
+    -fx-background-color:
+            linear-gradient(to right, rgba(127, 53, 247, 0.22), rgba(255, 92, 115, 0.16));
+    -fx-background-radius: 12;
+    -fx-border-color: rgba(255, 248, 243, 0.08);
+    -fx-border-radius: 12;
+    -fx-font-weight: 800;
 }
