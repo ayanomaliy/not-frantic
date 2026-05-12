@@ -1156,3 +1156,47 @@ If the player does not reconnect within the timeout, they are removed from the g
 ## Conclusion
 
 The reconnect system is now more stable and prevents games from getting stuck when a player disconnects. The feature was tested successfully with both 2-player and 3-player scenarios.
+
+## Date: May 12, 2026
+
+### Sound Design and Audio Implementation (Sevval, Aiysha)
+
+## What did we do today?
+
+* We worked on the **sound design** for the game.
+* We recorded and edited sounds for the **F% U card**.
+* We recorded and edited sounds for **wrong card plays**.
+* We recorded and edited sounds for the **draw pile** and **discard pile**.
+* We added our **background music**, which was created earlier by Aiysha.
+* We added a **start sound** for the game.
+* We removed other **unnecessary sounds** to keep the audio experience cleaner.
+
+## Work Summary
+
+During today’s work session, we focused entirely on improving the audio experience of the game. Our main goal was to create custom sounds that make gameplay feel more interactive, immersive, and polished.
+
+### Recording and Editing Sound Effects
+
+One of the main tasks today was recording and editing several **custom sound effects** for important game actions. We created sounds for the **F% U card**, for situations where a player places the **wrong card**, and for interactions with both the **draw pile** and the **discard pile**.
+
+After recording the sounds, we edited them to improve their quality and ensure they fit well into the overall atmosphere of the game. This helps create stronger feedback for player actions and makes gameplay feel more dynamic.
+
+### Background Music and Start Sound
+
+We also integrated our **background music**, which Aiysha had already prepared a few days ago. Adding the background music gives the game more personality and helps create a more engaging playing experience.
+
+In addition, we added a **start sound** that plays when the game begins. This creates a stronger first impression and makes the game feel more complete and professional.
+
+### Audio Cleanup
+
+Another important task was reviewing the existing sounds in the game and removing **unnecessary audio effects** that did not add much value. This cleanup helps keep the sound design focused and prevents the game from feeling overloaded with audio feedback.
+
+### Conclusion
+
+Overall, today’s session significantly improved the game’s audio design. By creating our own custom sound effects, adding background music, and cleaning up unnecessary sounds, the game now feels much more immersive and polished.
+
+## Future Plans
+
+* Finish editing sounds for the **special cards**.
+* Add and finalize sounds for the **black cards**.
+* Complete the remaining audio implementation so the **game’s sound design is fully finished**.
