@@ -36,7 +36,7 @@ public class OtherPlayerView extends Group {
     static final double INFO_INWARD_DISTANCE = 34.0;
     static final double FAN_OUTWARD_DISTANCE = 88.0;
 
-    static final double PLAYER_OUTWARD_DISTANCE = 14.0;
+    static final double PLAYER_OUTWARD_DISTANCE = 38.0;
     static final double HAND_INWARD_DISTANCE = 82.0;
 
     private static final String PLAYER_ICON_PATH = "/icons/player.svg";
@@ -73,7 +73,7 @@ public class OtherPlayerView extends Group {
         fanPane = new Pane();
         fanGroup = new Group(fanPane);
 
-        VBox infoBox = new VBox(2, iconCircle, nameLabel);
+        VBox infoBox = new VBox(2, nameLabel, iconCircle);
         infoBox.setAlignment(Pos.CENTER);
         infoGroup = new Group(infoBox);
 
@@ -92,10 +92,8 @@ public class OtherPlayerView extends Group {
         double rad = Math.toRadians(seatAngleDegrees);
 
         /*
-         * Vector from center outward toward this opponent seat.
-         * Example:
-         * - top-left opponent -> up-left
-         * - top-right opponent -> up-right
+         * Vector from table center outward toward this opponent seat.
+         * 0 degrees = top.
          */
         double outwardX = Math.sin(rad);
         double outwardY = -Math.cos(rad);
@@ -109,24 +107,104 @@ public class OtherPlayerView extends Group {
         double fanH = fanBounds.getHeight();
 
         /*
-         * Player icon + name go OUTWARD from the seat anchor.
+         * First calculate the visual rotation of the opponent hand.
          */
-        infoGroup.setLayoutX(outwardX * PLAYER_OUTWARD_DISTANCE - infoW / 2);
-        infoGroup.setLayoutY(outwardY * PLAYER_OUTWARD_DISTANCE - infoH / 2);
+        double fanRotation = calculateOpponentHandRotation(seatAngleDegrees);
 
         /*
-         * Opponent hand goes INWARD toward the table center.
+         * The player icon/name is the front of the opponent slot.
+         * It sits slightly outward from the table center.
          */
-        fanGroup.setLayoutX(-outwardX * HAND_INWARD_DISTANCE - fanW / 2);
-        fanGroup.setLayoutY(-outwardY * HAND_INWARD_DISTANCE - fanH / 2);
+        double infoCenterX = outwardX * PLAYER_OUTWARD_DISTANCE;
+        double infoCenterY = outwardY * PLAYER_OUTWARD_DISTANCE;
 
         /*
-         * Rotate only the fan so the cards face inward.
+         * Now place the hand fan BEHIND the player marker according to the same
+         * visual direction as the fan rotation.
+         *
+         * This is the important fix:
+         * previously the fan position used only the table-center direction.
+         * That made side players drift away from their own hand.
          */
-        fanGroup.setRotate(seatAngleDegrees + 180);
+        double fanRad = Math.toRadians(fanRotation);
+        double handDirectionX = Math.sin(fanRad);
+        double handDirectionY = -Math.cos(fanRad);
 
+        double infoToHandDistance = 76.0;
+
+        double fanCenterX = infoCenterX + handDirectionX * infoToHandDistance;
+        double fanCenterY = infoCenterY + handDirectionY * infoToHandDistance;
+
+        infoGroup.setLayoutX(infoCenterX - infoW / 2);
+        infoGroup.setLayoutY(infoCenterY - infoH / 2);
+
+        fanGroup.setLayoutX(fanCenterX - fanW / 2);
+        fanGroup.setLayoutY(fanCenterY - fanH / 2);
+
+        fanGroup.setRotate(fanRotation);
+
+        /*
+         * Player marker stays visually in front of the cards.
+         */
         fanGroup.toBack();
         infoGroup.toFront();
+    }
+
+    /**
+     * Calculates the visual rotation of an opponent hand.
+     *
+     * <p>The seat angle still controls where the player sits around the table,
+     * but the hand rotation is biased downward so the opponent hands visually
+     * guide the eye toward the local player's hand and the center piles.</p>
+     *
+     * @param seatAngle the opponent seat angle in degrees
+     * @return the rotation applied to the opponent card fan
+     */
+    private double calculateOpponentHandRotation(double seatAngle) {
+        /*
+         * Current inward-facing logic would be:
+         *
+         *     seatAngle + 180
+         *
+         * That points exactly toward the center of the table.
+         *
+         * We instead blend that direction with 180 degrees, which is visually
+         * downward in JavaFX rotation terms for these card fans.
+         */
+        double inwardRotation = normalizeDegrees(seatAngle + 180.0);
+        double downwardBias = 180.0;
+
+        /*
+         * 0.0 = only inward-facing
+         * 1.0 = completely downward-facing
+         *
+         * Around 0.45 looks natural: side players still keep their own angle,
+         * but they no longer look like they point sideways.
+         */
+        double biasStrength = 0.45;
+
+        return interpolateAngle(inwardRotation, downwardBias, biasStrength);
+    }
+
+    /**
+     * Interpolates between two angles using the shortest path.
+     */
+    private double interpolateAngle(double from, double to, double t) {
+        double difference = normalizeDegrees(to - from);
+
+        if (difference > 180.0) {
+            difference -= 360.0;
+        }
+
+        return normalizeDegrees(from + difference * t);
+    }
+
+    /**
+     * Normalizes an angle to the range [0, 360).
+     */
+    private double normalizeDegrees(double degrees) {
+        double result = degrees % 360.0;
+        return result < 0 ? result + 360.0 : result;
     }
 
     private Node buildIconNode(String colorClass) {
