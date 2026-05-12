@@ -1117,7 +1117,7 @@ class FxNetworkClientTest {
      * @throws Exception if the test fails
      */
     @Test
-    void onDisconnectedClearsState() throws Exception {
+    void onDisconnectedWithoutReconnectTokenClearsState() throws Exception {
         TestContext ctx = createContext();
 
         ctx.state().setConnected(true);
@@ -1129,7 +1129,7 @@ class FxNetworkClientTest {
         flushFx();
 
         assertFalse(ctx.state().isConnected());
-        assertEquals("Connection closed.", ctx.state().getStatusText());
+        assertEquals("Connection lost.", ctx.state().getStatusText());
         assertEquals("", ctx.state().getCurrentLobby());
         assertTrue(ctx.state().getPlayers().isEmpty());
         assertTrue(ctx.state().getGameMessages().isEmpty());
