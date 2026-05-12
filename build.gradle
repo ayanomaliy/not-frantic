@@ -24,7 +24,14 @@ repositories {
 
 javafx {
     version = "17.0.10"
-    modules = ['javafx.controls', 'javafx.fxml', 'javafx.base', 'javafx.swing', 'javafx.media']
+    modules = [
+            'javafx.controls',
+            'javafx.fxml',
+            'javafx.base',
+            'javafx.swing',
+            'javafx.media',
+            'javafx.web'
+    ]
 }
 
 dependencies {
@@ -32,6 +39,9 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.10.0")
     implementation 'io.github.typhon0:AnimateFX:1.2.4'
     implementation 'com.fluxvend:svgfx:0.0.4'
+
+    implementation 'org.apache.xmlgraphics:batik-transcoder:1.18'
+    implementation 'org.apache.xmlgraphics:batik-codec:1.18'
 }
 
 test {
@@ -98,6 +108,13 @@ tasks.register('client', JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
     mainClass = 'ch.unibas.dmi.dbis.cs108.example.client.ClientMain'
     standardInput = System.in
+}
+
+tasks.register('debugSvgLogo', JavaExec) {
+    group = 'verification'
+    description = 'Tests whether Batik can render icons/logo.svg.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'ch.unibas.dmi.dbis.cs108.example.debug.SvgRenderDebug'
 }
 
 tasks.register('build-cs108') {

@@ -1,4 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink"
      width="2172"
      height="724"
      viewBox="0 0 2172 724"
@@ -133,81 +134,89 @@
 
         <!-- ========================= -->
         <!-- SMALL CARD LOGO SYMBOL -->
+        <!-- updated to dark version -->
         <!-- ========================= -->
 
         <symbol id="miniFranticLogo" viewBox="0 0 1200 1100" overflow="visible">
 
             <!-- Small logo gradients -->
             <linearGradient id="mini_gradientOuterTopLeft" x1="240" y1="520" x2="610" y2="145" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stop-color="#FFD400"/>
-                <stop offset="40%" stop-color="#FF8A1F"/>
-                <stop offset="100%" stop-color="#78DD10"/>
+                <stop offset="0%" stop-color="#181400"/>
+                <stop offset="40%" stop-color="#1A0F05"/>
+                <stop offset="100%" stop-color="#0D1604"/>
             </linearGradient>
 
             <linearGradient id="mini_gradientOuterTopRight" x1="650" y1="145" x2="1000" y2="520" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stop-color="#42D4B0"/>
-                <stop offset="40%" stop-color="#248BDE"/>
-                <stop offset="70%" stop-color="#5C00FF"/>
-                <stop offset="100%" stop-color="#FF00C8"/>
+                <stop offset="0%" stop-color="#0B1714"/>
+                <stop offset="40%" stop-color="#0C1620"/>
+                <stop offset="70%" stop-color="#13002B"/>
+                <stop offset="100%" stop-color="#22001B"/>
             </linearGradient>
 
             <linearGradient id="mini_gradientOuterBottomLeft" x1="230" y1="550" x2="615" y2="910" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stop-color="#FFE600"/>
-                <stop offset="45%" stop-color="#FFB300"/>
-                <stop offset="100%" stop-color="#FF6B13"/>
+                <stop offset="0%" stop-color="#1C1800"/>
+                <stop offset="45%" stop-color="#1E1400"/>
+                <stop offset="100%" stop-color="#210D04"/>
             </linearGradient>
 
             <linearGradient id="mini_gradientOuterBottomRight" x1="650" y1="910" x2="1000" y2="550" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stop-color="#FF6C16"/>
-                <stop offset="45%" stop-color="#FF3D75"/>
-                <stop offset="100%" stop-color="#F100D1"/>
+                <stop offset="0%" stop-color="#220D04"/>
+                <stop offset="45%" stop-color="#230816"/>
+                <stop offset="100%" stop-color="#24001F"/>
             </linearGradient>
 
             <linearGradient id="mini_gradientInnerSwirlLeft" x1="0.12" y1="0.18" x2="0.88" y2="0.88" gradientUnits="objectBoundingBox">
-                <stop offset="0%" stop-color="#2B17C9"/>
-                <stop offset="35%" stop-color="#7E18D5"/>
-                <stop offset="70%" stop-color="#D30FCC"/>
-                <stop offset="100%" stop-color="#FF2EB5"/>
+                <stop offset="0%" stop-color="#0C0630"/>
+                <stop offset="35%" stop-color="#170831"/>
+                <stop offset="70%" stop-color="#250628"/>
+                <stop offset="100%" stop-color="#300A22"/>
             </linearGradient>
 
             <linearGradient id="mini_gradientInnerSwirlTop" x1="0.08" y1="0.25" x2="0.92" y2="0.42" gradientUnits="objectBoundingBox">
-                <stop offset="0%" stop-color="#CFE91A"/>
-                <stop offset="38%" stop-color="#FFAA1D"/>
-                <stop offset="75%" stop-color="#FF4B66"/>
-                <stop offset="100%" stop-color="#FF00C8"/>
+                <stop offset="0%" stop-color="#252A05"/>
+                <stop offset="38%" stop-color="#2B1B05"/>
+                <stop offset="75%" stop-color="#2B0C14"/>
+                <stop offset="100%" stop-color="#270022"/>
             </linearGradient>
 
             <linearGradient id="mini_gradientInnerSwirlRight" x1="0.38" y1="0.08" x2="0.76" y2="0.95" gradientUnits="objectBoundingBox">
-                <stop offset="0%" stop-color="#3E77E9"/>
-                <stop offset="45%" stop-color="#8E78C5"/>
-                <stop offset="78%" stop-color="#FF9066"/>
-                <stop offset="100%" stop-color="#FFD933"/>
+                <stop offset="0%" stop-color="#0D1A35"/>
+                <stop offset="45%" stop-color="#1B172A"/>
+                <stop offset="78%" stop-color="#2C1911"/>
+                <stop offset="100%" stop-color="#2B2408"/>
             </linearGradient>
 
             <linearGradient id="mini_gradientInnerSwirlBottom" x1="0.00" y1="0.78" x2="1.00" y2="0.22" gradientUnits="objectBoundingBox">
-                <stop offset="0%" stop-color="#FF681A"/>
-                <stop offset="55%" stop-color="#FF8A18"/>
-                <stop offset="100%" stop-color="#FF00C7"/>
+                <stop offset="0%" stop-color="#2A1004"/>
+                <stop offset="55%" stop-color="#2C1704"/>
+                <stop offset="100%" stop-color="#280021"/>
             </linearGradient>
 
             <linearGradient id="mini_gradientMinus" x1="420" y1="535" x2="620" y2="535" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stop-color="#C400F0"/>
-                <stop offset="100%" stop-color="#FF00B2"/>
+                <stop offset="0%" stop-color="#1E0026"/>
+                <stop offset="100%" stop-color="#240019"/>
             </linearGradient>
 
             <linearGradient id="mini_gradientOne" x1="620" y1="400" x2="700" y2="720" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stop-color="#FF1791"/>
-                <stop offset="100%" stop-color="#FF4154"/>
+                <stop offset="0%" stop-color="#260315"/>
+                <stop offset="100%" stop-color="#28070B"/>
             </linearGradient>
 
             <linearGradient id="mini_gradientMotionStreak" x1="40" y1="0" x2="430" y2="0" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stop-color="#C36BD1" stop-opacity="0"/>
-                <stop offset="65%" stop-color="#C36BD1" stop-opacity="0.35"/>
-                <stop offset="100%" stop-color="#FF9A50" stop-opacity="0.8"/>
+                <stop offset="0%" stop-color="#1B1020" stop-opacity="0"/>
+                <stop offset="65%" stop-color="#1B1020" stop-opacity="0.35"/>
+                <stop offset="100%" stop-color="#26180E" stop-opacity="0.8"/>
             </linearGradient>
 
-            <filter id="mini_shadow" x="-15%" y="-15%" width="130%" height="130%">
-                <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.4"/>
+            <filter id="mini_shadow" x="-15%" y="-15%" width="130%" height="130%" color-interpolation-filters="sRGB">
+                <feGaussianBlur in="SourceAlpha" stdDeviation="2" result="blur"/>
+                <feOffset in="blur" dx="0" dy="2" result="offsetBlur"/>
+                <feFlood flood-color="#000000" flood-opacity="0.55" result="shadowColor"/>
+                <feComposite in="shadowColor" in2="offsetBlur" operator="in" result="shadow"/>
+                <feMerge>
+                    <feMergeNode in="shadow"/>
+                    <feMergeNode in="SourceGraphic"/>
+                </feMerge>
             </filter>
 
             <path id="mini_swirlArmShape"
@@ -406,7 +415,6 @@
     <!-- SMALL LOGOS ON CARDS -->
     <!-- ========================= -->
     <g id="cardMiniLogos" filter="url(#softGlow)">
-
         <!-- front card mini logo -->
         <use id="miniLogoOnFrontCard"
              href="#miniFranticLogo"
@@ -467,14 +475,5 @@
     <text x="685" y="456" class="mainText">Frantic</text>
     <text x="1726" y="322" class="caret">^</text>
     <text x="1800" y="442" class="suffix">-1</text>
-
-
-    <filter id="miniLogoDarken" x="-20%" y="-20%" width="140%" height="140%">
-        <feComponentTransfer>
-            <feFuncR type="linear" slope="0.75"/>
-            <feFuncG type="linear" slope="0.75"/>
-            <feFuncB type="linear" slope="0.75"/>
-        </feComponentTransfer>
-    </filter>
 
 </svg>

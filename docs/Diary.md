@@ -1052,6 +1052,28 @@ The fullscreen and responsive layout experiment made good progress, especially f
 
 ## Date: May 9, 2026
 
+### Background Music Production and Audio Settings (Aiysha)
+
+## What did I do today?
+
+Today, I produced a background track for the game in FL Studio. At first, I wanted to create something softer with pretty chords, delay-heavy arpeggios, and a lot of reverb. However, after testing the idea, I realized that this did not fit the playful and chaotic feeling of the game.
+
+Because of that, I researched how companies like Nintendo approach background music in well-known Wii games. I focused on how their tracks often stay light, loopable, and memorable without becoming too distracting during gameplay. I then applied these ideas to my own track.
+
+The track is built around a G minor / modal minor harmonic centre, using a progression similar to Gm7, Fadd9/A, Gm7, and F7. This gives the music a bright but slightly mischievous feeling. The rhythm is in 4/4 at around 124 BPM, with short chord stabs and longer responses, creating a bouncy call-and-response groove. I wanted the music to feel uplifting and energetic, but still simple enough to work as background music during the game.
+
+The track uses a modal minor harmonic colour, short rhythmic chord stabs, and a loop-friendly call-and-response structure to create an uplifting and bouncy background atmosphere without overpowering the gameplay.
+
+
+I made the sounds myself using the Serum and Nexus synthesizer plugins instead of only using finished loops. I shaped the synth sounds to make the track feel playful, clear, and game-like. The current version is not professionally mixed yet, but it already works as a recognizable background track for the project.
+
+I also integrated music settings so the background music can be made quieter. This was important because even a catchy track can become annoying if it is too loud during longer gameplay sessions.
+
+## Future Plans:
+If I have enough time, I want to properly mix the background track further so the instruments, volume balance, and overall sound become cleaner. I also want to work together with Sevval to create more custom sound effects for the game. Our goal is to make the audio, visuals, logos, and overall game identity ourselves, instead of stealing assets or relying on AI-generated material.
+
+## Date: May 9, 2026
+
 ### Card Design & Lobby Feature Updates (Sevval, Aiysha)
 
 ## What did we do today?
@@ -1183,7 +1205,7 @@ After recording the sounds, we edited them to improve their quality and ensure t
 
 ### Background Music and Start Sound
 
-We also integrated our **background music**, which Aiysha had already prepared a few days ago. Adding the background music gives the game more personality and helps create a more engaging playing experience.
+We also integrated our **background music**, which Aiysha had already produced in FL Studio a few days ago. Adding the background music gives the game more personality and helps create a more engaging playing experience.
 
 In addition, we added a **start sound** that plays when the game begins. This creates a stronger first impression and makes the game feel more complete and professional.
 
@@ -1200,3 +1222,51 @@ Overall, today’s session significantly improved the game’s audio design. By 
 * Finish editing sounds for the **special cards**.
 * Add and finalize sounds for the **black cards**.
 * Complete the remaining audio implementation so the **game’s sound design is fully finished**.
+
+## Date: May 12, 2026
+
+### Logo Sketching and Manual SVG Asset Creation (Aiysha)
+
+## What did I do today?
+
+Today, I worked on the visual identity of the project and turned my own logo sketches from Clip Studio Paint into usable SVG assets.
+
+* I designed and refined the **card backside** for the game.
+
+* I considered visual design principles such as:
+
+  * symmetry,
+  * contrast,
+  * colour balance,
+  * readability,
+  * visual meaning,
+  * and consistency with the game’s overall style.
+
+* I made sure that the contrast between the **card background** and the **logo elements** is high enough for readability, so the design remains visible even at smaller sizes.
+
+* I chose a strong orange-to-purple gradient because it fits the chaotic, energetic style of *Frantic^-1*.
+
+* I created a blank SVG version of the card backside with:
+
+  * transparent background,
+  * rounded corners,
+  * gradient fill,
+  * subtle highlight,
+  * and clean border styling.
+
+* I also worked on the larger **Frantic^-1 logo** based on my own sketch.
+
+* I tested how the blank card stack, motion streaks, wordmark, contour lines, and sparkle elements work together.
+
+* I adjusted the colourful contour so it fits the composition better and does not overlap the cards too much.
+
+* I then created a separate **circular Frantic symbol** based on my own Clip Studio Paint sketch.
+
+* I manually built the SVG shape step by step, including the circular segments, inner swirl, motion streaks, black outlines, and “-1” symbol.
+
+* This was very tedious because the SVGs had to be created manually instead of simply exporting a finished vector file.
+
+* I repeatedly adjusted paths, gradients, outlines, and proportions so the result looked closer to my original sketch.
+
+
+
