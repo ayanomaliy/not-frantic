@@ -962,3 +962,12 @@
     -fx-border-radius: 12;
     -fx-font-weight: 800;
 }
+
+.hand-header {
+    -fx-padding: 0 0 0 46;
+}
+
+.hand-header .section-title {
+    -fx-font-size: 16px;
+    -fx-opacity: 0.88;
+}

@@ -70,7 +70,7 @@ public class FancyHandFrame extends Region {
 
     @Override
     protected double computePrefHeight(double width) {
-        return 300;
+        return 250;
     }
 
     @Override
@@ -84,7 +84,7 @@ public class FancyHandFrame extends Region {
 
         double left = 18;
         double right = w - 18;
-        double top = 18;
+        double top = 46;
         double bottom = h - 18;
 
         double radius = 30;

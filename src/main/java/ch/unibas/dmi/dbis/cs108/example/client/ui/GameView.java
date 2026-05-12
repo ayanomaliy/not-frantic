@@ -377,10 +377,10 @@ public class GameView extends BorderPane {
         HBox buttonRow = new HBox(endTurnButton);
         buttonRow.setAlignment(Pos.CENTER);
 
-        VBox centerWrapper = new VBox(24, pilesBox, buttonRow);
+        VBox centerWrapper = new VBox(18, pilesBox, buttonRow);
         centerWrapper.setAlignment(Pos.CENTER);
         centerWrapper.setMaxWidth(Double.MAX_VALUE);
-        centerWrapper.setTranslateY(36);
+        centerWrapper.setTranslateY(95);
 
         circularTablePane = new CircularTablePane(centerWrapper);
         circularTablePane.getStyleClass().add("circular-table-background");
@@ -402,30 +402,36 @@ public class GameView extends BorderPane {
 
         /*
          * Vertical room for tilted cards.
-         * The fan stays inside the decorative contour.
+         * The fan is placed inside the decorative contour, while the hand label is
+         * positioned separately as an overlay inside the same frame.
          */
-        handFanPane.setPrefHeight(220);
-        handFanPane.setMinHeight(220);
+        handFanPane.setPrefHeight(205);
+        handFanPane.setMinHeight(205);
         handFanPane.prefWidthProperty().bind(widthProperty().multiply(0.62));
 
         FancyHandFrame handFrame = new FancyHandFrame();
 
         /*
-         * The title is inside the contour again.
-         * The top padding leaves room for the top line and sparkle,
-         * so the label does not overlap the frame decoration.
+         * The card fan itself is centered near the bottom of the frame.
+         * This leaves room for the "Your Hand" / "Watching Current Player" label
+         * on the upper-left inside the contour.
          */
-        VBox handContent = new VBox(2, handTitleLabel, handFanPane);
-        handContent.setAlignment(Pos.TOP_CENTER);
-        handContent.setPadding(new Insets(42, 34, 34, 34));
-        handContent.setMaxWidth(Double.MAX_VALUE);
-
-        StackPane framedHandPane = new StackPane(handFrame, handContent);
+        StackPane framedHandPane = new StackPane(handFrame, handFanPane, handTitleLabel);
         framedHandPane.setAlignment(Pos.CENTER);
         framedHandPane.setMaxWidth(Double.MAX_VALUE);
 
-        framedHandPane.setPrefHeight(310);
-        framedHandPane.setMinHeight(310);
+        framedHandPane.setPrefHeight(250);
+        framedHandPane.setMinHeight(250);
+
+        StackPane.setAlignment(handFanPane, Pos.BOTTOM_CENTER);
+        StackPane.setMargin(handFanPane, new Insets(0, 34, 22, 34));
+
+        /*
+         * Keep the label inside the contour, but away from the top sparkle/line.
+         * This matches the sketch: label left, cards centered.
+         */
+        StackPane.setAlignment(handTitleLabel, Pos.TOP_LEFT);
+        StackPane.setMargin(handTitleLabel, new Insets(70, 0, 0, 64));
 
         handSection.getChildren().setAll(framedHandPane);
     }
