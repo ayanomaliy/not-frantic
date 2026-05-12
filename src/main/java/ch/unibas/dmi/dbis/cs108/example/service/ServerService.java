@@ -48,6 +48,9 @@ public class ServerService {
     private final HighScoreHistory highScoreHistory =
             new HighScoreHistory(Path.of("highscores.txt"));
 
+    /** Maximum reconnect wait time in milliseconds. */
+    private static final long RECONNECT_TIMEOUT_MS = 60_000;
+
     /**
      * Logs a message to the console with a server prefix.
      *
@@ -206,6 +209,108 @@ public class ServerService {
         sendLobbyList(session);
         sendAllPlayersList(session);
         broadcastAllPlayersListToAllClients();
+    }
+
+    /**
+     * Starts a background monitor that removes players
+     * who fail to reconnect in time.
+     */
+    public void startReconnectMonitor() {
+
+        Thread reconnectMonitor = new Thread(() -> {
+
+            while (true) {
+
+                try {
+
+                    long now = System.currentTimeMillis();
+
+                    for (Lobby lobby : lobbies.values()) {
+
+                        for (String playerName : lobby.getDisconnectedPlayers()) {
+
+                            long disconnectTime =
+                                    lobby.getDisconnectTime(playerName);
+
+                            if (disconnectTime < 0) {
+                                continue;
+                            }
+
+                            long disconnectedFor =
+                                    now - disconnectTime;
+
+                            if (disconnectedFor >= RECONNECT_TIMEOUT_MS) {
+
+                                System.out.println(
+                                        "[SERVER] Reconnect timeout for "
+                                                + playerName
+                                );
+
+                                handleReconnectTimeout(
+                                        lobby,
+                                        playerName
+                                );
+                            }
+                        }
+                    }
+
+                    Thread.sleep(2000);
+
+                } catch (Exception ignored) {
+                }
+            }
+
+        }, "reconnect-monitor");
+
+        reconnectMonitor.setDaemon(true);
+        reconnectMonitor.start();
+    }
+
+    /**
+     * Handles a reconnect timeout.
+     *
+     * @param lobby the affected lobby
+     * @param playerName disconnected player
+     */
+    private synchronized void handleReconnectTimeout(
+            Lobby lobby,
+            String playerName
+    ) {
+
+        lobby.removeDisconnectedPlayer(playerName);
+
+        broadcastToLobby(lobby, new Message(
+                Message.Type.INFO,
+                playerName + " did not reconnect in time and was removed from the game."
+        ));
+
+        /*
+         * If only 2 players existed originally,
+         * end the game immediately.
+         */
+        if (lobby.getPlayers().size() <= 2) {
+
+            broadcastToLobby(lobby, new Message(
+                    Message.Type.GAME_END,
+                    "Game ended because a player disconnected."
+            ));
+
+            lobby.setGameStarted(false);
+            lobby.setGameState(null);
+            lobby.setLobbyStatus(LobbyStatus.FINISHED);
+
+            broadcastLobbyListToAllClients();
+
+            return;
+        }
+
+        /*
+         * Otherwise:
+         * remaining players continue.
+         *
+         * Actual player removal from GameState
+         * will be implemented next.
+         */
     }
 
     /**

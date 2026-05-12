@@ -39,6 +39,9 @@ public class Lobby {
     /** Players that disconnected during an active game. */
     private final Set<String> disconnectedPlayers = new HashSet<>();
 
+    /** Disconnect timestamps for reconnect timeout handling. */
+    private final Map<String, Long> disconnectTimes = new HashMap<>();
+
     /** Whether a game is currently running in this lobby. */
     private boolean gameStarted = false;
 
@@ -300,6 +303,7 @@ public class Lobby {
      */
     public void markDisconnected(String playerName) {
         disconnectedPlayers.add(playerName);
+        disconnectTimes.put(playerName, System.currentTimeMillis());
     }
 
     /**
@@ -309,8 +313,8 @@ public class Lobby {
      */
     public void markReconnected(String playerName) {
         disconnectedPlayers.remove(playerName);
+        disconnectTimes.remove(playerName);
     }
-
     /**
      * Returns whether the given player is currently disconnected.
      *
@@ -372,6 +376,26 @@ public class Lobby {
      */
     public List<ClientSession> getSpectators() {
         return new ArrayList<>(spectators);
+    }
+
+    /**
+     * Returns the disconnect timestamp of a player.
+     *
+     * @param playerName the player name
+     * @return disconnect timestamp or -1 if not disconnected
+     */
+    public long getDisconnectTime(String playerName) {
+        return disconnectTimes.getOrDefault(playerName, -1L);
+    }
+
+    /**
+     * Completely removes a disconnected player from reconnect tracking.
+     *
+     * @param playerName the player name
+     */
+    public void removeDisconnectedPlayer(String playerName) {
+        disconnectedPlayers.remove(playerName);
+        disconnectTimes.remove(playerName);
     }
 
 }

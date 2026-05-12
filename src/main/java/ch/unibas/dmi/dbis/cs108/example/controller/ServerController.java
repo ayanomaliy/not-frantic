@@ -51,6 +51,7 @@ public class ServerController {
             System.out.println("Server running on port " + port);
 
             startHeartbeatMonitor();
+            serverService.startReconnectMonitor();
 
             while (true) {
                 Socket socket = serverSocket.accept();
