@@ -383,6 +383,8 @@ public class GameView extends BorderPane {
         centerWrapper.setTranslateY(36);
 
         circularTablePane = new CircularTablePane(centerWrapper);
+        circularTablePane.getStyleClass().add("circular-table-background");
+
         centerTablePane.getChildren().add(circularTablePane);
     }
 
@@ -460,7 +462,7 @@ public class GameView extends BorderPane {
                 playersList,
                 lobbyButtonRow
         );
-        playersBox.getStyleClass().add("panel");
+        playersBox.getStyleClass().addAll("panel", "panel-accent-top");
         playersBox.setMinHeight(130);
         playersBox.setPrefHeight(PLAYERS_HEIGHT_COLLAPSED);
         playersBox.setMaxHeight(Double.MAX_VALUE);
@@ -480,7 +482,7 @@ public class GameView extends BorderPane {
                 createChatHeader(),
                 chatContentBox
         );
-        chatBox.getStyleClass().add("panel");
+        chatBox.getStyleClass().addAll("panel", "panel-accent-top");
         chatBox.setPrefHeight(CHAT_HEIGHT_COLLAPSED);
         chatBox.setMinHeight(CHAT_HEIGHT_COLLAPSED);
         chatBox.setMaxHeight(Region.USE_PREF_SIZE);

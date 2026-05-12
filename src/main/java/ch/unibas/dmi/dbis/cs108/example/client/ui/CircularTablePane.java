@@ -36,9 +36,11 @@ import java.util.Map;
  */
 public class CircularTablePane extends Pane {
 
-    static final double RADIUS_FACTOR = 0.46;
-    private static final double TOP_SLOT_LIFT = 26.0;
-    private static final double SIDE_SLOT_PUSH = 18.0;
+    private static final double RADIUS_X_FACTOR = 0.39;
+    private static final double RADIUS_Y_FACTOR = 0.34;
+
+    private static final double TOP_SLOT_LIFT = 34.0;
+    private static final double SIDE_SLOT_PUSH = 34.0;
     private static final String TABLE_ASSET_PATH = "/icons/table.svg";
 
     private ImageView backgroundImageView;
@@ -98,10 +100,21 @@ public class CircularTablePane extends Pane {
 
         int n = others.size();
         if (n > 0) {
-            double interval = 240.0 / (n + 1);
+            double startAngle = 285.0;
+            double endAngle = 75.0;
+            double arc = 150.0;
+
+            double interval = arc / Math.max(1, n - 1);
+
             for (int i = 0; i < n; i++) {
                 ClientState.PlayerInfo info = others.get(i);
-                double angle = (240 + (i + 1) * interval) % 360;
+
+                double angle;
+                if (n == 1) {
+                    angle = 0.0;
+                } else {
+                    angle = (startAngle + i * interval) % 360;
+                }
 
                 OtherPlayerView slot = new OtherPlayerView(info.name(), info.handSize(), info.color(), registry);
                 slot.setSeatAngle(angle);
@@ -120,17 +133,26 @@ public class CircularTablePane extends Pane {
     protected void layoutChildren() {
         double w = getWidth();
         double h = getHeight();
-        if (w <= 0 || h <= 0) return;
+
+        if (w <= 0 || h <= 0) {
+            return;
+        }
 
         double cx = w / 2;
         double cy = h / 2;
-        double radius = Math.min(w, h) * RADIUS_FACTOR;
+
+        /*
+         * Oval seat layout:
+         * The game area is wide, so opponent seats need more horizontal spacing.
+         */
+        double radiusX = w * RADIUS_X_FACTOR;
+        double radiusY = h * RADIUS_Y_FACTOR;
 
         if (backgroundImageView != null) {
             backgroundImageView.setLayoutX(0);
             backgroundImageView.setLayoutY(0);
-            // fitWidth/fitHeight are bound to widthProperty()/heightProperty()
         }
+
         if (fallbackCircle != null) {
             fallbackCircle.setRadius(Math.min(w, h) * 0.45);
             fallbackCircle.setLayoutX(cx);
@@ -144,8 +166,8 @@ public class CircularTablePane extends Pane {
             double angle = slotAngles.get(i);
             double rad = Math.toRadians(angle);
 
-            double anchorX = cx + radius * Math.sin(rad);
-            double anchorY = cy - radius * Math.cos(rad);
+            double anchorX = cx + radiusX * Math.sin(rad);
+            double anchorY = cy - radiusY * Math.cos(rad);
 
             double topness = Math.max(0, Math.cos(rad));
             anchorY -= topness * TOP_SLOT_LIFT;

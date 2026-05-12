@@ -87,6 +87,12 @@
 .game-screen {
     -fx-padding: 16;
 }
+.game-screen {
+    -fx-background-color:
+            radial-gradient(center 12% 8%, radius 45%, rgba(127, 53, 247, 0.10), transparent),
+            radial-gradient(center 88% 92%, radius 42%, rgba(255, 92, 115, 0.08), transparent),
+            bg-color;
+}
 
 .game-end-screen {
     -fx-alignment: center;
@@ -193,9 +199,11 @@
 }
 
 .secondary-button {
-    -fx-background-color: secondary-bg;
+    -fx-background-color:
+            linear-gradient(to bottom, rgba(255,255,255,0.06), rgba(255,255,255,0.01)),
+            #252b36;
     -fx-text-fill: text-main;
-    -fx-border-color: secondary-border;
+    -fx-border-color: rgba(255, 248, 243, 0.16);
     -fx-border-width: 1;
 }
 
@@ -921,4 +929,36 @@
 
 .game-logo-image {
     -fx-opacity: 0.96;
+}
+
+
+.circular-table-background {
+    -fx-background-color:
+            radial-gradient(center 50% 45%, radius 65%, rgba(255, 122, 90, 0.08), transparent),
+            radial-gradient(center 50% 50%, radius 78%, rgba(127, 53, 247, 0.10), transparent),
+            #131c2c;
+    -fx-background-radius: 999;
+}
+
+.panel-accent-top {
+    -fx-border-color:
+            linear-gradient(to right, #7F35F7, #FF7C48, #FF2C8D),
+            panel-border;
+    -fx-border-width:
+            2 0 0 0,
+            1;
+    -fx-border-radius:
+            radius-panel radius-panel 0 0,
+            radius-panel;
+}
+
+
+.list-view.frantic-list-view .list-cell.current-lobby-cell,
+.list-view.frantic-list-view .list-cell.self-player-cell {
+    -fx-background-color:
+            linear-gradient(to right, rgba(127, 53, 247, 0.22), rgba(255, 92, 115, 0.16));
+    -fx-background-radius: 12;
+    -fx-border-color: rgba(255, 248, 243, 0.08);
+    -fx-border-radius: 12;
+    -fx-font-weight: 800;
 }
