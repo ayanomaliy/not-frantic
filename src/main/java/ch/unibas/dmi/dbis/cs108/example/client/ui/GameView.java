@@ -393,19 +393,39 @@ public class GameView extends BorderPane {
      * using a circular arc formula so the hand curves up from the bottom center.</p>
      */
     private void buildBottomHandArea() {
+        handSection.setAlignment(Pos.CENTER);
+        handSection.setSpacing(0);
+
         handFanPane = new Pane();
-        handFanPane.setPrefHeight(180);
-        handFanPane.prefWidthProperty().bind(widthProperty().multiply(0.60));
 
-        handSection.getChildren().addAll(
-                handTitleLabel,
-                handFanPane
-        );
+        /*
+         * Vertical room for tilted cards.
+         * The fan stays inside the decorative contour.
+         */
+        handFanPane.setPrefHeight(220);
+        handFanPane.setMinHeight(220);
+        handFanPane.prefWidthProperty().bind(widthProperty().multiply(0.62));
 
-//        handSection.getChildren().addAll(
-//                createSectionTitle("Your Hand"),
-//                handFanPane
-//        );
+        FancyHandFrame handFrame = new FancyHandFrame();
+
+        /*
+         * The title is inside the contour again.
+         * The top padding leaves room for the top line and sparkle,
+         * so the label does not overlap the frame decoration.
+         */
+        VBox handContent = new VBox(2, handTitleLabel, handFanPane);
+        handContent.setAlignment(Pos.TOP_CENTER);
+        handContent.setPadding(new Insets(42, 34, 34, 34));
+        handContent.setMaxWidth(Double.MAX_VALUE);
+
+        StackPane framedHandPane = new StackPane(handFrame, handContent);
+        framedHandPane.setAlignment(Pos.CENTER);
+        framedHandPane.setMaxWidth(Double.MAX_VALUE);
+
+        framedHandPane.setPrefHeight(310);
+        framedHandPane.setMinHeight(310);
+
+        handSection.getChildren().setAll(framedHandPane);
     }
 
     public void setSpectatorMode(boolean spectatorMode) {
