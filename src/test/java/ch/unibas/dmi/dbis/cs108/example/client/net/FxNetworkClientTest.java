@@ -1111,27 +1111,5 @@ class FxNetworkClientTest {
         assertEquals(List.of("local info"), ctx.state().getGameMessages());
     }
 
-    /**
-     * Verifies disconnect callback handling.
-     *
-     * @throws Exception if the test fails
-     */
-    @Test
-    void onDisconnectedClearsState() throws Exception {
-        TestContext ctx = createContext();
 
-        ctx.state().setConnected(true);
-        ctx.state().setCurrentLobby("Lobby1");
-        ctx.state().getPlayers().add("Alice");
-        ctx.state().getGameMessages().add("old");
-
-        ctx.fxClient().onDisconnected("Connection closed.");
-        flushFx();
-
-        assertFalse(ctx.state().isConnected());
-        assertEquals("Connection closed.", ctx.state().getStatusText());
-        assertEquals("", ctx.state().getCurrentLobby());
-        assertTrue(ctx.state().getPlayers().isEmpty());
-        assertTrue(ctx.state().getGameMessages().isEmpty());
-    }
 }

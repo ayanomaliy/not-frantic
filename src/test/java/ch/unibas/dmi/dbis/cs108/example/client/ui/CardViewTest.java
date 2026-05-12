@@ -2,7 +2,8 @@ package ch.unibas.dmi.dbis.cs108.example.client.ui;
 
 import ch.unibas.dmi.dbis.cs108.example.client.assets.AssetRegistry;
 import javafx.application.Platform;
-import javafx.geometry.Pos;
+import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.control.Label;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -49,6 +50,7 @@ class CardViewTest {
         AtomicReference<CardView> ref = new AtomicReference<>();
         AtomicReference<Throwable> err = new AtomicReference<>();
         CountDownLatch latch = new CountDownLatch(1);
+
         Platform.runLater(() -> {
             try {
                 ref.set(new CardView(cardId, registry, null));
@@ -58,9 +60,41 @@ class CardViewTest {
                 latch.countDown();
             }
         });
+
         assertTrue(latch.await(5, TimeUnit.SECONDS));
         assertNull(err.get(), "CardView constructor threw: " + err.get());
         return ref.get();
+    }
+
+    private static boolean containsLabel(Node node) {
+        if (node instanceof Label) {
+            return true;
+        }
+
+        if (node instanceof Parent parent) {
+            return parent.getChildrenUnmodifiable()
+                    .stream()
+                    .anyMatch(CardViewTest::containsLabel);
+        }
+
+        return false;
+    }
+
+    private static Label findFirstLabel(Node node) {
+        if (node instanceof Label label) {
+            return label;
+        }
+
+        if (node instanceof Parent parent) {
+            return parent.getChildrenUnmodifiable()
+                    .stream()
+                    .map(CardViewTest::findFirstLabel)
+                    .filter(label -> label != null)
+                    .findFirst()
+                    .orElse(null);
+        }
+
+        return null;
     }
 
     // -------------------------------------------------------------------------
@@ -99,6 +133,7 @@ class CardViewTest {
     @Test
     void construct_prefSizeIs90x130() throws Exception {
         CardView view = createOnFxThread(0);
+
         assertEquals(90, view.getPrefWidth());
         assertEquals(130, view.getPrefHeight());
     }
@@ -110,34 +145,35 @@ class CardViewTest {
     @Test
     void construct_hasGameCardButtonStyleClass() throws Exception {
         CardView view = createOnFxThread(0);
+
         assertTrue(view.getStyleClass().contains("game-card-button"));
     }
 
     // -------------------------------------------------------------------------
-    // Children — label is always present
+    // Children
     // -------------------------------------------------------------------------
 
     @Test
     void construct_alwaysHasAtLeastOneChild() throws Exception {
         CardView view = createOnFxThread(0);
+
         assertFalse(view.getChildren().isEmpty());
     }
 
     @Test
-    void construct_hasLabelChild() throws Exception {
+    void construct_hasLabelSomewhereInsideCardView() throws Exception {
         CardView view = createOnFxThread(0);
-        boolean hasLabel = view.getChildren().stream().anyMatch(n -> n instanceof Label);
-        assertTrue(hasLabel, "Expected a Label child in CardView");
+
+        assertTrue(containsLabel(view), "Expected a Label somewhere inside CardView");
     }
 
     @Test
-    void construct_unknownId_hasLabelWithFallbackText() throws Exception {
+    void construct_unknownId_hasFallbackTextSomewhereInsideCardView() throws Exception {
         CardView view = createOnFxThread(9999);
-        Label label = view.getChildren().stream()
-                .filter(n -> n instanceof Label)
-                .map(n -> (Label) n)
-                .findFirst().orElse(null);
-        assertNotNull(label);
+
+        Label label = findFirstLabel(view);
+
+        assertNotNull(label, "Expected a fallback Label somewhere inside CardView");
         assertFalse(label.getText().isBlank());
     }
 
@@ -147,7 +183,7 @@ class CardViewTest {
 
     @Test
     void construct_onPlayNull_doesNotThrow() throws Exception {
-        assertNotNull(createOnFxThread(0)); // null onPlay, already tested implicitly above
+        assertNotNull(createOnFxThread(0));
     }
 
     @Test
@@ -155,21 +191,22 @@ class CardViewTest {
         AtomicBoolean played = new AtomicBoolean(false);
         CountDownLatch latch = new CountDownLatch(1);
         AtomicReference<CardView> ref = new AtomicReference<>();
+
         Platform.runLater(() -> {
             ref.set(new CardView(0, registry, () -> played.set(true)));
             latch.countDown();
         });
+
         assertTrue(latch.await(5, TimeUnit.SECONDS));
-        // Fire the click handler directly
+
         CountDownLatch clickLatch = new CountDownLatch(1);
+
         Platform.runLater(() -> {
-            // Simulate by invoking the handler directly without a real MouseEvent
             var handler = ref.get().getOnMouseClicked();
-            // We can't easily fire a primary mouse click without a real event,
-            // so just verify the handler is registered (non-null)
             assertNotNull(handler, "MouseClicked handler should be set when onPlay is non-null");
             clickLatch.countDown();
         });
+
         assertTrue(clickLatch.await(5, TimeUnit.SECONDS));
     }
 
@@ -182,6 +219,7 @@ class CardViewTest {
         AssetRegistry empty = AssetRegistry.of(null);
         CountDownLatch latch = new CountDownLatch(1);
         AtomicReference<Throwable> err = new AtomicReference<>();
+
         Platform.runLater(() -> {
             try {
                 new CardView(0, empty, null);
@@ -191,6 +229,7 @@ class CardViewTest {
                 latch.countDown();
             }
         });
+
         assertTrue(latch.await(5, TimeUnit.SECONDS));
         assertNull(err.get(), "CardView must not throw with empty registry: " + err.get());
     }
