@@ -83,6 +83,8 @@ public class MainController {
 
     private static final double HAND_VERTICAL_LIFT = 40.0;
 
+    private ListChangeListener<String> wrongMoveMessageListener;
+
     /**
      * Creates a new main controller using assets loaded from the classpath.
      *
@@ -323,6 +325,26 @@ public class MainController {
         installSelfHighlight(view.getPlayersList());
         view.getGameInfoList().setItems(state.getGameMessages());
 
+        if (wrongMoveMessageListener != null) {
+            state.getGameMessages().removeListener(wrongMoveMessageListener);
+        }
+
+        wrongMoveMessageListener = change -> {
+            while (change.next()) {
+                if (!change.wasAdded()) {
+                    continue;
+                }
+
+                for (String message : change.getAddedSubList()) {
+                    if (isServerWrongMoveMessage(message)) {
+                        playWrongMoveSound();
+                    }
+                }
+            }
+        };
+
+        state.getGameMessages().addListener(wrongMoveMessageListener);
+
         view.getCurrentPlayerLabel().textProperty().bind(
                 Bindings.concat("Current Player: ", state.currentPlayerProperty())
         );
@@ -372,6 +394,7 @@ public class MainController {
         if (playerInfoListener != null) {
             state.getPlayerInfoList().removeListener(playerInfoListener);
         }
+
         playerInfoListener = change -> {
             peekActive = false;
 
@@ -437,12 +460,10 @@ public class MainController {
         view.getSendButton().setOnAction(e -> sendGameViewInput(view));
         view.getChatInput().setOnAction(e -> sendGameViewInput(view));
 
-
         view.getCommandButton().setOnAction(e -> sendCommand(view));
         view.getCommandInput().setOnAction(e -> sendCommand(view));
-        view.getDrawPilePane().setOnMouseClicked(e -> {
-            requestDrawWithAnimation(view);
-        });
+
+        view.getDrawPilePane().setOnMouseClicked(e -> requestDrawWithAnimation(view));
 
         view.getEndTurnButton().setOnAction(e -> networkClient.endTurn());
         view.getLeaveButton().setOnAction(e -> leaveCurrentLobbyAndShowLobbyView());
@@ -489,6 +510,7 @@ public class MainController {
 
             if (isEffectRequestForMe(payload, "SKIP")) {
                 showSkipEffectDialog(view);
+                return;
             }
 
             if (isEffectRequestForMe(payload, "NICE_TRY")) {
@@ -498,7 +520,6 @@ public class MainController {
 
             if (isEffectRequestForMe(payload, "COUNTERATTACK")) {
                 showCounterattackEffectDialog(view);
-                return;
             }
         });
 
@@ -530,6 +551,7 @@ public class MainController {
                 return;
             }
 
+            registry.getSoundId(CardView.lookupCard(playedCardId)).ifPresent(soundManager::play);
             playCardToDiscardAnimationThenRefresh(view, playingPlayer, playedCardId);
         });
 
@@ -541,7 +563,6 @@ public class MainController {
             EventBannerData data = describeEventCard(eventCardId);
             view.playEventOverlay(data.title(), data.description());
         });
-
 
         Scene scene = createStyledScene(view, 1280, 800);
         stage.setScene(scene);
@@ -648,18 +669,19 @@ public class MainController {
 
             final int cid = cardId;
             CardView cardView = new CardView(cid, registry, () -> {
-                registry.getSoundId(CardView.lookupCard(cid)).ifPresent(soundManager::play);
                 if (isSecondChanceActiveForMe()) {
                     networkClient.resolveSecondChance(cid);
                     clearPendingEffectIfSecondChance();
-                } else {
-                    if (!canLocalPlayerPlayNow()) {
-                        state.getGameMessages().add("[CLIENT] You cannot play right now.");
-                        return;
-                    }
-
-                    networkClient.playCard(cid);
+                    return;
                 }
+
+                if (!canLocalPlayerPlayNow()) {
+                    playWrongMoveSound();
+                    state.getGameMessages().add("[CLIENT] You cannot play right now.");
+                    return;
+                }
+
+                networkClient.playCard(cid);
             });
 
             cardView.setUserData(cid);
@@ -1870,6 +1892,28 @@ public class MainController {
         };
     }
 
+
+    /**
+     * Plays the sound used for rejected or illegal GUI moves.
+     */
+    private void playWrongMoveSound() {
+        soundManager.play("wrong_move");
+    }
+
+    private boolean isServerWrongMoveMessage(String message) {
+        if (message == null) {
+            return false;
+        }
+
+        String lower = message.toLowerCase();
+
+        return lower.startsWith("[error]")
+                && (lower.contains("cannot be played")
+                || lower.contains("not your turn")
+                || lower.contains("cannot draw")
+                || lower.contains("cannot end turn")
+                || lower.contains("not allowed"));
+    }
 
     private boolean canLocalPlayerPlayNow() {
         return isCurrentTurnForMe(state.getCurrentPlayer())
