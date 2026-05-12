@@ -11,7 +11,8 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
-import java.io.InputStream;
+
+
 
 /**
  * Connect screen for the Frantic^-1 GUI client.
@@ -56,20 +57,24 @@ public class ConnectView extends VBox {
         setPadding(new Insets(40));
         setAlignment(Pos.CENTER);
 
-        Label titleLabel = new Label("Frantic^-1");
-        titleLabel.getStyleClass().add("screen-title");
+        Label fallbackTitleLabel = new Label("Frantic^-1");
+        fallbackTitleLabel.getStyleClass().add("screen-title");
+
+        ImageView logoView = createLogoView();
 
         Label subtitleLabel = new Label("Connect to a lobby and bring chaos.");
         subtitleLabel.getStyleClass().add("screen-subtitle");
 
-        ImageView logoView = createImageView("/images/app/logo.png", 96, 96);
-
         VBox headerBox = new VBox(8);
         headerBox.setAlignment(Pos.CENTER);
+
         if (logoView != null) {
             headerBox.getChildren().add(logoView);
+        } else {
+            headerBox.getChildren().add(fallbackTitleLabel);
         }
-        headerBox.getChildren().addAll(titleLabel, subtitleLabel);
+
+        headerBox.getChildren().add(subtitleLabel);
 
         GridPane form = new GridPane();
         form.getStyleClass().add("form-grid");
@@ -128,19 +133,33 @@ public class ConnectView extends VBox {
         return statusLabel;
     }
 
-    private ImageView createImageView(String resourcePath, double fitWidth, double fitHeight) {
-        try (InputStream in = getClass().getResourceAsStream(resourcePath)) {
-            if (in == null) {
-                return null;
-            }
 
-            ImageView imageView = new ImageView(new Image(in));
-            imageView.setFitWidth(fitWidth);
-            imageView.setFitHeight(fitHeight);
-            imageView.setPreserveRatio(true);
-            return imageView;
-        } catch (Exception e) {
+    private ImageView createLogoView() {
+        Image logoImage = SvgImageLoader.loadSvgAsImage(
+                ConnectView.class,
+                "/icons/logo_font.svg",
+                900f,
+                300f
+        );
+
+        if (logoImage == null) {
             return null;
         }
+
+        ImageView logoView = new ImageView(logoImage);
+        logoView.getStyleClass().add("connect-logo-image");
+        logoView.setPreserveRatio(true);
+        logoView.setSmooth(true);
+        logoView.setMouseTransparent(true);
+
+        /*
+         * Technical display size:
+         * The SVG is rendered larger for sharpness, but displayed smaller so it fits
+         * into the connect panel. This is layout sizing, not visual styling.
+         */
+        logoView.setFitWidth(420);
+        logoView.setFitHeight(140);
+
+        return logoView;
     }
 }

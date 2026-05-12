@@ -72,7 +72,7 @@
         </linearGradient>
 
         <!-- Soft glow -->
-        <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+        <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
             <feGaussianBlur stdDeviation="3" result="blur"/>
             <feMerge>
                 <feMergeNode in="blur"/>
@@ -133,98 +133,101 @@
         </style>
 
         <!-- ========================= -->
+        <!-- MINI CARD LOGO DEFINITIONS -->
+        <!-- moved outside symbol for Batik compatibility -->
+        <!-- ========================= -->
+
+        <linearGradient id="mini_gradientOuterTopLeft" x1="240" y1="520" x2="610" y2="145" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#181400"/>
+            <stop offset="40%" stop-color="#1A0F05"/>
+            <stop offset="100%" stop-color="#0D1604"/>
+        </linearGradient>
+
+        <linearGradient id="mini_gradientOuterTopRight" x1="650" y1="145" x2="1000" y2="520" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#0B1714"/>
+            <stop offset="40%" stop-color="#0C1620"/>
+            <stop offset="70%" stop-color="#13002B"/>
+            <stop offset="100%" stop-color="#22001B"/>
+        </linearGradient>
+
+        <linearGradient id="mini_gradientOuterBottomLeft" x1="230" y1="550" x2="615" y2="910" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#1C1800"/>
+            <stop offset="45%" stop-color="#1E1400"/>
+            <stop offset="100%" stop-color="#210D04"/>
+        </linearGradient>
+
+        <linearGradient id="mini_gradientOuterBottomRight" x1="650" y1="910" x2="1000" y2="550" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#220D04"/>
+            <stop offset="45%" stop-color="#230816"/>
+            <stop offset="100%" stop-color="#24001F"/>
+        </linearGradient>
+
+        <linearGradient id="mini_gradientInnerSwirlLeft" x1="0.12" y1="0.18" x2="0.88" y2="0.88" gradientUnits="objectBoundingBox">
+            <stop offset="0%" stop-color="#0C0630"/>
+            <stop offset="35%" stop-color="#170831"/>
+            <stop offset="70%" stop-color="#250628"/>
+            <stop offset="100%" stop-color="#300A22"/>
+        </linearGradient>
+
+        <linearGradient id="mini_gradientInnerSwirlTop" x1="0.08" y1="0.25" x2="0.92" y2="0.42" gradientUnits="objectBoundingBox">
+            <stop offset="0%" stop-color="#252A05"/>
+            <stop offset="38%" stop-color="#2B1B05"/>
+            <stop offset="75%" stop-color="#2B0C14"/>
+            <stop offset="100%" stop-color="#270022"/>
+        </linearGradient>
+
+        <linearGradient id="mini_gradientInnerSwirlRight" x1="0.38" y1="0.08" x2="0.76" y2="0.95" gradientUnits="objectBoundingBox">
+            <stop offset="0%" stop-color="#0D1A35"/>
+            <stop offset="45%" stop-color="#1B172A"/>
+            <stop offset="78%" stop-color="#2C1911"/>
+            <stop offset="100%" stop-color="#2B2408"/>
+        </linearGradient>
+
+        <linearGradient id="mini_gradientInnerSwirlBottom" x1="0.00" y1="0.78" x2="1.00" y2="0.22" gradientUnits="objectBoundingBox">
+            <stop offset="0%" stop-color="#2A1004"/>
+            <stop offset="55%" stop-color="#2C1704"/>
+            <stop offset="100%" stop-color="#280021"/>
+        </linearGradient>
+
+        <linearGradient id="mini_gradientMinus" x1="420" y1="535" x2="620" y2="535" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#1E0026"/>
+            <stop offset="100%" stop-color="#240019"/>
+        </linearGradient>
+
+        <linearGradient id="mini_gradientOne" x1="620" y1="400" x2="700" y2="720" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#260315"/>
+            <stop offset="100%" stop-color="#28070B"/>
+        </linearGradient>
+
+        <linearGradient id="mini_gradientMotionStreak" x1="40" y1="0" x2="430" y2="0" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#1B1020" stop-opacity="0"/>
+            <stop offset="65%" stop-color="#1B1020" stop-opacity="0.35"/>
+            <stop offset="100%" stop-color="#26180E" stop-opacity="0.8"/>
+        </linearGradient>
+
+        <filter id="mini_shadow" x="-15%" y="-15%" width="130%" height="130%" color-interpolation-filters="sRGB">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="2" result="blur"/>
+            <feOffset in="blur" dx="0" dy="2" result="offsetBlur"/>
+            <feFlood flood-color="#000000" flood-opacity="0.55" result="shadowColor"/>
+            <feComposite in="shadowColor" in2="offsetBlur" operator="in" result="shadow"/>
+            <feMerge>
+                <feMergeNode in="shadow"/>
+                <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+        </filter>
+
+        <path id="mini_swirlArmShape"
+              d="M-150 124
+                 C-65 193 54 210 167 161
+                 C226 135 278 88 330 2
+                 C311 99 253 192 143 224
+                 C27 256 -79 219 -150 124 Z"/>
+
+        <!-- ========================= -->
         <!-- SMALL CARD LOGO SYMBOL -->
-        <!-- updated to dark version -->
         <!-- ========================= -->
 
         <symbol id="miniFranticLogo" viewBox="0 0 1200 1100" overflow="visible">
-
-            <!-- Small logo gradients -->
-            <linearGradient id="mini_gradientOuterTopLeft" x1="240" y1="520" x2="610" y2="145" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stop-color="#181400"/>
-                <stop offset="40%" stop-color="#1A0F05"/>
-                <stop offset="100%" stop-color="#0D1604"/>
-            </linearGradient>
-
-            <linearGradient id="mini_gradientOuterTopRight" x1="650" y1="145" x2="1000" y2="520" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stop-color="#0B1714"/>
-                <stop offset="40%" stop-color="#0C1620"/>
-                <stop offset="70%" stop-color="#13002B"/>
-                <stop offset="100%" stop-color="#22001B"/>
-            </linearGradient>
-
-            <linearGradient id="mini_gradientOuterBottomLeft" x1="230" y1="550" x2="615" y2="910" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stop-color="#1C1800"/>
-                <stop offset="45%" stop-color="#1E1400"/>
-                <stop offset="100%" stop-color="#210D04"/>
-            </linearGradient>
-
-            <linearGradient id="mini_gradientOuterBottomRight" x1="650" y1="910" x2="1000" y2="550" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stop-color="#220D04"/>
-                <stop offset="45%" stop-color="#230816"/>
-                <stop offset="100%" stop-color="#24001F"/>
-            </linearGradient>
-
-            <linearGradient id="mini_gradientInnerSwirlLeft" x1="0.12" y1="0.18" x2="0.88" y2="0.88" gradientUnits="objectBoundingBox">
-                <stop offset="0%" stop-color="#0C0630"/>
-                <stop offset="35%" stop-color="#170831"/>
-                <stop offset="70%" stop-color="#250628"/>
-                <stop offset="100%" stop-color="#300A22"/>
-            </linearGradient>
-
-            <linearGradient id="mini_gradientInnerSwirlTop" x1="0.08" y1="0.25" x2="0.92" y2="0.42" gradientUnits="objectBoundingBox">
-                <stop offset="0%" stop-color="#252A05"/>
-                <stop offset="38%" stop-color="#2B1B05"/>
-                <stop offset="75%" stop-color="#2B0C14"/>
-                <stop offset="100%" stop-color="#270022"/>
-            </linearGradient>
-
-            <linearGradient id="mini_gradientInnerSwirlRight" x1="0.38" y1="0.08" x2="0.76" y2="0.95" gradientUnits="objectBoundingBox">
-                <stop offset="0%" stop-color="#0D1A35"/>
-                <stop offset="45%" stop-color="#1B172A"/>
-                <stop offset="78%" stop-color="#2C1911"/>
-                <stop offset="100%" stop-color="#2B2408"/>
-            </linearGradient>
-
-            <linearGradient id="mini_gradientInnerSwirlBottom" x1="0.00" y1="0.78" x2="1.00" y2="0.22" gradientUnits="objectBoundingBox">
-                <stop offset="0%" stop-color="#2A1004"/>
-                <stop offset="55%" stop-color="#2C1704"/>
-                <stop offset="100%" stop-color="#280021"/>
-            </linearGradient>
-
-            <linearGradient id="mini_gradientMinus" x1="420" y1="535" x2="620" y2="535" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stop-color="#1E0026"/>
-                <stop offset="100%" stop-color="#240019"/>
-            </linearGradient>
-
-            <linearGradient id="mini_gradientOne" x1="620" y1="400" x2="700" y2="720" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stop-color="#260315"/>
-                <stop offset="100%" stop-color="#28070B"/>
-            </linearGradient>
-
-            <linearGradient id="mini_gradientMotionStreak" x1="40" y1="0" x2="430" y2="0" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stop-color="#1B1020" stop-opacity="0"/>
-                <stop offset="65%" stop-color="#1B1020" stop-opacity="0.35"/>
-                <stop offset="100%" stop-color="#26180E" stop-opacity="0.8"/>
-            </linearGradient>
-
-            <filter id="mini_shadow" x="-15%" y="-15%" width="130%" height="130%" color-interpolation-filters="sRGB">
-                <feGaussianBlur in="SourceAlpha" stdDeviation="2" result="blur"/>
-                <feOffset in="blur" dx="0" dy="2" result="offsetBlur"/>
-                <feFlood flood-color="#000000" flood-opacity="0.55" result="shadowColor"/>
-                <feComposite in="shadowColor" in2="offsetBlur" operator="in" result="shadow"/>
-                <feMerge>
-                    <feMergeNode in="shadow"/>
-                    <feMergeNode in="SourceGraphic"/>
-                </feMerge>
-            </filter>
-
-            <path id="mini_swirlArmShape"
-                  d="M-150 124
-                     C-65 193 54 210 167 161
-                     C226 135 278 88 330 2
-                     C311 99 253 192 143 224
-                     C27 256 -79 219 -150 124 Z"/>
 
             <!-- Motion streaks -->
             <g id="mini_motionStreaks" opacity="0.75">
@@ -297,22 +300,22 @@
                stroke-linejoin="round">
 
                 <g id="mini_innerSwirlBottomSweep" transform="rotate(10)">
-                    <use href="#mini_swirlArmShape"
+                    <use xlink:href="#mini_swirlArmShape"
                          fill="url(#mini_gradientInnerSwirlBottom)"/>
                 </g>
 
                 <g id="mini_innerSwirlLeftCrescent" transform="rotate(100)">
-                    <use href="#mini_swirlArmShape"
+                    <use xlink:href="#mini_swirlArmShape"
                          fill="url(#mini_gradientInnerSwirlLeft)"/>
                 </g>
 
                 <g id="mini_innerSwirlTopSweep" transform="rotate(190)">
-                    <use href="#mini_swirlArmShape"
+                    <use xlink:href="#mini_swirlArmShape"
                          fill="url(#mini_gradientInnerSwirlTop)"/>
                 </g>
 
                 <g id="mini_innerSwirlRightComma" transform="rotate(-80)">
-                    <use href="#mini_swirlArmShape"
+                    <use xlink:href="#mini_swirlArmShape"
                          fill="url(#mini_gradientInnerSwirlRight)"/>
                 </g>
             </g>
@@ -417,7 +420,7 @@
     <g id="cardMiniLogos" filter="url(#softGlow)">
         <!-- front card mini logo -->
         <use id="miniLogoOnFrontCard"
-             href="#miniFranticLogo"
+             xlink:href="#miniFranticLogo"
              x="466"
              y="260"
              width="160"

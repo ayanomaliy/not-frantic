@@ -899,3 +899,8 @@
     -fx-font-size: 13px;
     -fx-font-weight: bold;
 }
+
+
+.connect-logo-image {
+    -fx-opacity: 0.98;
+}
