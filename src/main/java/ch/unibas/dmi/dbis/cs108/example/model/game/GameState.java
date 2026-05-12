@@ -366,6 +366,55 @@ public class GameState {
     }
 
     /**
+     * Removes a player from the active turn order.
+     *
+     * <p>The current player index is adjusted so the remaining turn order
+     * stays valid after the removal.</p>
+     *
+     * @param playerName the player to remove
+     * @return true if the removed player was the current player
+     */
+    public boolean removePlayer(String playerName) {
+        int removedIndex = -1;
+
+        for (int i = 0; i < playerOrder.size(); i++) {
+            if (playerOrder.get(i).getPlayerName().equals(playerName)) {
+                removedIndex = i;
+                break;
+            }
+        }
+
+        if (removedIndex < 0) {
+            return false;
+        }
+
+        boolean removedCurrentPlayer = removedIndex == currentPlayerIndex;
+
+        playerOrder.remove(removedIndex);
+
+        if (playerOrder.isEmpty()) {
+            currentPlayerIndex = 0;
+            return removedCurrentPlayer;
+        }
+
+        if (removedIndex < currentPlayerIndex) {
+            currentPlayerIndex--;
+        }
+
+        if (currentPlayerIndex >= playerOrder.size()) {
+            currentPlayerIndex = 0;
+        }
+
+        if (playerName.equals(pendingEffectTarget)) {
+            pendingEffectTarget = null;
+            pendingEffects.clear();
+            phase = GamePhase.AWAITING_PLAY;
+        }
+
+        return removedCurrentPlayer;
+    }
+
+    /**
      * Returns the dev-mode forced event card id that should be used whenever
      * a black card is played, or {@code null} if normal event drawing is active.
      *

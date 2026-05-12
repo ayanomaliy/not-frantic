@@ -276,41 +276,63 @@ public class ServerService {
             Lobby lobby,
             String playerName
     ) {
+        GameState state = lobby.getGameState();
+
+        if (state == null) {
+            lobby.removeDisconnectedPlayer(playerName);
+            lobby.removeSessionsByPlayerName(playerName);
+            return;
+        }
+
+        int activePlayerCount = state.getPlayerOrder().size();
 
         lobby.removeDisconnectedPlayer(playerName);
+        lobby.removeSessionsByPlayerName(playerName);
+        playerLobbyMap.entrySet().removeIf(entry ->
+                entry.getKey().getPlayerName().equalsIgnoreCase(playerName)
+        );
+
+        if (activePlayerCount <= 2) {
+            broadcastToLobby(lobby, new Message(
+                    Message.Type.INFO,
+                    playerName + " did not reconnect in time. The game is ending."
+            ));
+
+            broadcastToLobby(lobby, new Message(
+                    Message.Type.GAME_END,
+                    "Game ended because " + playerName + " disconnected."
+            ));
+
+            state.setPhase(GamePhase.GAME_OVER);
+            lobby.setGameState(null);
+            lobby.setGameStarted(false);
+            lobby.setLobbyStatus(LobbyStatus.FINISHED);
+
+            broadcastLobbyListToAllClients();
+            broadcastAllPlayersListToAllClients();
+
+            return;
+        }
+
+        boolean removedCurrentPlayer = state.removePlayer(playerName);
+        lobby.getCumulativeScores().remove(playerName);
 
         broadcastToLobby(lobby, new Message(
                 Message.Type.INFO,
                 playerName + " did not reconnect in time and was removed from the game."
         ));
 
-        /*
-         * If only 2 players existed originally,
-         * end the game immediately.
-         */
-        if (lobby.getPlayers().size() <= 2) {
+        broadcastPlayerList(lobby);
+        broadcastAllHands(lobby);
 
-            broadcastToLobby(lobby, new Message(
-                    Message.Type.GAME_END,
-                    "Game ended because a player disconnected."
-            ));
-
-            lobby.setGameStarted(false);
-            lobby.setGameState(null);
-            lobby.setLobbyStatus(LobbyStatus.FINISHED);
-
-            broadcastLobbyListToAllClients();
-
-            return;
+        if (removedCurrentPlayer) {
+            state.setPhase(GamePhase.TURN_START);
+            TurnEngine.startTurn(state);
         }
 
-        /*
-         * Otherwise:
-         * remaining players continue.
-         *
-         * Actual player removal from GameState
-         * will be implemented next.
-         */
+        broadcastGameState(lobby);
+        broadcastLobbyListToAllClients();
+        broadcastAllPlayersListToAllClients();
     }
 
     /**
