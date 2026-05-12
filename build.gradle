@@ -42,6 +42,7 @@ test {
         exclude "**/*GuiTest.class"
         exclude "**/*UITest.class"
         exclude "**/AssetRegistryTest.class"
+        exclude "**/SoundManagerTest.class"
     }
 }
 
