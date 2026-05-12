@@ -1129,3 +1129,30 @@ Spectator mode is now working through the GUI. It supports current-player perspe
 
 * Improve spectator UI polish.
 * Continue testing reconnect and lobby edge cases.
+
+## Date: May 12, 2026
+
+### Reconnect Timeout Handling (Senanur)
+
+## What did I do today?
+
+* Improved the reconnect handling for players who lose connection during an active game.
+* Added a **60-second reconnect timeout** on the server side.
+* Tracked disconnected players inside the lobby.
+* Removed players automatically if they did not reconnect in time.
+* Added logic so that:
+  * games with more than two players continue,
+  * 2-player games end automatically after one player times out.
+* Updated the `GameState` so removed players are deleted from the active turn order.
+* Fixed the current-player index after player removal.
+* Tested the feature with simulated network loss.
+
+## Work Summary
+
+Today I improved the reconnect system for the multiplayer game. When a player disconnects during an active match, the server now gives them 60 seconds to reconnect. If the player reconnects in time, they can continue playing normally.
+
+If the player does not reconnect within the timeout, they are removed from the game. In games with more than two players, the remaining players can continue. In 2-player games, the match ends automatically because the game cannot continue with only one player.
+
+## Conclusion
+
+The reconnect system is now more stable and prevents games from getting stuck when a player disconnects. The feature was tested successfully with both 2-player and 3-player scenarios.
