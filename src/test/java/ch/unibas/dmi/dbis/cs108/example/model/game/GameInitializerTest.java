@@ -47,16 +47,34 @@ class GameInitializerTest {
 
     @Test
     void drawPile_hasCorrectSizeAfterDeal_3Players() {
-        // 125 total - 7*3 dealt - 1 flipped = 103
-        GameState state = initialize(List.of("Alice", "Bob", "Charlie"));
-        assertEquals(103, state.getDrawPile().size());
+        GameState state = GameInitializer.initialize(
+                List.of("Alice", "Bob", "Charlie"),
+                1,
+                null,
+                new Random(42)
+        );
+
+        assertEquals(
+                99,
+                state.getDrawPile().size(),
+                "Draw pile should contain 99 cards after dealing 7 cards to 3 players and flipping 1 starter card"
+        );
     }
 
     @Test
     void drawPile_hasCorrectSizeAfterDeal_4Players() {
-        // 125 total - 7*4 dealt - 1 flipped = 96
-        GameState state = initialize(List.of("Alice", "Bob", "Charlie", "Dave"));
-        assertEquals(96, state.getDrawPile().size());
+        GameState state = GameInitializer.initialize(
+                List.of("Alice", "Bob", "Charlie", "Diana"),
+                1,
+                null,
+                new Random(42)
+        );
+
+        assertEquals(
+                92,
+                state.getDrawPile().size(),
+                "Draw pile should contain 92 cards after dealing 7 cards to 4 players and flipping 1 starter card"
+        );
     }
 
     // --- Discard pile ---
