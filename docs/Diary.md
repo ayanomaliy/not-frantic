@@ -1362,7 +1362,7 @@ We also plan to cut the videos into a nice trailer and gameplay video and then u
 
 ## Date: May 13, 2026
 
-### Lobby Switching and Reconnect Bug Fix
+### Lobby Switching and Reconnect Bug Fix (Sevval, Aiysha)
 
 ## What did we do today?
 
@@ -1371,3 +1371,18 @@ Today, we investigated a server-side bug where players could leave a running lob
 We analyzed the server logs and found that `LEAVE` only removed players from the lobby session list, but not from the running game state. We then adjusted the logic so intentional lobby leaving is handled differently from real connection loss. Players who intentionally leave a running game are now removed from the old `GameState`, while automatic reconnect still remains available for actual disconnects.
 
 After testing again, we confirmed that the server now removes leaving players correctly and that new lobbies can start with a clean player list. We also identified a remaining GUI/client-state issue: after `GAME_END`, the client could still think that the game view was already shown. We planned a fix by resetting the local game state and `gameViewShown` after leaving a lobby or receiving `GAME_END`, so the GUI can correctly open a new game view when another lobby starts.
+
+
+## Date: May 13, 2026
+
+### CI Pipeline and GitHub Actions Setup (Aiysha)
+
+## What did we do today?
+
+Today we worked on fixing our CI pipeline. We first adjusted the GitLab CI configuration so that it uses a separate `pipelineTest` task instead of running all normal tests. This task excludes JavaFX UI tests as well as asset- and sound-related tests, because those were likely causing the GitLab runner jobs to hang.
+
+After pushing the changes to `main`, the GitLab job still stayed in the `pending` state and waited for a runner. Since we could not confirm whether the project was still allowed to use the GitLab runners, we removed the GitLab CI configuration for now.
+
+As an alternative, we set up a CI pipeline in our private GitHub repository using GitHub Actions. This pipeline successfully builds the project, runs the reduced `pipelineTest` task, and creates the Fat-JAR.
+
+If we get approval, we would like to keep the CI pipeline on GitHub, since it currently works reliably there and avoids further blocking of the GitLab runners.
