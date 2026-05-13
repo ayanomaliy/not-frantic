@@ -1332,5 +1332,13 @@ Next, I want to create SVG icons for the missing card effects, especially for al
 I also want to continue polishing the GUI visually. This includes improving spacing, proportions, logo placement, card readability, panel layout, and the general presentation of the game screens. The goal is to make the interface feel more polished, coherent, and visually appealing for the final demo.
 
 
+## Date: May 13, 2026
+
+### Card Icon and Logo Polish (Aiysha)
+
+## What did I do today?
+
+
+I also created and refined several SVG icons for special cards, including Skip, Gift, Exchange, Fantastic, Fantastic Four, Second Chance, Equality, and Nice Try.
 
 

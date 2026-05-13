@@ -35,7 +35,7 @@ public class DeckFactory {
      * Builds a fresh, unshuffled main deck of 125 cards.
      */
     public static List<Card> buildMainDeck() {
-        List<Card> deck = new ArrayList<>(125);
+        List<Card> deck = new ArrayList<>(121);
         int id = 0;
 
         // --- 72 color cards: 4 colors × values 1–9 × 2 copies ---
@@ -72,20 +72,35 @@ public class DeckFactory {
         }
         // id == 101
 
-        // --- 23 four-color special cards ---
-        // FANTASTIC ×5, FANTASTIC_FOUR ×5, EQUALITY ×5, COUNTERATTACK ×4, NICE_TRY ×4
-        int[] fourColorCounts = {5, 5, 5, 4, 4};
+// --- Four-color special cards ---
+// FANTASTIC ×5, FANTASTIC_FOUR ×5, EQUALITY ×5, NICE_TRY ×4
+// COUNTERATTACK ×4 removed because the effect is currently unstable.
+// We intentionally skip IDs 116–119 so old card-id assumptions do not shift.
+
+        int[] fourColorCounts = {5, 5, 5};
         SpecialEffect[] fourEffects = {
-            SpecialEffect.FANTASTIC, SpecialEffect.FANTASTIC_FOUR,
-            SpecialEffect.EQUALITY, SpecialEffect.COUNTERATTACK,
-            SpecialEffect.NICE_TRY
+                SpecialEffect.FANTASTIC,
+                SpecialEffect.FANTASTIC_FOUR,
+                SpecialEffect.EQUALITY
         };
+
         for (int i = 0; i < fourEffects.length; i++) {
             for (int j = 0; j < fourColorCounts[i]; j++) {
                 deck.add(Card.specialFourCard(id++, fourEffects[i]));
             }
         }
-        // id == 124
+
+// id == 116 here.
+// Skip old COUNTERATTACK IDs 116–119.
+        id += 4;
+
+// id == 120 here.
+// Add NICE_TRY ×4 with original IDs 120–123.
+        for (int j = 0; j < 4; j++) {
+            deck.add(Card.specialFourCard(id++, SpecialEffect.NICE_TRY));
+        }
+
+// id == 124
 
         // --- 1 Fuck You card ---
         deck.add(Card.fuckYouCard(id++));
