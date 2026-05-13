@@ -166,13 +166,23 @@ public class ServerService {
             return null;
         }
 
+        String playerName = session.getPlayerName();
+
+        boolean runningGame =
+                currentLobby.isGameStarted()
+                        && currentLobby.getGameState() != null;
+
         currentLobby.removeSession(session);
         playerLobbyMap.remove(session);
+
+        if (runningGame) {
+            handleIntentionalLeaveFromRunningGame(currentLobby, playerName);
+        }
 
         if (reasonText != null && !reasonText.isBlank()) {
             broadcastToLobby(currentLobby, new Message(
                     Message.Type.INFO,
-                    session.getPlayerName() + " " + reasonText
+                    playerName + " " + reasonText
             ));
         }
 
@@ -185,7 +195,66 @@ public class ServerService {
         }
 
         broadcastLobbyListToAllClients();
+        broadcastAllPlayersListToAllClients();
+
         return currentLobby;
+    }
+
+    private void handleIntentionalLeaveFromRunningGame(
+            Lobby lobby,
+            String playerName
+    ) {
+        GameState state = lobby.getGameState();
+
+        if (state == null) {
+            return;
+        }
+
+        /*
+         * Important:
+         * This is an intentional LEAVE, not a connection loss.
+         * Therefore the player must be removed from the running game
+         * and must not remain reconnectable in this old lobby.
+         */
+        lobby.removeDisconnectedPlayer(playerName);
+
+        boolean removedCurrentPlayer = state.removePlayer(playerName);
+        lobby.getCumulativeScores().remove(playerName);
+
+        if (state.getPlayerOrder().size() < 2) {
+            broadcastToLobby(lobby, new Message(
+                    Message.Type.INFO,
+                    playerName + " left the running game. The game is ending."
+            ));
+
+            broadcastToLobby(lobby, new Message(
+                    Message.Type.GAME_END,
+                    "Game ended because " + playerName + " left."
+            ));
+
+            state.setPhase(GamePhase.GAME_OVER);
+            lobby.setGameState(null);
+            lobby.setGameStarted(false);
+            lobby.setLobbyStatus(LobbyStatus.FINISHED);
+
+            broadcastLobbyListToAllClients();
+            broadcastAllPlayersListToAllClients();
+
+            return;
+        }
+
+        broadcastToLobby(lobby, new Message(
+                Message.Type.INFO,
+                playerName + " left the running game and was removed from the game."
+        ));
+
+        if (removedCurrentPlayer) {
+            state.setPhase(GamePhase.TURN_START);
+            TurnEngine.startTurn(state);
+        }
+
+        broadcastAllHands(lobby);
+        broadcastGameState(lobby);
     }
 
     /**
