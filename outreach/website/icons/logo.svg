@@ -1,0 +1,227 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="1200" height="1100" viewBox="0 0 1200 1100" fill="none">
+
+    <defs>
+        <!-- Outer ring gradients -->
+        <linearGradient id="gradientOuterTopLeft" x1="240" y1="520" x2="610" y2="145" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#181400"/>
+            <stop offset="40%" stop-color="#1A0F05"/>
+            <stop offset="100%" stop-color="#0D1604"/>
+        </linearGradient>
+
+        <linearGradient id="gradientOuterTopRight" x1="650" y1="145" x2="1000" y2="520" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#0B1714"/>
+            <stop offset="40%" stop-color="#0C1620"/>
+            <stop offset="70%" stop-color="#13002B"/>
+            <stop offset="100%" stop-color="#22001B"/>
+        </linearGradient>
+
+        <linearGradient id="gradientOuterBottomLeft" x1="230" y1="550" x2="615" y2="910" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#1C1800"/>
+            <stop offset="45%" stop-color="#1E1400"/>
+            <stop offset="100%" stop-color="#210D04"/>
+        </linearGradient>
+
+        <linearGradient id="gradientOuterBottomRight" x1="650" y1="910" x2="1000" y2="550" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#220D04"/>
+            <stop offset="45%" stop-color="#230816"/>
+            <stop offset="100%" stop-color="#24001F"/>
+        </linearGradient>
+
+        <!-- Inner swirl gradients -->
+        <linearGradient id="gradientInnerSwirlLeft" x1="0.12" y1="0.18" x2="0.88" y2="0.88" gradientUnits="objectBoundingBox">
+            <stop offset="0%" stop-color="#0C0630"/>
+            <stop offset="35%" stop-color="#170831"/>
+            <stop offset="70%" stop-color="#250628"/>
+            <stop offset="100%" stop-color="#300A22"/>
+        </linearGradient>
+
+        <linearGradient id="gradientInnerSwirlTop" x1="0.08" y1="0.25" x2="0.92" y2="0.42" gradientUnits="objectBoundingBox">
+            <stop offset="0%" stop-color="#252A05"/>
+            <stop offset="38%" stop-color="#2B1B05"/>
+            <stop offset="75%" stop-color="#2B0C14"/>
+            <stop offset="100%" stop-color="#270022"/>
+        </linearGradient>
+
+        <linearGradient id="gradientInnerSwirlRight" x1="0.38" y1="0.08" x2="0.76" y2="0.95" gradientUnits="objectBoundingBox">
+            <stop offset="0%" stop-color="#0D1A35"/>
+            <stop offset="45%" stop-color="#1B172A"/>
+            <stop offset="78%" stop-color="#2C1911"/>
+            <stop offset="100%" stop-color="#2B2408"/>
+        </linearGradient>
+
+        <linearGradient id="gradientInnerSwirlBottom" x1="0.00" y1="0.78" x2="1.00" y2="0.22" gradientUnits="objectBoundingBox">
+            <stop offset="0%" stop-color="#2A1004"/>
+            <stop offset="55%" stop-color="#2C1704"/>
+            <stop offset="100%" stop-color="#280021"/>
+        </linearGradient>
+
+        <!-- Center symbol gradients -->
+        <linearGradient id="gradientMinus" x1="420" y1="535" x2="620" y2="535" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#1E0026"/>
+            <stop offset="100%" stop-color="#240019"/>
+        </linearGradient>
+
+        <linearGradient id="gradientOne" x1="620" y1="400" x2="700" y2="720" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#260315"/>
+            <stop offset="100%" stop-color="#28070B"/>
+        </linearGradient>
+
+        <!-- Motion streaks -->
+        <linearGradient id="gradientMotionStreak" x1="40" y1="0" x2="430" y2="0" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#1B1020" stop-opacity="0"/>
+            <stop offset="65%" stop-color="#1B1020" stop-opacity="0.35"/>
+            <stop offset="100%" stop-color="#26180E" stop-opacity="0.8"/>
+        </linearGradient>
+
+        <filter id="shadow" x="-15%" y="-15%" width="130%" height="130%" color-interpolation-filters="sRGB">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="2" result="blur"/>
+            <feOffset in="blur" dx="0" dy="2" result="offsetBlur"/>
+            <feFlood flood-color="#000000" flood-opacity="0.55" result="shadowColor"/>
+            <feComposite in="shadowColor" in2="offsetBlur" operator="in" result="shadow"/>
+            <feMerge>
+                <feMergeNode in="shadow"/>
+                <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+        </filter>
+
+        <!-- Reusable swirl arm shape, centered around the swirl system -->
+        <path id="swirlArmShape"
+              d="M-150 124
+                 C-65 193 54 210 167 161
+                 C226 135 278 88 330 2
+                 C311 99 253 192 143 224
+                 C27 256 -79 219 -150 124 Z"/>
+    </defs>
+
+    <!-- ========================= -->
+    <!-- MOTION STREAKS / SPEED LINES -->
+    <!-- Same geometry as original, only darker colors -->
+    <!-- ========================= -->
+    <g id="motionStreaks" opacity="0.75">
+
+        <polygon id="motionStreakTop2"
+                 points="0,210 330,206 215,245"
+                 transform="translate(150 -40)"
+                 fill="url(#gradientMotionStreak)"/>
+
+        <polygon id="motionStreakTop3"
+                 points="0,310 290,308 205,352"
+                 transform="translate(50 -30)"
+                 fill="url(#gradientMotionStreak)"/>
+
+        <polygon id="motionStreakMiddle1"
+                 points="0,405 265,404 200,450"
+                 transform="translate(10 0)"
+                 fill="url(#gradientMotionStreak)"/>
+
+        <polygon id="motionStreakMiddle2"
+                 points="0,500 255,500 205,548"
+                 transform="translate(15 100)"
+                 fill="url(#gradientMotionStreak)"/>
+
+        <polygon id="motionStreakBottom1"
+                 points="0,660 285,660 225,712"
+                 transform="translate(50 50)"
+                 fill="url(#gradientMotionStreak)"/>
+
+        <polygon id="motionStreakBottom2"
+                 points="0,745 320,748 350,800"
+                 transform="translate(40 70)"
+                 fill="url(#gradientMotionStreak)"/>
+
+    </g>
+
+    <!-- ========================= -->
+    <!-- OUTER RING -->
+    <!-- ========================= -->
+    <g id="outerRing" filter="url(#shadow)" stroke-linejoin="round">
+
+        <path id="outerArcTopLeftOutline"
+              d="M238 517 A392 392 0 0 1 612 147"
+              stroke="#000"
+              stroke-width="70"/>
+
+        <path id="outerArcTopLeftColor"
+              d="M238 517 A392 392 0 0 1 612 147"
+              stroke="url(#gradientOuterTopLeft)"
+              stroke-width="58"/>
+
+        <path id="outerArcTopRightOutline"
+              d="M648 147 A392 392 0 0 1 1002 517"
+              stroke="#000"
+              stroke-width="70"/>
+
+        <path id="outerArcTopRightColor"
+              d="M648 147 A392 392 0 0 1 1002 517"
+              stroke="url(#gradientOuterTopRight)"
+              stroke-width="58"/>
+
+        <path id="outerArcBottomRightOutline"
+              d="M1002 553 A392 392 0 0 1 648 908"
+              stroke="#000"
+              stroke-width="70"/>
+
+        <path id="outerArcBottomRightColor"
+              d="M1002 553 A392 392 0 0 1 648 908"
+              stroke="url(#gradientOuterBottomRight)"
+              stroke-width="58"/>
+
+        <path id="outerArcBottomLeftOutline"
+              d="M612 908 A392 392 0 0 1 238 553"
+              stroke="#000"
+              stroke-width="70"/>
+
+        <path id="outerArcBottomLeftColor"
+              d="M612 908 A392 392 0 0 1 238 553"
+              stroke="url(#gradientOuterBottomLeft)"
+              stroke-width="58"/>
+    </g>
+
+    <!-- ========================= -->
+    <!-- INNER SWIRLS -->
+    <!-- centered at (620, 550) -->
+    <!-- ========================= -->
+    <g id="innerSwirls"
+       transform="translate(620 520)"
+       filter="url(#shadow)"
+       stroke="#000"
+       stroke-width="5"
+       stroke-linejoin="round">
+
+        <g id="innerSwirlBottomSweep" transform="rotate(10)">
+            <use xlink:href="#swirlArmShape"
+                 fill="url(#gradientInnerSwirlBottom)"/>
+        </g>
+
+        <g id="innerSwirlLeftCrescent" transform="rotate(100)">
+            <use xlink:href="#swirlArmShape"
+                 fill="url(#gradientInnerSwirlLeft)"/>
+        </g>
+
+        <g id="innerSwirlTopSweep" transform="rotate(190)">
+            <use xlink:href="#swirlArmShape"
+                 fill="url(#gradientInnerSwirlTop)"/>
+        </g>
+
+        <g id="innerSwirlRightComma" transform="rotate(-80)">
+            <use xlink:href="#swirlArmShape"
+                 fill="url(#gradientInnerSwirlRight)"/>
+        </g>
+    </g>
+
+    <!-- ========================= -->
+    <!-- CENTRAL -1 SYMBOL -->
+    <!-- ========================= -->
+    <g id="centerMinusOne" filter="url(#shadow)" stroke="#000" stroke-width="5" stroke-linejoin="round">
+
+        <path id="centerMinus"
+              d="M420 540 C485 520 548 520 620 535 C555 553 488 556 420 540 Z"
+              fill="url(#gradientMinus)"/>
+
+        <path id="centerOne"
+              d="M618 430 L673 367 L690 705 L672 749 L654 412 L623 444 Z"
+              fill="url(#gradientOne)"/>
+    </g>
+</svg>

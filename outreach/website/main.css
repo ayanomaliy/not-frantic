@@ -665,6 +665,142 @@ footer strong {
     color: var(--text-heading);
 }
 
+/* =========================
+   Website cards matching JavaFX CardView
+   ========================= */
+
+.web-card {
+    width: min(220px, 80%);
+    aspect-ratio: 90 / 130;
+    border-radius: 26px;
+    padding: 20px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 3px solid rgba(255, 248, 243, 0.42);
+    box-shadow:
+            0 28px 60px rgba(0, 0, 0, 0.28),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.10);
+
+    transform: rotate(var(--card-rotation, -4deg));
+}
+
+.card-showcase-row.reverse .web-card {
+    transform: rotate(var(--card-rotation, 4deg));
+}
+
+.web-card-top,
+.web-card-bottom {
+    position: absolute;
+    left: 18px;
+    font-family: Arial, "Segoe UI", sans-serif;
+    font-size: 1rem;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    line-height: 1;
+}
+
+.web-card-top {
+    top: 18px;
+}
+
+.web-card-bottom {
+    bottom: 14px;
+}
+
+.web-card-center-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-align: center;
+}
+
+.web-card-icon {
+    width: 92px;
+    height: 92px;
+    object-fit: contain;
+}
+
+.web-card-icon.number-icon {
+    width: 108px;
+    height: 108px;
+}
+
+.web-card-subtitle {
+    max-width: 160px;
+    font-family: Arial, "Segoe UI", sans-serif;
+    font-size: 0.9rem;
+    font-weight: 900;
+    line-height: 1.05;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.web-card-text-dark {
+    color: #1f232b;
+}
+
+.web-card-text-light {
+    color: #fffaf5;
+}
+
+/* Same card surfaces as JavaFX */
+
+.web-card.card-red {
+    background:
+            linear-gradient(145deg, rgba(255,255,255,0.38), rgba(255,255,255,0.08)),
+            linear-gradient(145deg, #dd9e9c, #e5423b 58%, #c61e65);
+}
+
+.web-card.card-yellow {
+    background:
+            linear-gradient(145deg, rgba(255,255,255,0.38), rgba(255,255,255,0.08)),
+            linear-gradient(145deg, #f2df8d, #ebcf76 58%, #de8f47);
+}
+
+.web-card.card-green {
+    background:
+            linear-gradient(145deg, rgba(255,255,255,0.34), rgba(255,255,255,0.07)),
+            linear-gradient(145deg, #9fedb2, #52ed7f 58%, #1ecd8a);
+}
+
+.web-card.card-blue {
+    background:
+            linear-gradient(145deg, rgba(255,255,255,0.38), rgba(255,255,255,0.08)),
+            linear-gradient(145deg, #9ebde9, #4e92f4 58%, #4935f2);
+}
+
+.web-card.card-black {
+    background:
+            radial-gradient(circle at 50% 18%, rgba(255,255,255,0.18), transparent 34%),
+            linear-gradient(145deg, #111319, #2a2f39 54%, #8a5742);
+    border-color: rgba(255, 248, 243, 0.34);
+}
+
+.web-card.card-four-color {
+    background:
+            linear-gradient(145deg, rgba(255,255,255,0.30), rgba(255,255,255,0.05)),
+            linear-gradient(145deg, #e65a77, #f4ce5f, #55d68f, #5687ee, #8e5eea);
+    border-color: rgba(255, 248, 243, 0.52);
+}
+
+.web-card.card-fuck-you {
+    background:
+            radial-gradient(circle at 50% 18%, rgba(255,255,255,0.16), transparent 34%),
+            linear-gradient(145deg, #72505b, #554042 48%, #111319);
+    border-color: rgba(255, 248, 243, 0.40);
+}
+
+.web-card.card-neutral {
+    background:
+            radial-gradient(circle at 50% 20%, rgba(255,255,255,0.18), transparent 36%),
+            linear-gradient(145deg, #72505b, #554042 52%, #2a2f39);
+}
+
 @media (max-width: 860px) {
     .nav-links {
         display: none;
@@ -731,4 +867,7 @@ footer strong {
         width: 122vw;
         padding: 54px 20px;
     }
+
+
+
 }

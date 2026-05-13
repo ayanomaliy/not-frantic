@@ -1,0 +1,95 @@
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <!-- outer circle -->
+    <circle
+            cx="50"
+            cy="50"
+            r="31"
+            fill="none"
+            stroke="#1f232b"
+            stroke-width="7"
+            stroke-linecap="round"/>
+
+    <!-- top beam -->
+    <path
+            d="M34 38 L50 34 L66 38"
+            fill="none"
+            stroke="#1f232b"
+            stroke-width="7"
+            stroke-linecap="round"
+            stroke-linejoin="round"/>
+
+    <!-- center top circle -->
+    <circle
+            cx="50"
+            cy="34"
+            r="4.5"
+            fill="#1f232b"/>
+
+    <!-- center pole -->
+    <rect
+            x="46"
+            y="38"
+            width="8"
+            height="24"
+            fill="#1f232b"/>
+
+    <!-- base -->
+    <rect
+            x="39"
+            y="64"
+            width="22"
+            height="7"
+            fill="#1f232b"/>
+
+    <!-- left hanger -->
+    <line
+            x1="36"
+            y1="39"
+            x2="30"
+            y2="51"
+            stroke="#1f232b"
+            stroke-width="3.5"
+            stroke-linecap="round"/>
+    <line
+            x1="36"
+            y1="39"
+            x2="42"
+            y2="51"
+            stroke="#1f232b"
+            stroke-width="3.5"
+            stroke-linecap="round"/>
+
+    <!-- right hanger -->
+    <line
+            x1="64"
+            y1="39"
+            x2="58"
+            y2="51"
+            stroke="#1f232b"
+            stroke-width="3.5"
+            stroke-linecap="round"/>
+    <line
+            x1="64"
+            y1="39"
+            x2="70"
+            y2="51"
+            stroke="#1f232b"
+            stroke-width="3.5"
+            stroke-linecap="round"/>
+
+    <!-- left bowl -->
+    <path
+            d="M26 51
+               H46
+               C45 59, 39 63, 36 63
+               C33 63, 27 59, 26 51 Z"
+            fill="#1f232b"/>
+
+    <!-- right bowl -->
+    <path
+            d="M54 51
+               H74
+               C73 59, 67 63, 64 63
+               C61 63, 55 59, 54 51 Z"
+            fill="#1f232b"/>
+</svg>

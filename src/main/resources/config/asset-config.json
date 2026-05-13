@@ -49,7 +49,7 @@
         "sound": "card_play_black"
       },
       "FUCK_YOU": {
-        "icon": null,
+        "icon": "icons/fuck_you.svg",
         "sound": "card_play_fuck_you"
       },
       "EVENT": {
