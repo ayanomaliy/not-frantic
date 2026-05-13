@@ -1,4 +1,4 @@
-# Project Diary
+__# Project Diary
 
 ## Date: February 19, 2026
 
@@ -1345,9 +1345,6 @@ I also created and refined several SVG icons for special cards, including Skip, 
 ## Date: May 13, 2026
 
 ### Card Icon and Logo Polish (Aiysha, Sevval)
-
-## What did I do today?
-
 
 ## What did I do today?
 
