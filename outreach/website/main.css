@@ -865,3 +865,47 @@ footer strong {
 
 
 }
+
+
+.gameplay-preview-section {
+    padding-top: 7rem;
+    padding-bottom: 7rem;
+}
+
+.gameplay-preview-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+    align-items: center;
+    gap: 4rem;
+}
+
+.gameplay-preview-copy .section-title {
+    margin-bottom: 1.5rem;
+}
+
+.gameplay-preview-video {
+    border-radius: 28px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+}
+
+.gameplay-preview-video video {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+}
+
+@media (max-width: 900px) {
+    .gameplay-preview-grid {
+        grid-template-columns: 1fr;
+        gap: 2.5rem;
+    }
+
+    .gameplay-preview-video {
+        max-width: 720px;
+    }
+}
