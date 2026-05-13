@@ -2,16 +2,28 @@ image: eclipse-temurin:25-jdk
 
 stages:
   - test
+  - build
 
-test:
+pipeline-test:
   stage: test
+  timeout: 10m
   script:
     - chmod +x gradlew
-    - ./gradlew clean fatJar test -DexcludeGuiTests=true
+    - ./gradlew --no-daemon clean pipelineTest --stacktrace
   artifacts:
     when: always
     reports:
-      junit: build/test-results/test/*.xml
+      junit: build/test-results/pipelineTest/*.xml
     paths:
-      - build/reports/tests/test/
+      - build/reports/tests/pipelineTest/
+
+build-jar:
+  stage: build
+  timeout: 10m
+  script:
+    - chmod +x gradlew
+    - ./gradlew --no-daemon fatJar
+  artifacts:
+    when: always
+    paths:
       - build/libs/

@@ -56,6 +56,31 @@ test {
     }
 }
 
+tasks.register('pipelineTest', Test) {
+    group = 'verification'
+    description = 'Runs CI-safe tests without JavaFX UI and asset/sound tests.'
+
+    useJUnitPlatform()
+
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+
+    // Exclude JavaFX UI tests
+    exclude '**/ch/unibas/dmi/dbis/cs108/example/client/ui/**'
+
+    // Exclude asset and sound related tests
+    exclude '**/ch/unibas/dmi/dbis/cs108/example/client/assets/**'
+    exclude '**/*Sound*Test.class'
+    exclude '**/*Audio*Test.class'
+    exclude '**/SoundManagerTest.class'
+    exclude '**/AssetRegistryTest.class'
+
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+        exceptionFormat 'full'
+    }
+}
+
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
 }
