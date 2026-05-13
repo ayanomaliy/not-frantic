@@ -164,7 +164,7 @@ public class LobbyView extends BorderPane {
 
         chatModeButton.getStyleClass().addAll("frantic-button", "secondary-button");
 
-        nameButton.getStyleClass().addAll("frantic-button", "primary-button");
+        nameButton.getStyleClass().addAll("frantic-button", "secondary-button");
         settingsButton.getStyleClass().addAll("frantic-button", "secondary-button");
 
         joinLobbyButton.setDisable(true);

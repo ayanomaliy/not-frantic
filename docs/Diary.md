@@ -1348,9 +1348,6 @@ I also created and refined several SVG icons for special cards, including Skip, 
 
 ## What did I do today?
 
-
-## What did I do today?
-
 Today we worked on improving the Frantic^-1 GUI and website. We adjusted the player layout around the table, improved spacing, moved UI elements like the hand label and piles, and refined the table background. We also worked on making the website card visuals match the in-game JavaFX cards more closely. Later, we fixed several test issues after removing Counterattack from the game and updated failing tests such as `DeckFactoryTest`, `CircularTablePaneTest`, `HandFanPaneTest`, and `FullRoundSimulationTest`. We also debugged why the Fuck You card icon was not loading and found that the asset path in `asset-config.json` needed to point to `icons/fuck_you.svg`. Additionally, we recorded gameplay videos and updated the README so that it matches the current state of the project.
 
 We've also decided that more sounds are not neccessary as we played the game.
@@ -1362,3 +1359,15 @@ We plan to fix a server-side bug where `LEAVE` only removes a player from the lo
 We also plan to cut the videos into a nice trailer and gameplay video and then upload thos onto the website.
 
 
+
+## Date: May 13, 2026
+
+### Lobby Switching and Reconnect Bug Fix
+
+## What did we do today?
+
+Today, we investigated a server-side bug where players could leave a running lobby, join another lobby, and still remain inside the old active `GameState`. This caused problems when starting a new game, especially with the reconnect-on-connection-loss system.
+
+We analyzed the server logs and found that `LEAVE` only removed players from the lobby session list, but not from the running game state. We then adjusted the logic so intentional lobby leaving is handled differently from real connection loss. Players who intentionally leave a running game are now removed from the old `GameState`, while automatic reconnect still remains available for actual disconnects.
+
+After testing again, we confirmed that the server now removes leaving players correctly and that new lobbies can start with a clean player list. We also identified a remaining GUI/client-state issue: after `GAME_END`, the client could still think that the game view was already shown. We planned a fix by resetting the local game state and `gameViewShown` after leaving a lobby or receiving `GAME_END`, so the GUI can correctly open a new game view when another lobby starts.
