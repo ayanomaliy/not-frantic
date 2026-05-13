@@ -223,6 +223,7 @@ public class FxNetworkClient implements ClientMessageHandler {
      */
     public void leaveLobby() {
         protocolClient.leaveLobby();
+        clearLocalGameOnly();
     }
 
     /**
@@ -761,6 +762,24 @@ public class FxNetworkClient implements ClientMessageHandler {
                 state.getGameMessages().add("[GAME_END] " + message.content());
                 state.setWinnerName(message.content());
                 state.setCurrentPhase("GAME_OVER");
+
+                /*
+                 * Important:
+                 * The current game is over. If this client later joins/creates another lobby
+                 * and receives a fresh GAME_STATE, the gameStartListener must be allowed
+                 * to open a new GameView again.
+                 */
+                gameViewShown = false;
+
+                state.getCurrentHandCards().clear();
+                state.getPlayerInfoList().clear();
+                state.setPendingEffectRequest("");
+                state.setTopCardId("");
+                state.setPreviousRenderableTopCardId("");
+                state.setTopCardText("-");
+                state.setRequestedColor("");
+                state.setRequestedNumber("");
+                state.setDrawPileSize(0);
 
                 if (gameEndListener != null) {
                     gameEndListener.run();
