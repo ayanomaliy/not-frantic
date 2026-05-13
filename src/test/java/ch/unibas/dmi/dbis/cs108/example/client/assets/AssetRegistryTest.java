@@ -102,10 +102,10 @@ class AssetRegistryTest {
     }
 
     @Test
-    void getIconPath_fuckYouCard_returnsEmpty_typeEntryHasNullIcon() {
+    void getIconPath_fuckYouCard_returnsFuckYouSvgPath() {
         Card fy = Card.fuckYouCard(0);
-        // by_type["FUCK_YOU"] has icon=null → empty
-        assertTrue(registry.getIconPath(fy).isEmpty());
+
+        assertEquals(Optional.of("icons/fuck_you.svg"), registry.getIconPath(fy));
     }
 
     @Test

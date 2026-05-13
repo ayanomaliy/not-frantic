@@ -4,39 +4,39 @@
     "by_effect": {
       "SKIP": {
         "icon": "icons/card_skip.svg",
-        "sound": "card_play_skip"
+        "sound": "special_card"
       },
       "GIFT": {
         "icon": "icons/card_gift.svg",
-        "sound": "card_play_gift"
+        "sound": "special_card"
       },
       "EXCHANGE": {
         "icon": "icons/card_exchange.svg",
-        "sound": "card_play_exchange"
+        "sound": "special_card"
       },
       "FANTASTIC": {
         "icon": "icons/card_fantastic.svg",
-        "sound": "card_play_fantastic"
+        "sound": "special_card"
       },
       "FANTASTIC_FOUR": {
         "icon": "icons/card_fantastic_four.svg",
-        "sound": "card_play_fantastic_four"
+        "sound": "special_card"
       },
       "SECOND_CHANCE": {
         "icon": "icons/card_second_chance.svg",
-        "sound": "card_play_second_chance"
+        "sound": "special_card"
       },
       "EQUALITY": {
         "icon": "icons/card_equality.svg",
-        "sound": "card_play_equality"
+        "sound": "special_card"
       },
       "COUNTERATTACK": {
         "icon": "icons/card_counterattack.svg",
-        "sound": "card_play_counterattack"
+        "sound": "special_card"
       },
       "NICE_TRY": {
         "icon": "icons/card_nice_try.svg",
-        "sound": "card_play_nice_try"
+        "sound": "special_card"
       }
     },
     "by_type": {
@@ -135,7 +135,8 @@
     "card_play_nice_try": "sounds/card_play_generic.mp3",
     "card_play_black": "sounds/card_play_black.mp3",
     "card_play_fuck_you": "sounds/card_play_fuck_you.mp3",
-    "background_music": "sounds/background_music.mp3"
+    "background_music": "sounds/background_music.mp3",
+    "special_card": "sounds/special_card.mp3"
   },
   "events": {
     "GAME_STARTED": {
