@@ -1356,13 +1356,12 @@ We've also decided that more sounds are not neccessary as we played the game.
 
 We plan to fix a server-side bug where `LEAVE` only removes a player from the lobby session list, but not from the active `GameState`. Because of this, a player can leave one running game, join another lobby, and still remain inside the old game state. We want to handle intentional leaving during an active game differently from normal lobby leaving, so the player is properly removed from the running game state as well.
 
-We also plan to cut the videos into a nice trailer and gameplay video and then upload thos onto the website.
-
+We also plan to cut the videos into a nice trailer and gameplay video and then upload this onto the website.
 
 
 ## Date: May 13, 2026
 
-### Lobby Switching and Reconnect Bug Fix (Sevval, Aiysha)
+### Lobby Switching and Reconnect Bug Fix (Aiysha,Sevval)
 
 ## What did we do today?
 
@@ -1372,6 +1371,9 @@ We analyzed the server logs and found that `LEAVE` only removed players from the
 
 After testing again, we confirmed that the server now removes leaving players correctly and that new lobbies can start with a clean player list. We also identified a remaining GUI/client-state issue: after `GAME_END`, the client could still think that the game view was already shown. We planned a fix by resetting the local game state and `gameViewShown` after leaving a lobby or receiving `GAME_END`, so the GUI can correctly open a new game view when another lobby starts.
 
+## Future plans
+
+We received an Email from our tutor regarding the failed pipelines so we will try to fix it.
 
 ## Date: May 13, 2026
 
