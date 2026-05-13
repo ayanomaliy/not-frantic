@@ -189,7 +189,7 @@ Both client and server handle heartbeats automatically.
 
 4. `101–120` → four-color special cards
 
-5. `121` → `F%&/ U`
+5. `121` → F%&/ U
 
 ### Event deck
 
