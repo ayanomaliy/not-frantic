@@ -1388,3 +1388,18 @@ After pushing the changes to `main`, the GitLab job still stayed in the `pending
 As an alternative, we set up a CI pipeline in our private GitHub repository using GitHub Actions. This pipeline successfully builds the project, runs the reduced `pipelineTest` task, and creates the Fat-JAR.
 
 If we get approval, we would like to keep the CI pipeline on GitHub, since it currently works reliably there and avoids further blocking of the GitLab runners.
+
+
+## Date: May 13, 2026
+
+### Gameplay Video and Website Update (Aiysha)
+
+## What did I do today?
+
+Today I edited the gameplay video that Sevval and I recorded. I used DaVinci Resolve to cut and prepare the footage so it could be shown properly on the website.
+
+After that, I added the finished gameplay video to the Frantic^-1 website as a smaller preview next to the game description section. I also adjusted the text in that section so it better explains that the game may look calm at first, but quickly becomes chaotic when a player is close to winning.
+
+## Future plan
+
+Next, Sevval and me are planning to cut a trailer for the game.
