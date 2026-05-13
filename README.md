@@ -187,9 +187,9 @@ Both client and server handle heartbeats automatically.
 
 3. `81–100` → single-color special cards
 
-4. `101–123` → four-color special cards
+4. `101–120` → four-color special cards
 
-5. `124` → `FUCK_YOU`
+5. `121` → `F%&/ U`
 
 ### Event deck
 
@@ -480,32 +480,6 @@ Slash:
 
 ```text
 /skip <player>
-```
-
-### Counterattack
-
-Color only:
-
-```text
-EFFECT_RESPONSE|COUNTERATTACK||<COLOR>
-```
-
-Slash:
-
-```text
-/counter <color>
-```
-
-Color plus redirected target:
-
-```text
-EFFECT_RESPONSE|COUNTERATTACK|<player>|<COLOR>
-```
-
-Slash:
-
-```text
-/counter <color> <player>
 ```
 
 ### Nice Try
