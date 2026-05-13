@@ -1353,10 +1353,12 @@ I also created and refined several SVG icons for special cards, including Skip, 
 
 Today we worked on improving the Frantic^-1 GUI and website. We adjusted the player layout around the table, improved spacing, moved UI elements like the hand label and piles, and refined the table background. We also worked on making the website card visuals match the in-game JavaFX cards more closely. Later, we fixed several test issues after removing Counterattack from the game and updated failing tests such as `DeckFactoryTest`, `CircularTablePaneTest`, `HandFanPaneTest`, and `FullRoundSimulationTest`. We also debugged why the Fuck You card icon was not loading and found that the asset path in `asset-config.json` needed to point to `icons/fuck_you.svg`. Additionally, we recorded gameplay videos and updated the README so that it matches the current state of the project.
 
+We've also decided that more sounds are not neccessary as we played the game.
 
 ## Future plans
 
 We plan to fix a server-side bug where `LEAVE` only removes a player from the lobby session list, but not from the active `GameState`. Because of this, a player can leave one running game, join another lobby, and still remain inside the old game state. We want to handle intentional leaving during an active game differently from normal lobby leaving, so the player is properly removed from the running game state as well.
 
 We also plan to cut the videos into a nice trailer and gameplay video and then upload thos onto the website.
+
 
