@@ -20,7 +20,6 @@ Today, we had our first project meeting. We spent time chatting and getting to k
 - During this meeting, we will share the results of our research and decide on the final project.
 - We will also prepare the presentation for the **first milestone** together.
 
----
 
 ## Date: March 3, 2026
 
@@ -37,7 +36,6 @@ Today, we met to share the research we had done individually. After discussing o
 - Finally, we agreed on the game we will create.
 - After making this decision, we started preparing our presentation and organized the main points together.
 
----
 
 ## Date: March 3, 2026
 
@@ -61,7 +59,6 @@ Today, we started implementing the basic skeleton of our project. The focus was 
 - We will continue expanding chat and lobby functionality.
 - We also plan to refine nickname handling and make sure login/logout are handled cleanly.
 
----
 
 ## Date: March 9, 2026 
 
@@ -111,6 +108,7 @@ Today, we improved the connection handling in our client-server structure. The m
 - We want to continue testing login, logout, and nickname uniqueness with multiple clients.
 - We also plan to improve protocol consistency and extend the chat/lobby functionality further.
 
+
 ## Date: March 11, 2026
 
 ### Protocol Document (Denys)
@@ -118,6 +116,7 @@ Today, we improved the connection handling in our client-server structure. The m
 #### What did we do to-day?
 
 - Clearly defined the communication protocol by defining commands, syntax, message formats, and error handling. Added clear explanations with examples. Defines legacy commands for backwards-compatibility, and possilbe future additions for forwards-compatibility.
+
 
 ## Date: March 11, 2026
 
@@ -137,6 +136,7 @@ Today, I focused on improving the client-server communication structure and clea
 I also investigated whether emojis could be sent correctly through the chat, since this is relevant for robust encoding. For this, I added temporary debugging output and checked the message flow step by step. The result was that the emojis were already corrupted before they even entered the actual protocol layer. This means the issue is not mainly caused by the socket encoding itself, but by terminal input handling on Windows. A full fix for emoji input through the console was not achieved, but the source of the problem was narrowed down.
 
 In addition, I created a new `AppMain` launcher class so that the executable `not-frantic.jar` can be used to start either the server or the client. This makes the packaged application more practical, because one JAR file can now serve as the unified entry point for both modes.
+
 
 ## Date: March 11, 2026
 
@@ -282,6 +282,7 @@ Today, I focused on building the JavaFX GUI for the client and integrating it wi
   - visualizing game events and effects
 - Possibly refactor UI components further to keep them modular and extensible
 
+
 ## Date: April 2, 2026 
 
 ### Multi-Lobby Support Implementation (Senanur)
@@ -302,6 +303,7 @@ Today, I implemented support for multiple lobbies in the server. The goal was to
 - Test multi-lobby behavior with multiple clients to ensure proper isolation between lobbies.
 - Add validation (e.g., prevent joining non-existing lobbies).
 - Extend lobby functionality with features such as player lists and game start conditions.
+
 
 ## Date: April 2, 2026
 
@@ -331,6 +333,7 @@ In addition, I fixed several smaller synchronization issues between GUI and serv
 * I fixed disconnect handling so old chat and lobby data no longer remain visible after reconnecting.
 * I fixed stale player list updates by making sure global player lists are refreshed after renames and connection changes.
 * I also improved the handling of lobby/player list refreshes so GUI state now matches the server state more reliably.
+
 
 ## Date: April 5, 2026
 
@@ -368,6 +371,7 @@ I also added the **Version Control** section. This explains how we use version c
 
 In the coming days, I will continue working on the **QA Concept** and complete the remaining sections. The next focus will be adding the required **measurements and metrics**, which are important for evaluating code quality and technical progress.
 
+
 ## Date: April 6, 2026 
 
 ### Game State Integration and UI Improvements (Senanur)
@@ -389,6 +393,7 @@ Today, I focused on integrating the game state into the client and improving the
 - Improve turn logic and enforce rules such as turn-based actions.
 - Enhance UI with interactive elements (clickable cards, animations).
 - Continue refining the overall game flow and user experience.
+
 
 ## Date: April 7, 2026
 
@@ -414,6 +419,7 @@ Today, I focused on restructuring the client architecture and improving the game
 * Implement proper **effect resolution in the GUI**, since it currently still has to be done through the CLI.
 * Investigate and fix the **effect resolution bug** where the player sometimes gets kicked while resolving an effect.
 * Continue refining the overall in-game UI so it becomes clearer and more comfortable to use.
+
 
 ## Date: April 8, 2026
 
@@ -455,6 +461,7 @@ At the moment, our **QA concept is fully completed except for the JaCoCo coverag
 
 To clarify this, I contacted our tutor and am currently waiting for a response. Once I receive feedback, I can continue with the JaCoCo setup and finalize the remaining QA section.
 
+
 ## Date: April 8, 2026 (Senanur)
 
 ### Lobby Constraints and Improved Lobby Display
@@ -478,6 +485,7 @@ Today, I focused on improving lobby management by enforcing player limits and en
 - Prevent joining lobbies that are already full or currently playing.
 - Add visual indicators (e.g., disabled buttons) in the UI for invalid actions.
 - Extend lobby status handling (e.g., FINISHED state).
+
 
 ## Date: April 10, 2026 (Senanur)
 
@@ -505,6 +513,7 @@ Today, I worked on improving the lobby system by enforcing stricter join rules a
 - Prevent joining finished lobbies entirely.
 - Improve UI feedback (e.g., disable join buttons instead of only blocking on server side).
 - Continue refining synchronization between server state and UI.
+
 
 ## Date: April 11, 2026
 
@@ -545,6 +554,7 @@ My plan is to redo the Project Plan tomorrow and finish a stronger, clearer, and
 
 Overall, most of the QA work is completed, the report is ready, and the remaining focus is on solving the JaCoCo issue and improving the Project Plan.
 
+
 ## Date: April 12, 2026 (Aiysha)
 
 ### Bug Fixing, GUI Styling Cleanup, and Manual Writing
@@ -579,6 +589,7 @@ Today, I worked on cleaning up several parts of the project that were still roug
 * Continue polishing usability so the project feels more complete and easier to understand for someone testing it for the first time.
 * Add more targeted tests and dev-mode scenarios for tricky interactions involving black cards, event effects, requested colors/numbers, and chained effect resolution.
 
+
 ## Date: April 12, 2026
 
 ### QA (Sevval)
@@ -606,6 +617,7 @@ After completing the revisions, I uploaded the updated **Project Plan**. I also 
 ### Work Summary
 
 Overall, today’s work helped improve both the planning structure and the project documentation. With the updated project plan, new Gantt chart, and uploaded QA documents, our organizational work is now in a much stronger state.
+
 
 ## Date: April 16, 2026
 
@@ -652,6 +664,7 @@ During testing, we noticed that the **/cheatwin** command does not seem to work 
 
 - Investigate what is causing the **/cheatwin** command to fail.
 - Fix the issue so it can be used again for testing purposes.
+
 
 ## Date: April 21, 2026
 
@@ -708,6 +721,7 @@ Updated failing tests after UI refactor from draw button to draw pile.
 - Review remaining tests for UI consistency.
 - Improve test robustness for UI changes.
 - Increase coverage for user interactions.
+
 
 ## Date: April 22, 2026
 
@@ -780,7 +794,9 @@ In addition, we plan to fully complete and polish the GUI. This includes:
 - Adjusting remaining elements
 - Ensuring all game features are smoothly integrated
 
-Our goal is to create a clean, user-friendly, and professional-looking game experience.  
+Our goal is to create a clean, user-friendly, and professional-looking game experience.
+
+
 ## Date: April 22, 2026
 
 ### Effect Response GUI for Special Cards (Aiysha)
@@ -788,6 +804,7 @@ Our goal is to create a clean, user-friendly, and professional-looking game expe
 Today, I worked on expanding the JavaFX GUI so that special card effects no longer have to be resolved only through slash commands. I implemented dedicated effect response views for Fantastic, Equality, and Fantastic Four, all using the same visual theme and overlay style on top of the existing `GameView`. I also added the necessary wiring between `MainController`, `FxNetworkClient`, and `ClientProtocolClient` so that the GUI can send structured effect responses directly instead of relying on manual text input.
 
 In addition, I fixed several issues that came up during testing. I corrected how effect requests are targeted so that only the intended player sees the popup. I also added filtering so that players cannot select themselves in the Fantastic Four and Equality GUIs. On the server side, I tightened validation for Fantastic Four so that illegal self-targeting is rejected even if a client tries to send it anyway. Another bug I fixed was that hand updates were sometimes missing after event resolution, which caused the GUI to show stale cards until another action happened. I also improved the handling of Second Chance so that cards in hand and the draw pile can now be clicked directly during effect resolution instead of forcing command-line input.
+
 
 ## Date: April 23, 2026 (Denys)
 
@@ -797,10 +814,12 @@ Documenting what I did a few days before. I created the asset-config file that a
 
 Next, I want to continue adding GUI support for the remaining special effects such as Gift, Exchange, Skip, Nice Try, and Counterattack, so that all effect resolution can eventually be done fully through the GUI.
 
+
 ## Date: April 23, 2026
 
 ### Testing and Bug fixes (Sevval, Aiysha)
 Today we tested the new GUI and the effect response views. We found some bugs regarding the end turn logic, as you were able to end the turn without drawing a card but we quickly fixed it.
+
 
 ## Date: April 23, 2026
 
@@ -832,6 +851,7 @@ Today, I focused on stabilizing the test suite and aligning existing tests with 
 - Cleaned up the test suite:
   - Removed **brittle tests** that depended on UI or assets.
   - Improved overall test reliability and maintainability.
+
 
 ## Date April 24, 2026 (Denys)
 
@@ -869,6 +889,7 @@ Today, I focused on final polishing for the milestone hand-in. The main areas we
 * Improved the layout of the endscreen so the result panels are centered properly instead of being pushed to the left.
 * Reviewed the current milestone achievements and assessed which ones are likely fulfilled based on the present source state and GUI completeness.
 
+
 ## Date: May 1, 2026
 
 Reworked the round lifecycle, since the game was incorrectly ending after the first round. Split the round-end logic into clear phases: compute round scores, check if the game is over, otherwise wait for an explicit next-round trigger. Added proper game termination handling and ensured cumulative scores persist across rounds.
@@ -887,6 +908,7 @@ Rounded it off with targeted tests covering round transitions, scoring edge case
 * Keep the remaining focus on stability rather than new features.
 * If time allows, clean up any last small UI inconsistencies and verify Linux/JAR behavior once more.
 
+
 ## Date: May 6, 2026
 
 ### QA Concept(Sevval)
@@ -898,6 +920,7 @@ Today, I added the MS 5 metrics to our QA Concept. I will wait for the MS 6 Metr
 #### Future Plans
 
 Tomorrow, Aiysha and I will meet again and work together on the project, trying to finish MS 6 tasks + bonuses.
+
 
 ## Date: May 7, 2026
 
@@ -952,6 +975,7 @@ We will meet tomorrow and try to finish these tasks:
 * Continue working on and clarifying the **CIA task**.
 * Follow up on the **tutor’s email response**.
 * Further improve **GUI polish and animations**.
+
 
 ## Date: May 9, 2026
 
@@ -1050,6 +1074,7 @@ The fullscreen and responsive layout experiment made good progress, especially f
   * loading/game screens.
 * Continue polishing the overall visual consistency of the GUI.
 
+
 ## Date: May 9, 2026
 
 ### Background Music Production and Audio Settings (Aiysha)
@@ -1116,6 +1141,7 @@ Overall, today’s session focused on improving the user interface and reducing 
 * Create our own custom sound effects and audio for the game.
 * Remove an unnecessary or unbalanced **card** from the game.
 
+
 ## Date: May 10, 2026
 
 ### Spectator Mode and Reconnect Improvements (Senanur)
@@ -1152,6 +1178,7 @@ Spectator mode is now working through the GUI. It supports current-player perspe
 * Improve spectator UI polish.
 * Continue testing reconnect and lobby edge cases.
 
+
 ## Date: May 12, 2026
 
 ### Reconnect Timeout Handling (Senanur)
@@ -1178,6 +1205,7 @@ If the player does not reconnect within the timeout, they are removed from the g
 ## Conclusion
 
 The reconnect system is now more stable and prevents games from getting stuck when a player disconnects. The feature was tested successfully with both 2-player and 3-player scenarios.
+
 
 ## Date: May 12, 2026
 
@@ -1222,6 +1250,7 @@ Overall, today’s session significantly improved the game’s audio design. By 
 * Finish editing sounds for the **special cards**.
 * Add and finalize sounds for the **black cards**.
 * Complete the remaining audio implementation so the **game’s sound design is fully finished**.
+
 
 ## Date: May 12, 2026
 
@@ -1338,7 +1367,6 @@ I also want to continue polishing the GUI visually. This includes improving spac
 
 ## What did I do today?
 
-
 I also created and refined several SVG icons for special cards, including Skip, Gift, Exchange, Fantastic, Fantastic Four, Second Chance, Equality, and Nice Try.
 
 
@@ -1375,6 +1403,7 @@ After testing again, we confirmed that the server now removes leaving players co
 
 We received an Email from our tutor regarding the failed pipelines so we will try to fix it.
 
+
 ## Date: May 13, 2026
 
 ### CI Pipeline and GitHub Actions Setup (Aiysha)
@@ -1403,3 +1432,11 @@ After that, I added the finished gameplay video to the Frantic^-1 website as a s
 ## Future plan
 
 Next, Sevval and me are planning to cut a trailer for the game.
+
+## Date: May 13, 2026
+
+### Trailer (Aiysha,Sevval)
+
+## What did we do today?
+
+We finished the trailer and uploaded it on our website.
