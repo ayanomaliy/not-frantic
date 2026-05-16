@@ -74,6 +74,8 @@ tasks.register('pipelineTest', Test) {
     exclude '**/*Audio*Test.class'
     exclude '**/SoundManagerTest.class'
     exclude '**/AssetRegistryTest.class'
+    exclude '**/client/net/Fx*Test.class'
+    exclude '**/client/net/Fx*Test$*.class'
 
     testLogging {
         events 'passed', 'skipped', 'failed'
