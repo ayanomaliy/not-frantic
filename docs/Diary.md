@@ -1440,3 +1440,18 @@ Next, Sevval and me are planning to cut a trailer for the game.
 ## What did we do today?
 
 We finished the trailer and uploaded it on our website.
+
+
+## Date: May 16, 2026
+
+### Setting up a GitLab CI Pipeline (Aiysha)
+
+## What did I do today?
+
+Today I worked on setting up a proper CI pipeline for our project. I already had a working GitHub Actions pipeline in my private GitHub repository (https://github.com/ayanomaliy/not-frantic.git) , which built the project, ran `pipelineTest`, and created the Fat-JAR. However, I decided to move back to GitLab CI because the official group repository is on GitLab. Since the requirement says that every commit should be built and tested, GitHub Actions alone was not ideal, because it would only test commits that were pushed to my private GitHub mirror.
+
+First, I tried to solve this by setting up an automatic GitLab-to-GitHub mirror with an access token. The idea was that every GitLab commit would be mirrored to GitHub and then tested by GitHub Actions. However, I could not find the mirroring settings in the university GitLab interface. My guess is that the feature may be disabled or that we do not have the required permissions.
+
+Because of that, I decided to try GitLab Pipelines again, but with a safer setup. Instead of running the normal `test` task, the pipeline now runs our custom `pipelineTest` task, which excludes GUI, sound, asset, and JavaFX client network tests. This is important because those tests can fail or hang in the GitLab Docker runner environment.
+
+In the end, the GitLab pipeline started correctly, built the project, ran the CI-safe tests, and created the Fat-JAR.
