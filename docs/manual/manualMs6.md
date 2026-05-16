@@ -261,19 +261,9 @@ Score value: **20 points**
 
 ---
 
-### 9.8 Counterattack
 
-Choose a color.
 
-The chosen color becomes the active request.
-
-Counterattack can also redirect a pending effect in some situations.
-
-Score value: **20 points**
-
----
-
-### 9.9 Nice Try
+### 9.8 Nice Try
 
 Stops a player from safely ending the round.
 
@@ -283,7 +273,7 @@ Score value: **20 points**
 
 ---
 
-### 9.10 Fuck You
+### 9.9 Fuck You
 
 A unique special card.
 
@@ -345,7 +335,6 @@ Lower score is better.
 | Fantastic      |             20 |
 | Fantastic Four |             20 |
 | Equality       |             20 |
-| Counterattack  |             20 |
 | Nice Try       |             20 |
 | Fuck You       |             69 |
 | Event card     |              0 |

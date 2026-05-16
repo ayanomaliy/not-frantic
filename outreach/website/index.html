@@ -43,21 +43,17 @@
             </p>
 
             <div class="hero-actions">
-                <a class="primary-button" href="not-frantic.jar" download>Download not-frantic.jar</a>
+                <a class="primary-button" href="../not-frantic.jar" download>Download not-frantic.jar</a>
                 <a class="secondary-button" href="#trailer">Watch gameplay</a>
-                <a class="secondary-button" href="#play">Read manual</a>
+                <a class="secondary-button" href="../not-frantic-manual.pdf" download>Read manual</a>
             </div>
-
-            <p class="hero-note">
-                Built with Java, JavaFX, Gradle and a TCP client-server architecture.
-            </p>
         </div>
     </section>
 
     <section class="showcase" id="trailer">
         <div class="media-frame">
-            <video controls poster="screenshot.png">
-                <source src="trailer.mp4" type="video/mp4">
+            <video controls poster="../screenshot.png">
+                <source src="../trailer.mp4" type="video/mp4">
                 Your browser does not support the video tag.
             </video>
         </div>
@@ -83,7 +79,7 @@
 
             <div class="gameplay-preview-video">
                 <video controls muted loop playsinline>
-                    <source src="gameplay.mp4" type="video/mp4">
+                    <source src="../gameplay.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
             </div>
@@ -92,15 +88,24 @@
 
     <section class="showcase" aria-label="Gameplay screenshot">
         <div class="media-frame">
-            <img src="screenshot.png" alt="Screenshot of Frantic^-1 gameplay">
+            <img src="../screenshot.png" alt="Screenshot of Frantic^-1 gameplay">
         </div>
     </section>
 
     <section class="page-section" id="play">
-        <p class="section-eyebrow">How to play</p>
-        <h2 class="section-title">Start a server. Destroy friendships.</h2>
+        <div class="section-header-row">
+            <div>
+                <p class="section-eyebrow">How to play</p>
+                <h2 class="section-title">Start a server. Destroy friendships.</h2>
+            </div>
+
+            <a class="manual-button" href="../not-frantic-manual.pdf" download>
+                Download Manual
+            </a>
+        </div>
+
         <p class="section-lead">
-            The game is played through the GUI. Start the server, connect with one or more clients,
+            Start the server, connect with one or more clients,
             create or join a lobby, then start the match.
         </p>
 
@@ -638,13 +643,12 @@
     <section class="page-section" id="about">
         <p class="section-eyebrow">About the project</p>
         <h2 class="section-title">Built for the University of Basel.</h2>
-        <p class="section-lead">
-            Frantic^-1 was created as a project for the University of Basel by <strong>The Devs^-1</strong>.
-        </p>
 
         <div class="content-grid">
             <article class="content-card">
-                <h3>The Devs^-1</h3>
+                <h3>
+                    <img class="about-group-logo" src="icons/group_logo.svg" alt="The Devs^-1 logo">
+                </h3>
                 <p>
                     This project was developed as part of the Programmierprojekt course.
                     It combines a full game implementation with a graphical client,
