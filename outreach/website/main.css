@@ -185,6 +185,14 @@ section {
     letter-spacing: -0.035em;
 }
 
+.hero-actions {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 52px;
+}
+
 .primary-button,
 .secondary-button {
     display: inline-flex;
